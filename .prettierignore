@@ -1,0 +1,10 @@
+# Add files here to ignore them from prettier formatting
+/dist
+/coverage
+# Brain + imported design references are authored/locked artifacts — don't reformat.
+/.claude
+/CLAUDE.md
+/pnpm-lock.yaml
+/.nx/cache
+/.nx/workspace-data
+.nx/self-healing

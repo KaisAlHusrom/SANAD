@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./libs/contracts"
+    },
+    {
+      "path": "./libs/shared/util"
+    },
+    {
+      "path": "./libs/shared/database"
+    },
+    {
+      "path": "./libs/shared/messaging"
+    },
+    {
+      "path": "./libs/shared/auth"
+    },
+    {
+      "path": "./libs/shared/config"
+    },
+    {
+      "path": "./apps/api-gateway"
+    }
+  ]
+}

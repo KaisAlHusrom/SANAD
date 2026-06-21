@@ -1,0 +1,114 @@
+# Sanad dev stack (OPS2): mirrors staging/prod topology and hot-reloads.
+# Published host ports are offset into a Sanad-only block so they never collide with
+# other projects' containers; internal container ports stay standard. All overridable.
+#
+#   docker compose -f infra/docker-compose.dev.yml up -d --build
+#   curl http://localhost:${NGINX_PORT:-8190}/api/health
+#
+name: sanad-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sanad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sanad}
+      POSTGRES_DB: ${POSTGRES_DB:-sanad}
+    ports:
+      - '${POSTGRES_PORT:-5440}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-sanad} -d ${POSTGRES_DB:-sanad}',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sanad-dev-net
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6390}:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sanad-dev-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-sanad}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-sanad}
+    ports:
+      - '${RABBITMQ_PORT:-5680}:5672'
+      - '${RABBITMQ_MGMT_PORT:-15680}:15672'
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - sanad-dev-net
+
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: infra/docker/api-gateway.dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      PORT: 3000
+      HOST: 0.0.0.0
+      # Connection strings the gateway/services consume from P2 onward.
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
+    volumes:
+      # Bind-mount the whole workspace for hot-reload; keep container-built node_modules.
+      - ..:/workspace
+      - gateway_node_modules:/workspace/node_modules
+    ports:
+      - '${GATEWAY_PORT:-3010}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sanad-dev-net
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx/dev.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - '${NGINX_PORT:-8190}:80'
+    depends_on:
+      - api-gateway
+    networks:
+      - sanad-dev-net
+
+networks:
+  sanad-dev-net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  rabbitmqdata:
+  gateway_node_modules:

@@ -1,0 +1,26 @@
+{
+  "name": "@sanad/api-gateway",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/main.js",
+  "nx": {
+    "name": "api-gateway",
+    "tags": [
+      "scope:gateway",
+      "type:app"
+    ]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/terminus": "^11.0.0",
+    "@sanad/contracts": "workspace:*",
+    "@sanad/util": "workspace:*",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.3.0",
+    "zod": "^3.24.1"
+  }
+}
