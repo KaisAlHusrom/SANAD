@@ -1,11 +1,28 @@
 import { Module } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module.js';
+import { BrandingModule } from './branding/branding.module.js';
+import { ContentModule } from './content/content.module.js';
+import { CoreModule } from './core/core.module.js';
 import { HealthModule } from './health/health.module.js';
+import { MediaModule } from './media/media.module.js';
+import { UsersModule } from './users/users.module.js';
 
 /**
- * Root gateway module. P1 bootstrap wires only health (MS8). Auth/JWT validation and
- * RMQ request/reply + identity forwarding (MS4) arrive in P2.
+ * Root gateway module (MS4). CoreModule (global) provides the identity + settings + media
+ * RMQ clients + token verifier; feature modules add the public auth routes, the
+ * RBAC-guarded users route, the branding surface (public read + guarded write), the media
+ * surface (signed upload + library), the content surface (public CMS reads + guarded writes
+ * + public lead submit), and health.
  */
 @Module({
-  imports: [HealthModule],
+  imports: [
+    CoreModule,
+    HealthModule,
+    AuthModule,
+    UsersModule,
+    BrandingModule,
+    MediaModule,
+    ContentModule,
+  ],
 })
 export class AppModule {}

@@ -12,6 +12,9 @@ export default [
             '{projectRoot}/eslint.config.{js,cjs,mjs,ts,cts,mts}',
             '{projectRoot}/vitest.config.{js,ts,mjs,mts}',
           ],
+          // reflect-metadata is a runtime requirement of the decorator-metadata
+          // emit (Nest guards), not a source import — keep it declared (N11/U20).
+          ignoredDependencies: ['reflect-metadata'],
         },
       ],
     },

@@ -22,7 +22,22 @@
       "path": "./libs/shared/config"
     },
     {
+      "path": "./libs/shared/cache"
+    },
+    {
       "path": "./apps/api-gateway"
+    },
+    {
+      "path": "./apps/identity-service"
+    },
+    {
+      "path": "./apps/settings-service"
+    },
+    {
+      "path": "./apps/media-service"
+    },
+    {
+      "path": "./apps/content-service"
     }
   ]
 }

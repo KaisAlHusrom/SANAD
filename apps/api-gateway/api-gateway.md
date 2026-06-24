@@ -3,9 +3,9 @@
 ## Purpose
 
 The single public entry to the platform (MS4). Clients talk only to the gateway; it
-validates auth once and fans out to internal services over RabbitMQ. **P1 scope is a
-bootstrap only** — it exposes health and nothing else. Auth/JWT validation, RBAC route
-guards, and RMQ request/reply + identity forwarding arrive in **P2**.
+validates auth once and fans out to internal services over RabbitMQ. **P2** added auth:
+the gateway verifies the RS256 access token at the edge, enforces RBAC permissions, and
+forwards the validated identity to services in RMQ headers (never the raw token).
 
 ## Stack & build
 
@@ -18,9 +18,28 @@ guards, and RMQ request/reply + identity forwarding arrive in **P2**.
 
 ## Endpoints
 
-| Method | Path (behind nginx) | Returns                        | Notes                                          |
-| ------ | ------------------- | ------------------------------ | ---------------------------------------------- |
-| GET    | `/api/health`       | `ok({ status })` envelope (N9) | global prefix `api`; nginx routes `/api/` here |
+All responses are the 5-field wire envelope (N9), added by the global
+`ResponseEnvelopeInterceptor`; errors by the global `AllExceptionsFilter`.
+
+| Method | Path (behind nginx)   | Auth                        | Returns               | Notes                                                                                                           |
+| ------ | --------------------- | --------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`         | —                           | `{ status }`          | liveness                                                                                                        |
+| POST   | `/api/auth/login`     | —                           | `AuthResult`          | → `identity.auth.login` (MS2)                                                                                   |
+| POST   | `/api/auth/refresh`   | —                           | `TokenPair`           | rotates the refresh token                                                                                       |
+| POST   | `/api/auth/logout`    | —                           | `LogoutResult`        | revokes the refresh token                                                                                       |
+| GET    | `/api/auth/me`        | JWT                         | `IdentityContext`     | sample protected route                                                                                          |
+| GET    | `/api/identity/users` | JWT + `identity.users.read` | `Paginated<AuthUser>` | **RBAC sample**: 403 without the permission; forwards identity headers to `identity.users.list` (MS4)           |
+| GET    | `/api/branding`       | — (public)                  | `BrandingRecord`      | **P3**: website reads branding unauthenticated; → `settings.branding.get` (MS2); coded defaults when unset (F7) |
+| PUT    | `/api/branding`       | JWT + `settings.manage`     | `BrandingRecord`      | **P3**: deep-partial update; forwards identity headers to `settings.branding.update` (MS4)                      |
+
+## Auth internals
+
+- `CoreModule` (global) registers the `IDENTITY_CLIENT` (`identity.commands`) **and the
+  `SETTINGS_CLIENT` (`settings.commands`, P3)** RMQ ClientProxies, and provides the RS256
+  `TokenVerifier` (public key from env).
+- Guards from `@sanad/auth`: `JwtAuthGuard` (verify + attach `IdentityContext`) then
+  `PermissionsGuard` (`@RequirePermissions(...)`). `toHttpException` maps RMQ
+  `RpcException({ statusCode })` back to HTTP statuses.
 
 ## Entities
 

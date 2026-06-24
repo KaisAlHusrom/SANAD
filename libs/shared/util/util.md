@@ -14,3 +14,10 @@
 **Env:** branches on `APP_ENV` only, never `NODE_ENV` (U19/OPS1). The accessor requires its source be passed in (the app's single `env.ts` supplies `process.env`/`import.meta.env`).
 **Events/settings:** none.
 **Tests:** `env.spec.ts`, `envelope.spec.ts`.
+
+## P2 additions — NestJS adapters (`src/lib/nest`, U20)
+
+- **pipes/** — `ZodValidationPipe` (validate against a contracts schema, 400 on failure, N7).
+- **interceptors/** — `ResponseEnvelopeInterceptor` (wrap responses in the 5-field N9 envelope).
+- **filters/** — `AllExceptionsFilter` (standard error envelope + Postgres code mapping).
+- Envelope: `toHttpEnvelope`/`failHttp` + the contract's `httpEnvelopeSchema`/`HttpResponseEnvelope`.

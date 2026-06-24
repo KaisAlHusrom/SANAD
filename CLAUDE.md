@@ -48,7 +48,7 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 3. **Read the relevant `.claude/plans/*`** — `02-mvp.md` for the next phase, plus the matching deep plan (`01-architecture`, `03-microservices-platform`, `04-website`, `05-deployment`, `06-ai-assistant`).
 4. **Build** following the rules + architecture. **TDD**: write the failing test first. Keep the module's `<module>.md` doc in the same change.
 5. **Update `PROGRESS.md`** — what was done, what's next, decisions made, issues hit.
-6. **Run the `verifier` agent** — it must report **PASS** before a phase is marked done.
+6. **Run the `verifier` agent** — it must report **PASS** before a phase is marked done. **Then run the `boot-verifier` agent** — bring up the Docker dev stack and confirm it actually runs (gateway answers through nginx, the phase's routes are mapped, no crash-looped container). The verifier checks *code*; boot-verifier checks *runtime* — a phase isn't done until both are green.
 7. **Grow the rules** — if you fixed a bug or hit a recurring mistake, add a dated rule so it never recurs.
 
 ## Commands & agents (project-local)
@@ -56,6 +56,7 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 - `/continue-plan` — read rules + PROGRESS + plans, build the next `02-mvp.md` phase, update PROGRESS, run verifier.
 - `/fix` — diagnose & fix a bug/regression/rule-violation, add a preventive rule, update PROGRESS, re-verify.
 - `verifier` agent — checks built code against the exact rule IDs; runs typecheck/lint/build/test; greps for violations; reports PASS/FAIL.
+- `boot-verifier` agent — runtime gate (run after `verifier`): brings up the Docker dev stack, confirms every container is up (no crash-loop), the gateway answers `GET /api/health` through nginx, and the phase's routes are mapped; reports UP/DOWN with the failing container's logs.
 - `designer` agent — the single design language (tokens-only, dark+light, ar/en RTL; shadcn for portals, bespoke-animated for the website).
 - `planner` agent — plans the next phase/feature; surfaces new settings, events, services, and modules.
 
@@ -68,7 +69,7 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 - **Settings-with-defaults.** Every client/admin-configurable value resolves override → global → **coded default**; reads are null-safe to the leaf. (U9, F7)
 - **Per-service own DB; DDD layering; base/translatable repos; never `new Date()`.** (N1–N5)
 - **APP_ENV drives all config; secrets via env; dev in Docker with hot-reload.** (OPS1–OPS3, U19)
-- **TDD always; DB tests use the `*_test` DB; every module has a synced doc.** (TDD1–TDD2, DOC1)
+- **TDD always; DB tests use the `*_test` DB; every module has a synced doc; the `docs/postman` collection stays current with every endpoint.** (TDD1–TDD2, DOC1–DOC2)
 - **Plans before building; PROGRESS is the ledger; always verify; rules grow.** (U11–U13)
 
 > Start here, then `.claude/rules.md`, then `.claude/docs/PROGRESS.md`. When in doubt, the rules win.

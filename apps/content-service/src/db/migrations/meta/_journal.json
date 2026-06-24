@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1782251692285,
+      "tag": "0000_friendly_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782256811665,
+      "tag": "0001_salty_old_lace",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782258606595,
+      "tag": "0002_acoustic_captain_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1782260316900,
+      "tag": "0003_square_baron_strucker",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782301744249,
+      "tag": "0004_common_kingpin",
+      "breakpoints": true
+    }
+  ]
+}

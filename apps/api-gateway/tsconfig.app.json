@@ -12,10 +12,19 @@
   "include": ["src/**/*.ts"],
   "references": [
     {
+      "path": "../../libs/shared/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/messaging/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/database/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/contracts/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/shared/util/tsconfig.lib.json"
+      "path": "../../libs/shared/auth/tsconfig.lib.json"
     }
   ],
   "exclude": [

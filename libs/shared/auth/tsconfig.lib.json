@@ -6,6 +6,9 @@
     "tsBuildInfoFile": "dist/tsconfig.lib.tsbuildinfo",
     "emitDeclarationOnly": false,
     "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],

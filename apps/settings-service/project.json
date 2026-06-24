@@ -1,0 +1,42 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "settings-service",
+  "projectType": "application",
+  "sourceRoot": "apps/settings-service/src",
+  "tags": ["scope:settings", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": ["^build"],
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "cwd": "apps/settings-service",
+        "command": "swc src -d dist --strip-leading-paths"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "cwd": "apps/settings-service",
+        "command": "swc src -d dist --strip-leading-paths && (swc src -d dist --watch --strip-leading-paths & node --enable-source-maps --watch dist/main.js)"
+      }
+    },
+    "db-generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "apps/settings-service",
+        "command": "drizzle-kit generate"
+      }
+    },
+    "db-migrate": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "cwd": "apps/settings-service",
+        "command": "node --enable-source-maps dist/db/migrate.js"
+      }
+    }
+  }
+}

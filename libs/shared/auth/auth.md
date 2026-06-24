@@ -15,3 +15,11 @@
 
 **Events/settings:** none.
 **Tests:** `rbac.spec.ts` (membership, staff/client, schema rejection).
+
+## P2 additions — NestJS adapters (`src/lib/nest`, grouped by kind, U20)
+
+- **verifiers/** — `TokenVerifier` seam + `JwtTokenVerifier` (RS256, public-key verify).
+- **guards/** — `JwtAuthGuard` (verify bearer → attach `IdentityContext`), `PermissionsGuard` (`@RequirePermissions`, honors the `manage` wildcards).
+- **decorators/** — `@RequirePermissions(...)`, `@CurrentUser()`.
+- **helpers/** — `identityToHeaders`/`identityFromHeaders` (forward identity in RMQ headers, MS4).
+- Policy: `hasPermission`/`identityHasPermission` + `GLOBAL_MANAGE_PERMISSION`; `accessTokenPayloadSchema`/`refreshTokenPayloadSchema` carry permissions.

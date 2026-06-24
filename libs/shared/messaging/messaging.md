@@ -16,3 +16,9 @@
 **Events:** defines the carrier types; concrete event contracts live with their owning service.
 **Settings:** none.
 **Tests:** `idempotent-consumer.spec.ts`, `domain-event.spec.ts`.
+
+## P2 additions — NestJS adapters (`src/lib/nest`, U20)
+
+- **transports/** — `createRmqServerOptions`/`createRmqClientOptions` + `commandsQueue`/`eventsQueue` (MS6).
+- **helpers/** — `sendRequest` (request/reply with timeout+catchError, MS2), `readMessageHeaders`.
+- **outbox/** — `outboxTable`, `DrizzleOutboxStore`, `OutboxRelay` + `clientProxyPublisher`, `createOutboxRecord` (transactional Outbox, MS3).

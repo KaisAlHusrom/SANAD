@@ -23,9 +23,13 @@
     ]
   },
   "dependencies": {
-    "tslib": "^2.3.0",
+    "@nestjs/common": "^11.0.0",
+    "@sanad/contracts": "workspace:*",
+    "drizzle-orm": "^0.44.0",
     "luxon": "^3.5.0",
-    "@sanad/contracts": "workspace:*"
+    "pg": "^8.13.0",
+    "reflect-metadata": "^0.2.2",
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@types/luxon": "^3.4.2"

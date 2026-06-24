@@ -2,9 +2,20 @@
 # Published host ports are offset into a Sanad-only block so they never collide with
 # other projects' containers; internal container ports stay standard. All overridable.
 #
-#   docker compose -f infra/docker-compose.dev.yml up -d --build
-#   curl http://localhost:${NGINX_PORT:-8190}/api/health
+# From P2 the JWT keypair must be supplied (identity fails fast without it, U19), so
+# pass a dev env file that carries it (committed throwaway in infra/.env.example; the
+# gitignored infra/.env.development also has it from 2026-06-24):
 #
+#   docker compose --env-file infra/.env.development -f infra/docker-compose.dev.yml up -d --build
+#   curl http://localhost:${NGINX_PORT:-8190}/api/health
+#   curl -X POST http://localhost:${NGINX_PORT:-8190}/api/auth/login \
+#        -H 'content-type: application/json' \
+#        -d '{"email":"admin@sanad.tech","password":"change-me-admin"}'
+#
+# Nx isolation (per app container): each app gets its OWN `.nx` volume (masking the
+# bind-mounted one) + NX_DAEMON=false, so concurrent nx processes (host vs container,
+# or two containers starting at once) never collide on shared `.nx` state — which used
+# to crash a container with "Recursive task invocation detected".
 name: sanad-dev
 
 services:
@@ -71,21 +82,156 @@ services:
     environment:
       NODE_ENV: development
       APP_ENV: development
+      # Isolate Nx per container (own .nx volume below) + no daemon, so concurrent nx
+      # processes never collide on shared state (the "recursive task invocation" crash).
+      NX_DAEMON: 'false'
       PORT: 3000
       HOST: 0.0.0.0
       # Connection strings the gateway/services consume from P2 onward.
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
+      # The gateway holds only the JWT PUBLIC key — it verifies, identity signs (decision 2).
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
     volumes:
-      # Bind-mount the whole workspace for hot-reload; keep container-built node_modules.
+      # Bind-mount the whole workspace for hot-reload; keep container-built node_modules + .nx.
       - ..:/workspace
       - gateway_node_modules:/workspace/node_modules
+      - gateway_nx:/workspace/.nx
     ports:
       - '${GATEWAY_PORT:-3010}:3000'
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      settings-service:
+        condition: service_started
+      media-service:
+        condition: service_started
+      content-service:
+        condition: service_started
+    networks:
+      - sanad-dev-net
+
+  identity-service:
+    build:
+      context: ..
+      dockerfile: infra/docker/identity-service.dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      NX_DAEMON: 'false'
+      PORT: 3001
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sanad}:${POSTGRES_PASSWORD:-sanad}@postgres:5432/identity
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
+      # RS256 keypair (dev throwaway in infra/.env.example) — identity signs + verifies.
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sanad.tech}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-admin}
+    volumes:
+      - ..:/workspace
+      - identity_node_modules:/workspace/node_modules
+      - identity_nx:/workspace/.nx
+    ports:
+      - '${IDENTITY_PORT:-3011}:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sanad-dev-net
+
+  settings-service:
+    build:
+      context: ..
+      dockerfile: infra/docker/settings-service.dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      NX_DAEMON: 'false'
+      PORT: 3002
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sanad}:${POSTGRES_PASSWORD:-sanad}@postgres:5432/settings
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - ..:/workspace
+      - settings_node_modules:/workspace/node_modules
+      - settings_nx:/workspace/.nx
+    ports:
+      - '${SETTINGS_PORT:-3012}:3002'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sanad-dev-net
+
+  media-service:
+    build:
+      context: ..
+      dockerfile: infra/docker/media-service.dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      NX_DAEMON: 'false'
+      PORT: 3003
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sanad}:${POSTGRES_PASSWORD:-sanad}@postgres:5432/media
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
+      # Cloudflare R2 (S3-compatible). OPTIONAL — the service boots without them and
+      # uploads 503 until set. Real values live in gitignored infra/.env.development
+      # (the integration-secrets vault replaces this env source later — see PROGRESS).
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      R2_BUCKET: ${R2_BUCKET:-}
+      R2_ENDPOINT: ${R2_ENDPOINT:-}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
+    volumes:
+      - ..:/workspace
+      - media_node_modules:/workspace/node_modules
+      - media_nx:/workspace/.nx
+    ports:
+      - '${MEDIA_PORT:-3013}:3003'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sanad-dev-net
+
+  content-service:
+    build:
+      context: ..
+      dockerfile: infra/docker/content-service.dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      NX_DAEMON: 'false'
+      PORT: 3004
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sanad}:${POSTGRES_PASSWORD:-sanad}@postgres:5432/content
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
+    volumes:
+      - ..:/workspace
+      - content_node_modules:/workspace/node_modules
+      - content_nx:/workspace/.nx
+    ports:
+      - '${CONTENT_PORT:-3014}:3004'
+    depends_on:
+      postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -112,3 +258,13 @@ volumes:
   redisdata:
   rabbitmqdata:
   gateway_node_modules:
+  identity_node_modules:
+  settings_node_modules:
+  media_node_modules:
+  content_node_modules:
+  # Per-container Nx state (masks the bind-mounted .nx so nx processes don't share state).
+  gateway_nx:
+  identity_nx:
+  settings_nx:
+  media_nx:
+  content_nx:

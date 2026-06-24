@@ -9,6 +9,12 @@ export const identityContextSchema = z
   .object({
     userId: z.string().min(1),
     roles: z.array(roleSchema).min(1),
+    /**
+     * Resolved permission keys (`<resource>.<action>`, plus `manage` wildcards).
+     * Defaults to empty so older callers/tokens without the claim still parse;
+     * authorization then simply denies (fail-closed).
+     */
+    permissions: z.array(z.string()).default([]),
     email: z.string().email().optional(),
   })
   .strict();

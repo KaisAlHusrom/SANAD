@@ -1,0 +1,2020 @@
+{
+  "info": {
+    "name": "Sanad Tech API",
+    "_postman_id": "5a4d0001-0000-4000-8000-sanadtech0001",
+    "description": "# سند التقنية — Sanad Tech API\n\nThe **single, fully-documented map of every endpoint** behind the API gateway. A frontend developer should be able to integrate against this collection without reading the backend code. Kept in sync with the code by rule **DOC2** — every endpoint added or changed updates this collection in the same change.\n\n## Global conventions\n\n- **Gateway is the only public entry (MS4).** Every route lives under the `api` prefix. Default `{{baseUrl}}` = `http://localhost:8190/api` (the dev stack through nginx — `NGINX_PORT` def `8190`).\n- **Response envelope (N9).** Every HTTP response is wrapped:\n  `{ \"success\": boolean, \"message\": string, \"data\": <payload>, \"path\": string, \"timestamp\": ISO }`.\n  Read the real payload from `data`. Errors set `success:false`, `data:null`, and an HTTP error status.\n- **Auth.** RS256 bearer access token in `Authorization: Bearer {{accessToken}}` (collection default). Public routes override to *no auth*. The token is short-lived (~15 min); refresh rotates it. Authorization is enforced at the gateway edge against the token's `permissions` claim (`<resource>.<action>`; the global `manage` wildcard covers everything).\n- **Locales.** Arabic is the default (RTL); English is secondary. Translatable values are `{ \"ar\": string, \"en\": string }`.\n- **Validation.** Request bodies are `.strict()` Zod schemas — unknown fields are rejected (HTTP 400).\n- **Run order.** Call **Auth → Login** first (it captures `{{accessToken}}`/`{{refreshToken}}`/`{{userId}}` automatically), then any guarded request.\n- **Seed admin (dev):** `admin@sanad.tech` / `change-me-admin`.\n\n## Folders\n- **Health** — gateway liveness.\n- **Auth** — login / refresh / logout / me.\n- **Identity** — user management (RBAC-guarded).\n- **Branding** — public branding read + admin write (settings-service).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8190/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mediaAssetId",
+      "value": ""
+    },
+    {
+      "key": "mediaUploadUrl",
+      "value": ""
+    },
+    {
+      "key": "contentPageId",
+      "value": ""
+    },
+    {
+      "key": "contentSectionId",
+      "value": ""
+    },
+    {
+      "key": "contentBlockId",
+      "value": ""
+    },
+    {
+      "key": "contentServiceId",
+      "value": ""
+    },
+    {
+      "key": "contentBlogCategoryId",
+      "value": ""
+    },
+    {
+      "key": "contentBlogTagId",
+      "value": ""
+    },
+    {
+      "key": "contentBlogPostId",
+      "value": ""
+    },
+    {
+      "key": "leadId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Gateway liveness/readiness (terminus). Public.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "**Purpose:** confirm the gateway is up.\n\n**Auth:** public.\n\n**Returns** `data`: `{ status: 'ok', uptime, ... }` (envelope-wrapped, N9)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "description": "Email/password login, token refresh (rotated), logout, and the current-user probe. **Start here** — Login captures the tokens.",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@sanad.tech\",\n  \"password\": \"change-me-admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "**Purpose:** exchange email + password for an access/refresh token pair + the authenticated user.\n\n**Auth:** public.\n\n**Body** (required, `.strict()`):\n\n| field | type | rules |\n|---|---|---|\n| `email` | string | valid email |\n| `password` | string | non-empty |\n\n**Returns** `data`:\n- `tokens`: `{ access, refresh }` (RS256 JWTs; access ~15 min)\n- `user`: `{ id, email, name, roles: string[], isActive }`\n\n_The test script stores `access`→`{{accessToken}}`, `refresh`→`{{refreshToken}}`, `user.id`→`{{userId}}`._"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const data = body.data || {};",
+                  "if (data.tokens) {",
+                  "  pm.collectionVariables.set('accessToken', data.tokens.access);",
+                  "  pm.collectionVariables.set('refreshToken', data.tokens.refresh);",
+                  "}",
+                  "if (data.user) { pm.collectionVariables.set('userId', data.user.id); }",
+                  "pm.test('login ok', () => pm.expect(body.success).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "**Purpose:** rotate the token pair using a valid refresh token. The old refresh token is revoked (single-use).\n\n**Auth:** public (the refresh token IS the credential).\n\n**Body:** `{ refresh: string }` (`.strict()`).\n\n**Returns** `data`: `{ access, refresh }` — a NEW pair. Reusing an old refresh token → 401."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const data = body.data || {};",
+                  "if (data.access) pm.collectionVariables.set('accessToken', data.access);",
+                  "if (data.refresh) pm.collectionVariables.set('refreshToken', data.refresh);",
+                  "pm.test('refresh ok', () => pm.expect(body.success).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "**Purpose:** revoke a refresh token. Idempotent — a malformed/expired token is a no-op, not an error.\n\n**Auth:** public.\n\n**Body:** `{ refresh: string }`.\n\n**Returns** `data`: `{ revoked: boolean }`."
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "**Purpose:** return the identity encoded in the current access token (the sample authenticated route).\n\n**Auth:** bearer (`{{accessToken}}`).\n\n**Returns** `data`: `{ userId, roles: string[], permissions: string[], email? }`. Admin carries `permissions:['manage']`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Identity",
+      "description": "User management owned by the identity-service. RBAC-guarded at the gateway edge (MS4).",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/identity/users?page=1&pageSize=20&search=&sort=createdAt&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["identity", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "**Purpose:** paginated, searchable list of users.\n\n**Auth:** bearer + permission `identity.users.read` (admin `manage` covers it). Missing → 403; no token → 401.\n\n**Query** (all optional): `page` (≥1), `pageSize` (1–100), `search` (email/name ilike), `sort` (`email|name|createdAt`), `order` (`asc|desc`).\n\n**Returns** `data`: `{ items: Array<{ id, email, name, roles: string[], isActive }>, meta: { total, page, pageSize, ... } }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Branding",
+      "description": "Visual-identity branding resolved by the settings-service (override → global → coded default, U9). The website reads it unauthenticated; admins write it.",
+      "item": [
+        {
+          "name": "Get branding",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/branding",
+              "host": ["{{baseUrl}}"],
+              "path": ["branding"]
+            },
+            "description": "**Purpose:** the fully-resolved branding record for the website/admin. **Always complete** — unset leaves fall back to coded defaults (F7), so it never renders blank.\n\n**Auth:** **public**.\n\n**Returns** `data`: `BrandingRecord` —\n- `brand`: `{ name, tagline, shortDesc }` (each `{ar,en}`)\n- `logoUrl`, `faviconUrl`: `string|null`\n- `colors`: `{ primary, secondary, pageAccents{landing,about,services,serviceDetail}, surface{bg,track,s1,s2}, text{base,dim,muted,faint} }`\n- `fonts`: `{ sans, mono }`\n- `social`: `{ twitter,linkedin,instagram,github,youtube }` (each `string|null`)\n- `contact`: `{ email, phone: string|null, address: {ar,en}|null }`"
+          },
+          "response": []
+        },
+        {
+          "name": "Update branding",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brand\": {\n    \"name\": {\n      \"ar\": \"سَنَد التقنية\",\n      \"en\": \"Sanad Tech\"\n    }\n  },\n  \"colors\": {\n    \"primary\": \"#22d3ee\"\n  },\n  \"social\": {\n    \"twitter\": \"https://x.com/sanad\",\n    \"linkedin\": null\n  },\n  \"contact\": {\n    \"email\": \"hello@sanad.tech\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/branding",
+              "host": ["{{baseUrl}}"],
+              "path": ["branding"]
+            },
+            "description": "**Purpose:** apply a **deep-partial** branding update. Only the leaves you send change; everything else keeps its global/default value. Emits `settings.changed` and busts the cache.\n\n**Auth:** bearer + permission `settings.manage` (admin `manage` covers it). Missing → 403.\n\n**Body:** a deep-partial of `BrandingRecord` (`.strict()`). Colors must be hex (`#abc`/`#aabbcc`); social/contact URLs validated; localized leaves are `{ar,en}`; nullable leaves accept `null` to clear.\n\n**Returns** `data`: the re-resolved `BrandingRecord`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "description": "Image/file storage on Cloudflare R2 via the media-service (P4). Signed-upload flow: ask for a presigned URL, PUT the bytes **directly to R2** (not through the gateway), then confirm. All routes require auth; reads need `media.read`, mutations `media.manage` (admin `manage` covers both).",
+      "item": [
+        {
+          "name": "Sign upload",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json().data;",
+                  "if (data && data.asset) {",
+                  "  pm.collectionVariables.set('mediaAssetId', data.asset.id);",
+                  "  pm.collectionVariables.set('mediaUploadUrl', data.upload.url);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filename\": \"brand-logo.png\",\n  \"contentType\": \"image/png\",\n  \"size\": 12345,\n  \"alt\": {\n    \"ar\": \"شعار سند\",\n    \"en\": \"Sanad logo\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/uploads",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "uploads"]
+            },
+            "description": "**Purpose:** validate + create a `pending` asset and mint a presigned **PUT** URL.\n\n**Auth:** bearer + `media.manage`.\n\n**Body** (`.strict()`): `filename`, `contentType` (must be in the allowlist: png/jpeg/webp/gif/svg/pdf), `size` (≤ `MEDIA_MAX_UPLOAD_BYTES`), optional `folderId`, optional `alt {ar,en}`.\n\n**Returns** `data`: `{ asset: MediaAsset (status 'pending'), upload: { url, method:'PUT', headers, expiresAt } }`. The test script captures `mediaAssetId` + `mediaUploadUrl`.\n\n**Next:** PUT the bytes to `{{mediaUploadUrl}}` (directly to R2, outside this collection), then **Confirm upload**."
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"width\": 800,\n  \"height\": 600,\n  \"alt\": {\n    \"ar\": \"شعار سند\",\n    \"en\": \"Sanad logo\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/uploads/{{mediaAssetId}}/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "uploads", "{{mediaAssetId}}", "confirm"]
+            },
+            "description": "**Purpose:** mark the asset `ready` after the direct-to-R2 PUT; capture dimensions and finalize `alt`. Best-effort HEADs the object to record the real size.\n\n**Auth:** bearer + `media.manage`.\n\n**Path:** `:id` = the asset id (`{{mediaAssetId}}`).\n\n**Body** (`.strict()`): optional `width`, `height`, `alt {ar,en}`.\n\n**Returns** `data`: `MediaAsset` (status `'ready'`, with the resolved CDN `url`)."
+          },
+          "response": []
+        },
+        {
+          "name": "List media",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/media?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["media"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "**Purpose:** a paginated, searchable, filterable page of assets.\n\n**Auth:** bearer + `media.read`.\n\n**Query** (`.strict()`): `page`, `pageSize` (≤100), `search` (filename), `sort`, `order` (asc/desc), `folderId`, `type` (MIME contains, e.g. `image`).\n\n**Returns** `data`: `{ items: MediaAsset[], meta: { page,pageSize,total,totalPages } }`. Each item carries its resolved CDN `url` and `alt {ar,en}`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get media asset",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/media/{{mediaAssetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "{{mediaAssetId}}"]
+            },
+            "description": "**Purpose:** a single asset by id.\n\n**Auth:** bearer + `media.read`.\n\n**Path:** `:id` (`{{mediaAssetId}}`).\n\n**Returns** `data`: `MediaAsset`. 404 if not found."
+          },
+          "response": []
+        },
+        {
+          "name": "Create folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Brand\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/media/folders",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "folders"]
+            },
+            "description": "**Purpose:** create a media folder.\n\n**Auth:** bearer + `media.manage`.\n\n**Body** (`.strict()`): `name`, optional `parentId`.\n\n**Returns** `data`: `MediaFolder`."
+          },
+          "response": []
+        },
+        {
+          "name": "List folders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/media/folders",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "folders"]
+            },
+            "description": "**Purpose:** list media folders (flat in the MVP).\n\n**Auth:** bearer + `media.read`.\n\n**Query** (`.strict()`): optional `parentId`.\n\n**Returns** `data`: `MediaFolder[]`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete media asset",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/media/{{mediaAssetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "{{mediaAssetId}}"]
+            },
+            "description": "**Purpose:** soft-delete an asset; emits `media.deleted` (Outbox, MS3) and best-effort removes the R2 object.\n\n**Auth:** bearer + `media.manage`.\n\n**Path:** `:id` (`{{mediaAssetId}}`).\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Content",
+      "description": "The CMS surface (P5): the Page→Section→Block tree + the services collection. **Public** reads (the website renders them unauthenticated, never blank — coded defaults are seeded) and **guarded** admin writes (`content.read` to list, `content.manage` to write). Request/response shapes mirror `@sanad/contracts` content domain; bodies are `.strict()` (unknown keys 400). Translatable copy is sent + returned in BOTH locales `{ar,en}`.",
+      "item": [
+        {
+          "name": "Get page tree (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/pages/landing",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "pages", "landing"]
+            },
+            "description": "**Purpose:** the assembled, published Page→Section→Block tree the website renders (WEB2).\n\n**Auth:** none (public).\n\n**Returns** `data`: `PageTree` — `{ id, slug, status, title{ar,en}, metaTitle, metaDescription, sections: [{ type, eyebrow, title, subtitle, blocks: [{ type, data, imageMediaId, title, body }] }] }`. 404 if no published page matches the slug."
+          },
+          "response": []
+        },
+        {
+          "name": "List pages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "pages"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "**Purpose:** the admin page list (P7).\n\n**Auth:** bearer + `content.read`.\n\n**Returns** `data`: `Paginated<PageSummary>`."
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert page",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentPageId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"landing\",\n  \"status\": \"published\",\n  \"sortOrder\": 0,\n  \"title\": {\n    \"ar\": \"الصفحة الرئيسية\",\n    \"en\": \"Home\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/pages",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "pages"]
+            },
+            "description": "**Purpose:** create or update a page meta + both-locale copy. `id` present → update; absent → create (keyed on unique `slug`).\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug`, `status` (`draft`/`published`), `sortOrder`, `title{ar,en}` (required), optional `metaTitle`/`metaDescription`.\n\n**Returns** `data`: `PageSummary`. Captures `contentPageId`. 409 on a duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert section",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentSectionId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pageId\": \"{{contentPageId}}\",\n  \"type\": \"stats\",\n  \"sortOrder\": 0,\n  \"published\": true,\n  \"eyebrow\": {\n    \"ar\": \"أرقام\",\n    \"en\": \"Numbers\"\n  },\n  \"title\": {\n    \"ar\": \"أرقامٌ تختصر رحلتنا\",\n    \"en\": \"The numbers behind the work\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/sections",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "sections"]
+            },
+            "description": "**Purpose:** create or update a section within a page. `id` present → update.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `pageId`, `type` (hero/trust/services/process/work/stats/testimonials/blog/cta/richtext), `sortOrder`, `published`, optional `eyebrow`/`title`/`subtitle` `{ar,en}`.\n\n**Returns** `data`: `SectionNode` (with its blocks). Captures `contentSectionId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert block",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentBlockId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sectionId\": \"{{contentSectionId}}\",\n  \"type\": \"stat\",\n  \"sortOrder\": 0,\n  \"data\": {\n    \"value\": 120,\n    \"suffix\": \"+\"\n  },\n  \"title\": {\n    \"ar\": \"مشروعًا سُلّم\",\n    \"en\": \"Projects delivered\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/blocks",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blocks"]
+            },
+            "description": "**Purpose:** create or update a block within a section. `id` present → update.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `sectionId`, `type` (text/richtext/stat/step/feature/image/cta), `sortOrder`, `data` (non-translatable jsonb: stat values in Western digits, icon keys, urls), optional `imageMediaId` (soft media ref), optional `title`/`body` `{ar,en}`.\n\n**Returns** `data`: `BlockNode`. Captures `contentBlockId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete block",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blocks/{{contentBlockId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blocks", "{{contentBlockId}}"]
+            },
+            "description": "**Purpose:** soft-delete a block.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        },
+        {
+          "name": "List services (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "services"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "core",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Purpose:** the services grid (public website).\n\n**Auth:** none (public).\n\n**Query** (`.strict()`): standard list (`page`/`pageSize`/`search`/`sort`/`order`) + whitelisted `category` (`core`/`support`). `search` matches the translatable title/summary in either locale.\n\n**Returns** `data`: `Paginated<ServiceItem>` (each with `title`/`summary`/`detailBody` `{ar,en}`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get service (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/services/saas",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "services", "saas"]
+            },
+            "description": "**Purpose:** a service detail page by slug (public).\n\n**Auth:** none (public).\n\n**Returns** `data`: `ServiceItem`. 404 if absent."
+          },
+          "response": []
+        },
+        {
+          "name": "Create service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentServiceId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"saas\",\n  \"category\": \"core\",\n  \"iconKey\": \"cloud\",\n  \"sortOrder\": 0,\n  \"title\": {\n    \"ar\": \"منصّات SaaS\",\n    \"en\": \"SaaS platforms\"\n  },\n  \"summary\": {\n    \"ar\": \"منتجاتٌ سحابية\",\n    \"en\": \"Cloud products\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "services"]
+            },
+            "description": "**Purpose:** create a service + both-locale copy.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug`, `category`, optional `iconKey`/`coverMediaId`, `sortOrder`, `title{ar,en}` (required), optional `summary`/`detailBody`.\n\n**Returns** `data`: `ServiceItem`. Captures `contentServiceId`. 409 on duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update service",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sortOrder\": 1,\n  \"summary\": {\n    \"ar\": \"منتجاتٌ سحابية متعددة المستأجرين\",\n    \"en\": \"Multi-tenant cloud products\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/services/{{contentServiceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "services", "{{contentServiceId}}"]
+            },
+            "description": "**Purpose:** update a service (partial). Only provided fields change; translatable fields carry both locales.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `ServiceItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/services/{{contentServiceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "services", "{{contentServiceId}}"]
+            },
+            "description": "**Purpose:** soft-delete a service.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Testimonials",
+      "description": "The client testimonials collection (P5). **Public** list (the website social-proof section) + **guarded** admin writes (`content.manage`). No detail-by-slug route — testimonials are listed. Translatable `quote`/`authorRole`/`companyDescriptor` carry `{ar,en}`.",
+      "item": [
+        {
+          "name": "List testimonials (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/testimonials",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "testimonials"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "featured",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Purpose:** the testimonials section (public website).\n\n**Auth:** none (public).\n\n**Query** (`.strict()`): standard list + whitelisted `featured` (`true`/`false` — literal, never coerced, N7). `search` matches the translatable quote/role in either locale.\n\n**Returns** `data`: `Paginated<TestimonialItem>` (each with `quote`/`authorRole`/`companyDescriptor` `{ar,en}`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create testimonial",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentTestimonialId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authorName\": \"Layla Mansour\",\n  \"companyName\": \"Tadawul Pay\",\n  \"rating\": 5,\n  \"featured\": true,\n  \"sortOrder\": 0,\n  \"quote\": {\n    \"ar\": \"فريقٌ يُسنِدك بعد الإطلاق\",\n    \"en\": \"A team that backs you after launch\"\n  },\n  \"authorRole\": {\n    \"ar\": \"الرئيسة التنفيذية\",\n    \"en\": \"Chief Executive Officer\"\n  },\n  \"companyDescriptor\": {\n    \"ar\": \"منصّة مدفوعات\",\n    \"en\": \"Payments platform\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/testimonials",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "testimonials"]
+            },
+            "description": "**Purpose:** create a testimonial + both-locale copy.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `authorName` (required proper noun), optional `companyName`/`avatarMediaId`/`rating` (1–5), `featured`, `sortOrder`, `quote{ar,en}` (required), optional `authorRole`/`companyDescriptor`.\n\n**Returns** `data`: `TestimonialItem`. Captures `contentTestimonialId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Update testimonial",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"featured\": false,\n  \"quote\": {\n    \"ar\": \"كل وعدٍ تحقّق، وكل مرحلة كانت واضحة\",\n    \"en\": \"Every promise kept, every phase clear\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/testimonials/{{contentTestimonialId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "testimonials", "{{contentTestimonialId}}"]
+            },
+            "description": "**Purpose:** update a testimonial (partial). Only provided fields change; translatable fields carry both locales.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `TestimonialItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete testimonial",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/testimonials/{{contentTestimonialId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "testimonials", "{{contentTestimonialId}}"]
+            },
+            "description": "**Purpose:** soft-delete a testimonial.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Team",
+      "description": "The team-members collection (P5 — the About page). **Public** list + detail-by-slug + **guarded** admin writes (`content.manage`). Translatable `name`/`role`/`bio` carry `{ar,en}`.",
+      "item": [
+        {
+          "name": "List team (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/team",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "team"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "featured",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Purpose:** the team grid (public website About page).\n\n**Auth:** none (public).\n\n**Query** (`.strict()`): standard list + whitelisted `featured` (`true`/`false` — literal, never coerced, N7). `search` matches the translatable name/role in either locale.\n\n**Returns** `data`: `Paginated<TeamMemberItem>` (each with `name`/`role`/`bio` `{ar,en}`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get team member (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/team/samer-al-hasan",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "team", "samer-al-hasan"]
+            },
+            "description": "**Purpose:** a team member by slug (public).\n\n**Auth:** none (public).\n\n**Returns** `data`: `TeamMemberItem`. 404 if absent."
+          },
+          "response": []
+        },
+        {
+          "name": "Create team member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentTeamMemberId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"sara-noor\",\n  \"featured\": true,\n  \"sortOrder\": 0,\n  \"linkedinUrl\": \"https://linkedin.com/in/sara\",\n  \"name\": {\n    \"ar\": \"سارة نور\",\n    \"en\": \"Sara Noor\"\n  },\n  \"role\": {\n    \"ar\": \"مديرة المنتج\",\n    \"en\": \"Head of Product\"\n  },\n  \"bio\": {\n    \"ar\": \"تترجم أهداف العميل إلى مسارٍ واضح من المراحل.\",\n    \"en\": \"Turns client goals into a clear path of phases.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/team",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "team"]
+            },
+            "description": "**Purpose:** create a team member + both-locale copy.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug` (unique), optional `avatarMediaId`/`email`/`linkedinUrl`/`githubUrl`, `featured`, `sortOrder`, `name{ar,en}` + `role{ar,en}` (required), optional `bio`.\n\n**Returns** `data`: `TeamMemberItem`. Captures `contentTeamMemberId`. 409 on duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update team member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sortOrder\": 1,\n  \"role\": {\n    \"ar\": \"قائدة المنتج\",\n    \"en\": \"Head of Product\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/team/{{contentTeamMemberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "team", "{{contentTeamMemberId}}"]
+            },
+            "description": "**Purpose:** update a team member (partial). Only provided fields change; translatable fields carry both locales.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `TeamMemberItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete team member",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/team/{{contentTeamMemberId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "team", "{{contentTeamMemberId}}"]
+            },
+            "description": "**Purpose:** soft-delete a team member.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Portfolio",
+      "description": "The portfolio / case-studies collection (P5). **Public** category list + project grid (published only) + project detail-by-slug (published only); guarded `content.read` **manage** list (sees drafts); guarded `content.manage` writes. Projects embed their category on read (`{id,slug,name{ar,en}}`) and take `categoryId` on write. `status` gates visibility (drafts never leak — N7); `publishedAt` is server-stamped on first publish.",
+      "item": [
+        {
+          "name": "List portfolio categories (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio-categories"]
+            },
+            "description": "**Purpose:** the work-grid category filter (public).\n\n**Auth:** none.\n\n**Returns** `data`: `Paginated<PortfolioCategoryItem>` (each with `name{ar,en}`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create portfolio category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentPortfolioCategoryId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"payments\",\n  \"sortOrder\": 0,\n  \"name\": {\n    \"ar\": \"المدفوعات\",\n    \"en\": \"Payments\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio-categories"]
+            },
+            "description": "**Purpose:** create a portfolio category.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug` (unique), `sortOrder`, `name{ar,en}`.\n\n**Returns** `data`: `PortfolioCategoryItem`. Captures `contentPortfolioCategoryId`. 409 on duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update portfolio category",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": {\n    \"ar\": \"المدفوعات الرقمية\",\n    \"en\": \"Digital payments\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio-categories/{{contentPortfolioCategoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "content",
+                "portfolio-categories",
+                "{{contentPortfolioCategoryId}}"
+              ]
+            },
+            "description": "**Purpose:** update a portfolio category (partial).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `PortfolioCategoryItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete portfolio category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio-categories/{{contentPortfolioCategoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "content",
+                "portfolio-categories",
+                "{{contentPortfolioCategoryId}}"
+              ]
+            },
+            "description": "**Purpose:** soft-delete a portfolio category (projects' `category_id` → null).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        },
+        {
+          "name": "List portfolio projects (public, published)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                {
+                  "key": "categoryId",
+                  "value": "{{contentPortfolioCategoryId}}",
+                  "disabled": true
+                },
+                { "key": "featured", "value": "true", "disabled": true },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            },
+            "description": "**Purpose:** the public work grid. The gateway FORCES `status=published` — a client can never see drafts (N7).\n\n**Auth:** none.\n\n**Query** (`.strict()`): standard list + whitelisted `categoryId`/`featured`. `search` matches the translatable title/summary in either locale.\n\n**Returns** `data`: `Paginated<PortfolioProjectItem>` (category embedded)."
+          },
+          "response": []
+        },
+        {
+          "name": "List portfolio projects (admin, drafts incl.)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio/manage",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio", "manage"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "status", "value": "draft", "disabled": true }
+              ]
+            },
+            "description": "**Purpose:** the admin project list — sees drafts. Honors the supplied `status` (or omit to see all).\n\n**Auth:** bearer + `content.read`.\n\n**Returns** `data`: `Paginated<PortfolioProjectItem>`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get portfolio project (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio/tadawul-pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio", "tadawul-pay"]
+            },
+            "description": "**Purpose:** a case-study detail by slug (public).\n\n**Auth:** none.\n\n**Returns** `data`: `PortfolioProjectItem` (category embedded). 404 if absent OR a draft (drafts never leak)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create portfolio project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentPortfolioId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"tadawul-pay\",\n  \"categoryId\": \"{{contentPortfolioCategoryId}}\",\n  \"clientName\": \"Tadawul Pay\",\n  \"status\": \"draft\",\n  \"featured\": true,\n  \"sortOrder\": 0,\n  \"title\": { \"ar\": \"تداول باي\", \"en\": \"Tadawul Pay\" },\n  \"summary\": { \"ar\": \"منصّة مدفوعات\", \"en\": \"A payments platform\" },\n  \"challenge\": { \"ar\": \"التحدي\", \"en\": \"The challenge\" },\n  \"solution\": { \"ar\": \"الحل\", \"en\": \"The solution\" },\n  \"result\": { \"ar\": \"النتيجة\", \"en\": \"The result\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio"]
+            },
+            "description": "**Purpose:** create a case study + both-locale copy.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug` (unique), optional `categoryId`/`coverMediaId`/`clientName`/`projectUrl`, `status` (default `draft`), `featured`, `sortOrder`, `title{ar,en}` (required), optional `summary`/`challenge`/`solution`/`result`. `publishedAt` is server-managed (never sent).\n\n**Returns** `data`: `PortfolioProjectItem`. Captures `contentPortfolioId`. 409 on duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update / publish portfolio project",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"published\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio/{{contentPortfolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio", "{{contentPortfolioId}}"]
+            },
+            "description": "**Purpose:** update a project (partial). Setting `status=published` the first time stamps `publishedAt` server-side.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `PortfolioProjectItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete portfolio project",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/portfolio/{{contentPortfolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "portfolio", "{{contentPortfolioId}}"]
+            },
+            "description": "**Purpose:** soft-delete a case study.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Blog",
+      "description": "The blog collection (P5). Translatable **categories** + **tags** (lookups) + **posts** (articles). **Public** category/tag lists, post grid (published only) + post detail-by-slug (published only); guarded `content.read` **manage** list (sees drafts); guarded `content.manage` writes. Posts embed `category`/`author`/`tags` on read (`{id,slug,name{ar,en}}`) and take `categoryId`/`authorTeamMemberId`/`tagIds` on write (`tagIds` is the M2M set; sending it on update REPLACES the set). `status` gates visibility (drafts never leak — N7); `publishedAt` is server-stamped on first publish.",
+      "item": [
+        {
+          "name": "List blog categories (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog-categories"]
+            },
+            "description": "**Purpose:** the blog category filter (public).\n\n**Auth:** none.\n\n**Returns** `data`: `Paginated<BlogCategoryItem>` (each with `name{ar,en}`, `description{ar,en}`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create blog category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentBlogCategoryId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"engineering\",\n  \"sortOrder\": 0,\n  \"name\": { \"ar\": \"الهندسة\", \"en\": \"Engineering\" },\n  \"description\": { \"ar\": \"كيف نبني\", \"en\": \"How we build\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog-categories"]
+            },
+            "description": "**Purpose:** create a blog category.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug` (unique), `sortOrder`, `name{ar,en}` (required), optional `description{ar,en}`.\n\n**Returns** `data`: `BlogCategoryItem`. Captures `contentBlogCategoryId`. 409 on duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update blog category",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": { \"ar\": \"الهندسة والمعمارية\", \"en\": \"Engineering & Architecture\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-categories/{{contentBlogCategoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "content",
+                "blog-categories",
+                "{{contentBlogCategoryId}}"
+              ]
+            },
+            "description": "**Purpose:** update a blog category (partial).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `BlogCategoryItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete blog category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-categories/{{contentBlogCategoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "content",
+                "blog-categories",
+                "{{contentBlogCategoryId}}"
+              ]
+            },
+            "description": "**Purpose:** soft-delete a blog category (posts' `category_id` → null).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        },
+        {
+          "name": "List blog tags (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog-tags"]
+            },
+            "description": "**Purpose:** the blog topic chips (public).\n\n**Auth:** none.\n\n**Returns** `data`: `Paginated<BlogTagItem>` (each with `name{ar,en}`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create blog tag",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentBlogTagId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"microservices\",\n  \"sortOrder\": 0,\n  \"name\": { \"ar\": \"الخدمات المصغّرة\", \"en\": \"Microservices\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog-tags"]
+            },
+            "description": "**Purpose:** create a blog tag.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug` (unique), `sortOrder`, `name{ar,en}` (required).\n\n**Returns** `data`: `BlogTagItem`. Captures `contentBlogTagId`. 409 on duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update blog tag",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": { \"ar\": \"معمارية الخدمات\", \"en\": \"Service architecture\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-tags/{{contentBlogTagId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog-tags", "{{contentBlogTagId}}"]
+            },
+            "description": "**Purpose:** update a blog tag (partial).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `BlogTagItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete blog tag",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog-tags/{{contentBlogTagId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog-tags", "{{contentBlogTagId}}"]
+            },
+            "description": "**Purpose:** soft-delete a blog tag (its M2M links cascade away).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        },
+        {
+          "name": "List blog posts (public, published)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                {
+                  "key": "categoryId",
+                  "value": "{{contentBlogCategoryId}}",
+                  "disabled": true
+                },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            },
+            "description": "**Purpose:** the public blog index. The gateway FORCES `status=published` — a client can never see drafts (N7).\n\n**Auth:** none.\n\n**Query** (`.strict()`): standard list + whitelisted `categoryId`. `search` matches the translatable title/excerpt in either locale.\n\n**Returns** `data`: `Paginated<BlogPostItem>` (category+author+tags embedded)."
+          },
+          "response": []
+        },
+        {
+          "name": "List blog posts (admin, drafts incl.)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog/manage",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog", "manage"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" },
+                { "key": "status", "value": "draft", "disabled": true }
+              ]
+            },
+            "description": "**Purpose:** the admin post list — sees drafts. Honors the supplied `status` (or omit to see all).\n\n**Auth:** bearer + `content.read`.\n\n**Returns** `data`: `Paginated<BlogPostItem>`."
+          },
+          "response": []
+        },
+        {
+          "name": "Get blog post (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog/building-phase-by-phase",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog", "building-phase-by-phase"]
+            },
+            "description": "**Purpose:** an article detail by slug (public).\n\n**Auth:** none.\n\n**Returns** `data`: `BlogPostItem` (category+author+tags embedded). 404 if absent OR a draft (drafts never leak)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create blog post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentBlogPostId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"building-phase-by-phase\",\n  \"categoryId\": \"{{contentBlogCategoryId}}\",\n  \"authorTeamMemberId\": null,\n  \"status\": \"draft\",\n  \"readMinutes\": 6,\n  \"sortOrder\": 0,\n  \"tagIds\": [\"{{contentBlogTagId}}\"],\n  \"title\": { \"ar\": \"لماذا نبني مرحلةً تلو الأخرى\", \"en\": \"Why we build phase by phase\" },\n  \"excerpt\": { \"ar\": \"التسليم المرحلي\", \"en\": \"Phased delivery\" },\n  \"body\": { \"ar\": \"النص الكامل\", \"en\": \"The full body\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/blog",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog"]
+            },
+            "description": "**Purpose:** create an article + both-locale copy + its tag set.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `slug` (unique), optional `categoryId`/`authorTeamMemberId`/`coverMediaId`, `status` (default `draft`), `readMinutes`, `sortOrder`, `tagIds` (M2M, default `[]`), `title{ar,en}` (required), optional `excerpt`/`body`. `publishedAt` is server-managed (never sent).\n\n**Returns** `data`: `BlogPostItem`. Captures `contentBlogPostId`. 409 on duplicate slug."
+          },
+          "response": []
+        },
+        {
+          "name": "Update / publish blog post",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"published\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/blog/{{contentBlogPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog", "{{contentBlogPostId}}"]
+            },
+            "description": "**Purpose:** update a post (partial). Setting `status=published` the first time stamps `publishedAt` server-side. Sending `tagIds` REPLACES the tag set.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `BlogPostItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete blog post",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/blog/{{contentBlogPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "blog", "{{contentBlogPostId}}"]
+            },
+            "description": "**Purpose:** soft-delete an article.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FAQs",
+      "description": "The FAQ collection (P5). **Public** list (the website FAQ page) + **guarded** admin writes (`content.manage`). No detail-by-slug route. Translatable `question`/`answer` carry `{ar,en}`; optional `category` (`general`/`pricing`/`process`/`support`).",
+      "item": [
+        {
+          "name": "List FAQs (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/faqs",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "faqs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "process",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Purpose:** the FAQ page (public website).\n\n**Auth:** none (public).\n\n**Query** (`.strict()`): standard list + whitelisted `category` (`general`/`pricing`/`process`/`support`). `search` matches the translatable question/answer in either locale.\n\n**Returns** `data`: `Paginated<FaqItem>` (each with `question`/`answer` `{ar,en}`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create FAQ",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentFaqId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"process\",\n  \"sortOrder\": 0,\n  \"question\": {\n    \"ar\": \"كيف تسير آلية العمل؟\",\n    \"en\": \"How does your process work?\"\n  },\n  \"answer\": {\n    \"ar\": \"نعمل على مراحل واضحة ونلتقي أسبوعيًا قبل كل اعتماد.\",\n    \"en\": \"We work in clear phases and meet weekly before each approval.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/faqs",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "faqs"]
+            },
+            "description": "**Purpose:** create an FAQ + both-locale copy.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): optional `category`, `sortOrder`, `question{ar,en}` + `answer{ar,en}` (required).\n\n**Returns** `data`: `FaqItem`. Captures `contentFaqId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Update FAQ",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sortOrder\": 1,\n  \"answer\": {\n    \"ar\": \"نعمل على مراحل واضحة — اكتشاف، تصميم، تطوير، إطلاق.\",\n    \"en\": \"We work in clear phases — discovery, design, build, launch.\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/faqs/{{contentFaqId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "faqs", "{{contentFaqId}}"]
+            },
+            "description": "**Purpose:** update an FAQ (partial). Only provided fields change; translatable fields carry both locales.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `FaqItem`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete FAQ",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/faqs/{{contentFaqId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "faqs", "{{contentFaqId}}"]
+            },
+            "description": "**Purpose:** soft-delete an FAQ.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Menus",
+      "description": "Navigation menus (P5 — header/footer). The keyed tree read is **public**; the admin list is guarded `content.read`; every write (menu + items) is guarded `content.manage`. The menu itself is non-translatable; its items carry the `{ar,en}` labels. Items nest one level via `parentId`.",
+      "item": [
+        {
+          "name": "Get menu by key (public)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/menus/primary",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "menus", "primary"]
+            },
+            "description": "**Purpose:** the assembled menu the website renders by key (`primary`/`footer`).\n\n**Auth:** none (public).\n\n**Returns** `data`: `MenuTree` — `{ id, key, items: [{ id, url, icon, label{ar,en}, children: [...] }] }`, ordered by `sortOrder`. 404 if the keyed menu is absent."
+          },
+          "response": []
+        },
+        {
+          "name": "List menus",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/menus",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "menus"]
+            },
+            "description": "**Purpose:** the admin menu list (discover menu ids to manage their items).\n\n**Auth:** bearer + `content.read`.\n\n**Returns** `data`: `MenuSummary[]` (no items)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create menu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentMenuId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"footer\",\n  \"sortOrder\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/menus",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "menus"]
+            },
+            "description": "**Purpose:** create a keyed menu (mostly seeded; `primary`/`footer` exist by default).\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `key` (`primary`/`footer`), `sortOrder`.\n\n**Returns** `data`: `MenuSummary`. Captures `contentMenuId`. 409 if the key already exists."
+          },
+          "response": []
+        },
+        {
+          "name": "Create menu item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"contentMenuItemId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"menuId\": \"{{contentMenuId}}\",\n  \"url\": \"/services\",\n  \"sortOrder\": 0,\n  \"label\": {\n    \"ar\": \"خدماتنا\",\n    \"en\": \"Services\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/menu-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "menu-items"]
+            },
+            "description": "**Purpose:** add an item to a menu + both-locale label.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `menuId`, optional `parentId` (one nesting level), `url` (required), optional `icon`, `sortOrder`, `label{ar,en}` (required).\n\n**Returns** `data`: `MenuItemNode`. Captures `contentMenuItemId`."
+          },
+          "response": []
+        },
+        {
+          "name": "Update menu item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sortOrder\": 2,\n  \"label\": {\n    \"ar\": \"خدماتنا\",\n    \"en\": \"Our services\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/content/menu-items/{{contentMenuItemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "menu-items", "{{contentMenuItemId}}"]
+            },
+            "description": "**Purpose:** update a menu item (partial). Only provided fields change; `label` carries both locales.\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `MenuItemNode`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete menu item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/menu-items/{{contentMenuItemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "menu-items", "{{contentMenuItemId}}"]
+            },
+            "description": "**Purpose:** soft-delete a menu item (its children cascade).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete menu",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/content/menus/{{contentMenuId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["content", "menus", "{{contentMenuId}}"]
+            },
+            "description": "**Purpose:** soft-delete a menu (its items cascade).\n\n**Auth:** bearer + `content.manage`.\n\n**Returns** `data`: `{ id }`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "description": "The website contact / request-a-project capture (P5). `POST /leads` is **public** — it persists a lead and emits `lead.created` (Outbox, MS3) for the notifications service. The inbox (list + status) is **guarded** by `content.manage`.",
+      "item": [
+        {
+          "name": "Submit lead (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d = pm.response.json().data;",
+                  "if (d && d.id) pm.collectionVariables.set(\"leadId\", d.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Layla\",\n  \"email\": \"layla@example.com\",\n  \"company\": \"Acme\",\n  \"budget\": \"10k-25k\",\n  \"projectType\": \"SaaS\",\n  \"message\": \"We need a multi-tenant LMS.\",\n  \"source\": \"contact\",\n  \"locale\": \"ar\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leads",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads"]
+            },
+            "description": "**Purpose:** submit a contact / request-a-project lead.\n\n**Auth:** none (public).\n\n**Body** (`.strict()`): `name`, `email`, optional `company`/`budget`/`projectType`, `message`, `source` (`contact`/`request-project`, default `contact`), `locale` (default `ar`).\n\n**Returns** `data`: `{ id }` (never echoes the row). Emits `lead.created`. Captures `leadId`."
+          },
+          "response": []
+        },
+        {
+          "name": "List leads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "new",
+                  "disabled": true
+                },
+                {
+                  "key": "source",
+                  "value": "contact",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Purpose:** the admin leads inbox.\n\n**Auth:** bearer + `content.manage`.\n\n**Query** (`.strict()`): standard list + whitelisted `status` (`new`/`contacted`/`archived`) + `source`. `search` matches name/email/company.\n\n**Returns** `data`: `Paginated<Lead>`."
+          },
+          "response": []
+        },
+        {
+          "name": "Update lead status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"contacted\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}"]
+            },
+            "description": "**Purpose:** transition a lead in the inbox.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `status` (`new`/`contacted`/`archived`).\n\n**Returns** `data`: `Lead`."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

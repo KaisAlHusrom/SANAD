@@ -102,6 +102,41 @@ export default [
       '**/*.mjs',
     ],
     // Override or add rules here
-    rules: {},
+    rules: {
+      // `_`-prefixed args are intentional unused params (e.g. override-hook seams in
+      // the base repository); ignore them by the conventional naming.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrors: 'none',
+        },
+      ],
+    },
+  },
+  {
+    // N14 — application services NEVER reach the database directly. The `DRIZZLE` handle
+    // is injected ONLY into repositories (N1) + infrastructure (outbox relay / seed),
+    // never the application layer. A service depends on repositories; for an atomic
+    // multi-write (business row + Outbox, MS3) it injects a TransactionRunner port and
+    // passes the `tx` to repos — never the raw db. (outbox/ and seed/ are not application/,
+    // so they are correctly out of scope.)
+    files: ['**/application/**/*.service.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@sanad/database',
+              importNames: ['DRIZZLE'],
+              message:
+                'N14: application services must not inject the DB handle. Depend on a repository (N1); for an atomic multi-write inject a TransactionRunner port, not DRIZZLE.',
+            },
+          ],
+        },
+      ],
+    },
   },
 ];

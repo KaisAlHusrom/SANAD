@@ -1,0 +1,37 @@
+// Content service DB schema — the Page→Section→Block tree, services, leads, idempotency
+// ledger (+ Outbox). Barrel (U10).
+export * from './enums.js';
+export * from './page.table.js';
+export * from './page-translation.table.js';
+export * from './section.table.js';
+export * from './section-translation.table.js';
+export * from './block.table.js';
+export * from './block-translation.table.js';
+export * from './service.table.js';
+export * from './service-translation.table.js';
+export * from './testimonial.table.js';
+export * from './testimonial-translation.table.js';
+export * from './team-member.table.js';
+export * from './team-member-translation.table.js';
+export * from './portfolio-category.table.js';
+export * from './portfolio-category-translation.table.js';
+export * from './portfolio-project.table.js';
+export * from './portfolio-project-translation.table.js';
+export * from './blog-category.table.js';
+export * from './blog-category-translation.table.js';
+export * from './blog-tag.table.js';
+export * from './blog-tag-translation.table.js';
+export * from './blog-post.table.js';
+export * from './blog-post-translation.table.js';
+export * from './blog-post-tag.table.js';
+export * from './faq.table.js';
+export * from './faq-translation.table.js';
+export * from './menu.table.js';
+export * from './menu-item.table.js';
+export * from './menu-item-translation.table.js';
+export * from './lead.table.js';
+export * from './processed-message.table.js';
+export * from './schema.js';
+// Re-export the shared Outbox table so drizzle-kit includes it in this service's
+// migrations (each service owns its own outbox, MS3/MS5).
+export { outboxTable } from '@sanad/messaging';

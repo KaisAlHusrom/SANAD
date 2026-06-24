@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { hasAllRoles, hasAnyRole, hasRole, isStaff } from './rbac.js';
+import {
+  hasAllRoles,
+  hasAnyRole,
+  hasPermission,
+  hasRole,
+  identityHasPermission,
+  isStaff,
+} from './rbac.js';
 import { identityContextSchema } from './identity-context.js';
 
 const admin = identityContextSchema.parse({
@@ -25,7 +32,58 @@ describe('rbac', () => {
   });
 });
 
+describe('hasPermission (wildcards)', () => {
+  it('matches an exact permission', () => {
+    expect(hasPermission(['identity.users.read'], 'identity.users.read')).toBe(
+      true,
+    );
+    expect(
+      hasPermission(['identity.users.read'], 'identity.users.update'),
+    ).toBe(false);
+  });
+
+  it('grants everything to the global manage permission', () => {
+    expect(hasPermission(['manage'], 'identity.users.read')).toBe(true);
+    expect(hasPermission(['manage'], 'content.pages.update')).toBe(true);
+  });
+
+  it('grants every action on a resource via <resource>.manage', () => {
+    expect(
+      hasPermission(['identity.users.manage'], 'identity.users.read'),
+    ).toBe(true);
+    expect(
+      hasPermission(['identity.users.manage'], 'identity.users.delete'),
+    ).toBe(true);
+    // resource wildcard does NOT leak to a different resource
+    expect(
+      hasPermission(['identity.users.manage'], 'identity.roles.read'),
+    ).toBe(false);
+  });
+
+  it('fails closed on empty grants', () => {
+    expect(hasPermission([], 'identity.users.read')).toBe(false);
+  });
+
+  it('reads permissions off an identity context', () => {
+    const staff = identityContextSchema.parse({
+      userId: 'u3',
+      roles: ['developer'],
+      permissions: ['identity.users.read'],
+    });
+    expect(identityHasPermission(staff, 'identity.users.read')).toBe(true);
+    expect(identityHasPermission(staff, 'identity.users.delete')).toBe(false);
+  });
+});
+
 describe('identity-context schema', () => {
+  it('defaults permissions to an empty array when omitted', () => {
+    const parsed = identityContextSchema.parse({
+      userId: 'u',
+      roles: ['admin'],
+    });
+    expect(parsed.permissions).toEqual([]);
+  });
+
   it('rejects unknown keys and empty roles', () => {
     expect(
       identityContextSchema.safeParse({ userId: 'u', roles: [] }).success,
