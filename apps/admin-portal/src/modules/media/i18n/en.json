@@ -1,0 +1,48 @@
+{
+  "title": "Media library",
+  "subtitle": "Upload and manage images and files, stored on Cloudflare R2.",
+  "toolbar": {
+    "upload": "Upload",
+    "newFolder": "New folder",
+    "uploading": "Uploading…"
+  },
+  "filters": {
+    "allFolders": "All folders",
+    "type": "Type"
+  },
+  "types": {
+    "all": "All types",
+    "image": "Images",
+    "video": "Video",
+    "audio": "Audio",
+    "document": "Documents"
+  },
+  "empty": {
+    "title": "No media yet",
+    "description": "Upload your first file to get started."
+  },
+  "card": {
+    "delete": "Delete"
+  },
+  "delete": {
+    "title": "Delete file",
+    "description": "This file will be permanently deleted. This can't be undone.",
+    "confirm": "Delete",
+    "toastSuccess": "File deleted."
+  },
+  "folder": {
+    "dialogTitle": "New folder",
+    "nameLabel": "Folder name",
+    "namePlaceholder": "e.g. Logos",
+    "nameRequired": "A folder name is required.",
+    "submit": "Create",
+    "toastSuccess": "Folder created."
+  },
+  "errors": {
+    "loadFailed": "Couldn't load media.",
+    "uploadFailed": "The upload failed.",
+    "storageUnconfigured": "Media storage isn't configured yet.",
+    "deleteFailed": "Couldn't delete the file.",
+    "unknown": "Something went wrong."
+  }
+}

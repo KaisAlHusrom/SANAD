@@ -1,0 +1,48 @@
+{
+  "title": "مكتبة الوسائط",
+  "subtitle": "ارفع الصور والملفّات وأدِرها، مُخزّنة على Cloudflare R2.",
+  "toolbar": {
+    "upload": "رفع",
+    "newFolder": "مجلّد جديد",
+    "uploading": "جارٍ الرفع…"
+  },
+  "filters": {
+    "allFolders": "كل المجلّدات",
+    "type": "النوع"
+  },
+  "types": {
+    "all": "كل الأنواع",
+    "image": "صور",
+    "video": "فيديو",
+    "audio": "صوت",
+    "document": "مستندات"
+  },
+  "empty": {
+    "title": "لا توجد وسائط بعد",
+    "description": "ارفع أوّل ملفّ للبدء."
+  },
+  "card": {
+    "delete": "حذف"
+  },
+  "delete": {
+    "title": "حذف الملفّ",
+    "description": "سيُحذف هذا الملفّ نهائيًّا. لا يمكن التراجع.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف الملفّ."
+  },
+  "folder": {
+    "dialogTitle": "مجلّد جديد",
+    "nameLabel": "اسم المجلّد",
+    "namePlaceholder": "مثال: الشعارات",
+    "nameRequired": "اسم المجلّد مطلوب.",
+    "submit": "إنشاء",
+    "toastSuccess": "تم إنشاء المجلّد."
+  },
+  "errors": {
+    "loadFailed": "تعذّر تحميل الوسائط.",
+    "uploadFailed": "فشل رفع الملفّ.",
+    "storageUnconfigured": "لم تُهيّأ مساحة التخزين بعد.",
+    "deleteFailed": "تعذّر حذف الملفّ.",
+    "unknown": "حدث خطأ غير متوقّع."
+  }
+}

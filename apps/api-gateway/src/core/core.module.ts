@@ -7,6 +7,7 @@ import {
   CONTENT_CLIENT,
   IDENTITY_CLIENT,
   MEDIA_CLIENT,
+  NOTIFICATIONS_CLIENT,
   SETTINGS_CLIENT,
 } from './injection-tokens.js';
 
@@ -48,6 +49,13 @@ const env = loadGatewayEnv();
         ...createRmqClientOptions({
           url: env.RABBITMQ_URL,
           queue: commandsQueue('content'),
+        }),
+      },
+      {
+        name: NOTIFICATIONS_CLIENT,
+        ...createRmqClientOptions({
+          url: env.RABBITMQ_URL,
+          queue: commandsQueue('notifications'),
         }),
       },
     ]),

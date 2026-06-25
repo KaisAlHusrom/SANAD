@@ -1,0 +1,35 @@
+{
+  "title": "Third-party integrations",
+  "subtitle": "External service credentials — encrypted in the vault and always masked.",
+  "feature": {
+    "email": "Email (SMTP)",
+    "storage": "Storage (R2)"
+  },
+  "status": {
+    "notSet": "Not set",
+    "inVault": "Set in vault",
+    "fromEnv": "From environment"
+  },
+  "badge": {
+    "notWired": "Not in use yet"
+  },
+  "actions": {
+    "set": "Set",
+    "rotate": "Rotate"
+  },
+  "dialog": {
+    "setTitle": "Set secret",
+    "rotateTitle": "Rotate secret",
+    "description": "Enter the new value. It is encrypted on save and never shown again.",
+    "valueLabel": "Value",
+    "valuePlaceholder": "Paste the secret here",
+    "submit": "Save",
+    "toastSuccess": "Secret saved."
+  },
+  "errors": {
+    "loadFailed": "Couldn't load integration statuses.",
+    "valueRequired": "A value is required.",
+    "forbidden": "You don't have permission to manage this integration.",
+    "unknown": "Something went wrong."
+  }
+}

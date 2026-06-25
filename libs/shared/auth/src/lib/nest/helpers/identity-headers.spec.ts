@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { IdentityContext } from '../../identity-context.js';
+import type { IdentityContext } from '@sanad/contracts';
 import {
   IDENTITY_HEADER,
   identityFromHeaders,

@@ -3,7 +3,25 @@ import {
   CONTENT_PERMISSIONS,
   IDENTITY_PERMISSIONS,
   MEDIA_PERMISSIONS,
+  NOTIFICATION_PERMISSIONS,
+  SECRET_PERMISSIONS,
+  SECRET_REGISTRY_LIST,
+  SETTINGS_PERMISSIONS,
 } from '@sanad/contracts';
+
+/**
+ * The per-integration secret-manage permissions (N13 — each third party owns its
+ * permission), deduped from the registry so a new integration auto-extends the catalog.
+ */
+const SECRET_MANAGE_CATALOG: ReadonlyArray<[key: string, description: string]> =
+  [
+    ...new Map(
+      SECRET_REGISTRY_LIST.map((entry) => [
+        entry.managePermission,
+        `Manage ${entry.feature} integration secrets`,
+      ]),
+    ),
+  ];
 
 /** The permission catalog seeded into the identity DB (key → description). */
 export const PERMISSION_CATALOG: ReadonlyArray<
@@ -18,6 +36,12 @@ export const PERMISSION_CATALOG: ReadonlyArray<
   [MEDIA_PERMISSIONS.manage, 'Manage media'],
   [CONTENT_PERMISSIONS.read, 'View content'],
   [CONTENT_PERMISSIONS.manage, 'Manage content (pages, services, blog, leads)'],
+  [NOTIFICATION_PERMISSIONS.read, 'View in-app notifications'],
+  [NOTIFICATION_PERMISSIONS.manage, 'Manage notifications'],
+  [SETTINGS_PERMISSIONS.read, 'View settings'],
+  [SETTINGS_PERMISSIONS.manage, 'Manage settings & branding'],
+  [SECRET_PERMISSIONS.read, 'View integration secret statuses'],
+  ...SECRET_MANAGE_CATALOG,
 ];
 
 /** A seeded role: its display name + the permission keys it grants. */

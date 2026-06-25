@@ -1,0 +1,47 @@
+{
+  "title": "Visual identity",
+  "subtitle": "Control the site's logo, colors, fonts and links — all rendered live on the website.",
+  "sections": {
+    "identity": "Identity",
+    "colors": "Colors",
+    "typography": "Typography",
+    "social": "Social links",
+    "contact": "Contact details"
+  },
+  "fields": {
+    "logoUrl": "Logo",
+    "faviconUrl": "Favicon",
+    "brandName": "Brand name",
+    "tagline": "Tagline",
+    "shortDesc": "Short description",
+    "urlPlaceholder": "https://…",
+    "fontSans": "Primary font",
+    "fontMono": "Monospace font",
+    "twitter": "X (Twitter)",
+    "linkedin": "LinkedIn",
+    "instagram": "Instagram",
+    "github": "GitHub",
+    "youtube": "YouTube",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address"
+  },
+  "colors": {
+    "primary": "Primary color",
+    "secondary": "Secondary color",
+    "advanced": "Advanced color system",
+    "groups": {
+      "pageAccents": "Page accents",
+      "surface": "Surfaces",
+      "text": "Text colors"
+    }
+  },
+  "errors": {
+    "loadFailed": "Couldn't load the visual identity.",
+    "hex": "Invalid color (e.g. #22d3ee).",
+    "url": "Invalid URL.",
+    "email": "Invalid email.",
+    "required": "This field is required.",
+    "unknown": "Something went wrong."
+  }
+}

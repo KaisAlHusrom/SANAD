@@ -1,0 +1,52 @@
+{
+  "serverSelect": {
+    "placeholder": "اختر…",
+    "searchPlaceholder": "بحث…",
+    "noResults": "لا توجد نتائج",
+    "loading": "جارٍ التحميل…",
+    "more": "+{{count}} أخرى",
+    "clear": "مسح",
+    "addNew": "إضافة جديد"
+  },
+  "table": {
+    "search": "بحث…",
+    "selectAll": "تحديد الكل",
+    "selectRow": "تحديد الصف",
+    "columns": "الأعمدة",
+    "rowActions": "إجراءات الصف",
+    "noResults": "لا توجد نتائج",
+    "errorTitle": "تعذّر تحميل البيانات."
+  },
+  "filter": {
+    "filters": "عوامل التصفية",
+    "all": "الكل",
+    "any": "أي",
+    "yes": "نعم",
+    "no": "لا",
+    "from": "من",
+    "to": "إلى",
+    "apply": "تطبيق",
+    "clearAll": "مسح عوامل التصفية",
+    "active": "{{count}} مُفعّل"
+  },
+  "pagination": {
+    "showing": "عرض {{from}}–{{to}} من {{total}}",
+    "rowsPerPage": "صفوف بكل صفحة",
+    "first": "الصفحة الأولى",
+    "previous": "الصفحة السابقة",
+    "next": "الصفحة التالية",
+    "last": "الصفحة الأخيرة"
+  },
+  "bulk": {
+    "selected": "{{count}} محدد",
+    "clear": "مسح التحديد"
+  },
+  "form": {
+    "generate": "توليد",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "selectPlaceholder": "اختر…",
+    "uploadImage": "رفع صورة",
+    "changeImage": "تغيير الصورة"
+  }
+}

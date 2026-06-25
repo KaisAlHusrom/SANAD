@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "Sanad Tech",
+    "adminPortal": "Admin Portal"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "retry": "Retry",
+    "logout": "Log out"
+  },
+  "states": {
+    "loading": "Loading…",
+    "empty": "No data yet",
+    "error": "Something went wrong"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "content": "Content",
+    "settings": "Identity & settings",
+    "integrations": "Integrations",
+    "media": "Media library",
+    "leads": "Leads inbox",
+    "users": "Users & roles"
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "locale": {
+    "switch": "Change language"
+  },
+  "notifications": {
+    "label": "Notifications"
+  },
+  "mediaPicker": {
+    "choose": "Choose from library",
+    "title": "Media library",
+    "empty": "No images yet.",
+    "errorLoad": "Couldn't load media."
+  },
+  "errors": {
+    "forbidden": "You don't have permission to view this page."
+  }
+}

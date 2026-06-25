@@ -12,6 +12,8 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import type { Pool } from 'pg';
 import { DRIZZLE, PG_POOL } from './drizzle.tokens.js';
+import { DrizzleTransactionRunner } from './transaction/drizzle-transaction-runner.js';
+import { TransactionRunner } from './transaction/transaction-runner.js';
 
 /** What a service passes to wire its own database (DB-per-service, MS5). */
 export interface DrizzleModuleOptions {
@@ -48,10 +50,19 @@ export class DrizzleModule implements OnModuleDestroy {
       useFactory: (pool: Pool) => drizzle(pool, { schema: options.schema }),
     };
 
+    // The Unit-of-Work seam (N14): application services inject `TransactionRunner` for
+    // atomic multi-writes (business row + Outbox + idempotency claim in one tx) and never
+    // the `DRIZZLE` handle. Provided here so every service that wires `DrizzleModule` gets
+    // it with zero extra wiring.
+    const transactionRunnerProvider: Provider = {
+      provide: TransactionRunner,
+      useClass: DrizzleTransactionRunner,
+    };
+
     return {
       module: DrizzleModule,
-      providers: [poolProvider, drizzleProvider],
-      exports: [PG_POOL, DRIZZLE],
+      providers: [poolProvider, drizzleProvider, transactionRunnerProvider],
+      exports: [PG_POOL, DRIZZLE, TransactionRunner],
     };
   }
 

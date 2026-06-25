@@ -12,3 +12,4 @@ export * from './lib/identity/index.js';
 export * from './lib/settings/index.js';
 export * from './lib/media/index.js';
 export * from './lib/content/index.js';
+export * from './lib/notifications/index.js';

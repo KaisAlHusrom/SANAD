@@ -1,4 +1,4 @@
-import type { IdentityContext } from '../../identity-context.js';
+import type { IdentityContext } from '@sanad/contracts';
 
 /**
  * The minimal request shape the auth guards read/write — declared locally so the

@@ -32,6 +32,18 @@ All responses are the 5-field wire envelope (N9), added by the global
 | GET    | `/api/branding`       | — (public)                  | `BrandingRecord`      | **P3**: website reads branding unauthenticated; → `settings.branding.get` (MS2); coded defaults when unset (F7) |
 | PUT    | `/api/branding`       | JWT + `settings.manage`     | `BrandingRecord`      | **P3**: deep-partial update; forwards identity headers to `settings.branding.update` (MS4)                      |
 
+P6 additions (integration-secrets vault + in-app notifications):
+
+| Method | Path                            | Auth                                      | Returns                   | Notes                                                                                                                                              |
+| ------ | ------------------------------- | ----------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/integration-secrets`      | JWT + `settings.secrets.read`             | `SecretStatus[]`          | masked vault status; → `settings.integration-secret.status`; never a value (N13)                                                                   |
+| PUT    | `/api/integration-secrets/:key` | JWT + `settings.secrets.<feature>.manage` | `SecretStatus`            | set/rotate an encrypted secret; gated **per third party** by `SecretPermissionGuard` (P7.B — e.g. `SMTP_PASSWORD`→`settings.secrets.email.manage`) |
+| GET    | `/api/notifications`            | JWT + `notification.read`                 | `Paginated<Notification>` | caller's in-app notices (roles ∪ id); `?unread=true`                                                                                               |
+| PATCH  | `/api/notifications/:id/read`   | JWT + `notification.read`                 | `Notification`            | mark one read (if owned)                                                                                                                           |
+
+(Media (P4) + content (P5) routes are mapped in the Postman collection — the complete
+endpoint map, DOC2.)
+
 ## Auth internals
 
 - `CoreModule` (global) registers the `IDENTITY_CLIENT` (`identity.commands`) **and the

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { roleSchema } from './role.js';
+import { roleSchema } from '@sanad/contracts';
 
 /** Access vs refresh token discriminator. */
 export const tokenTypeSchema = z.enum(['access', 'refresh']);

@@ -65,6 +65,33 @@ message-pattern constants.
 | `settings.resolve`         | `ResolveRequest`                                  | resolved value       |
 | `settings.group.resolve`   | `ResolveGroupRequest`                             | `Record<key, value>` |
 
+## Integration-secrets vault (N13)
+
+Vault patterns (MS2):
+
+| Pattern                              | Payload                            | Reply                        |
+| ------------------------------------ | ---------------------------------- | ---------------------------- |
+| `settings.resolve-secret`            | `{ key }` (**internal only**, N13) | `string \| null` (decrypted) |
+| `settings.integration-secret.set`    | `{ key, value }` (+ identity, MS4) | `SecretStatus` (masked)      |
+| `settings.integration-secret.status` | `{}`                               | `SecretStatus[]` (masked)    |
+
+A dedicated, non-public `integration_secret` table holds third-party credentials (the
+**SMTP password** today; `R2_SECRET_KEY` registered-but-deferred) **encrypted at rest**
+(AES-256-GCM via `SecretCipherService`, master key `APP_SECRETS_ENCRYPTION_KEY`). The
+`ciphertext`/`iv`/`auth_tag` columns are `hidden` (N2); a partial unique index keeps one
+live row per key (clear = soft-delete, so rotate is clear-then-insert). `SecretsService`
+exposes **masked status** (`isSet`/`fromEnv`/`last4`/`updatedAt`/`updatedByUserId` — never
+the value), **set/rotate/clear**, and a server-side **resolve** (decrypt) whose plaintext
+crosses only the internal `settings.resolve-secret` reply, never a client. Resolution order
+**vault row → env fallback → null**. Consumed by the notifications-service for SMTP.
+
+**Per-integration RBAC (N13, P7.B):** the gateway gates the admin surface per third party,
+not under blanket `settings.manage`. Each `SECRET_REGISTRY` entry carries a
+`managePermission` (`settings.secrets.<feature>.manage`, e.g. `email`/`storage`); viewing
+the masked statuses needs `settings.secrets.read`. The gateway's `SecretPermissionGuard`
+resolves the `:key` route param to its entry and enforces that key (admin's global `manage`
+covers all). These permission keys are seeded into the identity RBAC catalog.
+
 ## Events emitted (MS3 — Outbox)
 
 | Event              | Payload            | Consumers                            |

@@ -9,6 +9,16 @@ export const SETTINGS_RESOLVE = 'settings.resolve';
 export const SETTINGS_RESOLVE_GROUP = 'settings.group.resolve';
 
 /**
+ * Integration-secret vault patterns (N13). `RESOLVE_SECRET` is **internal-only** — a
+ * server-side consumer (e.g. notifications-service) request/replies for the decrypted
+ * value; it is NEVER exposed on the gateway. `SECRET_SET`/`SECRET_STATUS` back the masked
+ * admin surface (gateway-guarded with `settings.manage`).
+ */
+export const SETTINGS_RESOLVE_SECRET = 'settings.resolve-secret';
+export const SETTINGS_SECRET_SET = 'settings.integration-secret.set';
+export const SETTINGS_SECRET_STATUS = 'settings.integration-secret.status';
+
+/**
  * Domain event the settings service emits via the Outbox on a branding change
  * (MS3). No consumer yet; the website (P8) will subscribe to revalidate its cache.
  */

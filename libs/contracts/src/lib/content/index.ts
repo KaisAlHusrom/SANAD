@@ -50,6 +50,6 @@ export * from './lead.types.js';
 export * from './lead-create.zod.types.js';
 export * from './lead-list-query.zod.types.js';
 export * from './lead-update.zod.types.js';
-export * from './lead-event.types.js';
+export * from './lead-event.zod.types.js';
 export * from './permission.js';
 export * from './message-pattern.js';

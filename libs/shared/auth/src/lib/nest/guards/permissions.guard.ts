@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { identityHasPermission } from '../../rbac.js';
+import { identityHasPermission } from '@sanad/contracts';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 import { PERMISSIONS_METADATA_KEY } from '../decorators/require-permissions.decorator.js';
 

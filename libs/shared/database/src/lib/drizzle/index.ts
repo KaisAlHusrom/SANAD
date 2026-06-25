@@ -3,5 +3,6 @@
 // only (U10).
 export * from './columns.js';
 export * from './repository/index.js';
+export * from './transaction/index.js';
 export * from './drizzle.tokens.js';
 export * from './drizzle.module.js';

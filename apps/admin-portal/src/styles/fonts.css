@@ -1,0 +1,22 @@
+/*
+ * Brand typography — IBM Plex Sans Arabic (UI/Arabic) + IBM Plex Mono (labels,
+ * numerals). Self-hosted WOFF2, no CDN in prod (design-spec / OPS rules).
+ *
+ * PENDING ASSET: drop the variable WOFF2 files into `public/fonts/` and uncomment the
+ * @font-face blocks below (served from `/admin/fonts/…`). Until then the body falls
+ * back to `system-ui` (global.css). Tracked in PROGRESS like the logo asset.
+ *
+ * @font-face {
+ *   font-family: 'IBM Plex Sans Arabic';
+ *   src: url('/admin/fonts/ibm-plex-sans-arabic-var.woff2') format('woff2');
+ *   font-weight: 300 700;
+ *   font-display: swap;
+ *   unicode-range: U+0600-06FF, U+0750-077F, U+0000-00FF;
+ * }
+ * @font-face {
+ *   font-family: 'IBM Plex Mono';
+ *   src: url('/admin/fonts/ibm-plex-mono.woff2') format('woff2');
+ *   font-weight: 400 500;
+ *   font-display: swap;
+ * }
+ */

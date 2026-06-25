@@ -75,6 +75,10 @@
     {
       "key": "leadId",
       "value": ""
+    },
+    {
+      "key": "notificationId",
+      "value": ""
     }
   ],
   "item": [
@@ -335,6 +339,103 @@
               "path": ["branding"]
             },
             "description": "**Purpose:** apply a **deep-partial** branding update. Only the leaves you send change; everything else keeps its global/default value. Emits `settings.changed` and busts the cache.\n\n**Auth:** bearer + permission `settings.manage` (admin `manage` covers it). Missing → 403.\n\n**Body:** a deep-partial of `BrandingRecord` (`.strict()`). Colors must be hex (`#abc`/`#aabbcc`); social/contact URLs validated; localized leaves are `{ar,en}`; nullable leaves accept `null` to clear.\n\n**Returns** `data`: the re-resolved `BrandingRecord`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Integration Secrets",
+      "description": "Encrypted third-party credentials owned by the settings-service (N13 — gated per-integration). Masked status + set/rotate only — the decrypted value is NEVER returned (resolution is server-side over RMQ, internal-only). Viewing statuses needs `settings.secrets.read`; set/rotate is gated **per third party** by `settings.secrets.<feature>.manage` (admin `manage` covers all).",
+      "item": [
+        {
+          "name": "Get statuses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/integration-secrets",
+              "host": ["{{baseUrl}}"],
+              "path": ["integration-secrets"]
+            },
+            "description": "**Purpose:** the masked status of every registered secret.\n\n**Auth:** bearer + `settings.secrets.read`.\n\n**Returns** `data`: `SecretStatus[]` — each `{ key, isSet, fromEnv, last4|null, updatedAt|null, updatedByUserId|null }`. Never the value (N13)."
+          },
+          "response": []
+        },
+        {
+          "name": "Set secret",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": \"super-secret-smtp-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/integration-secrets/SMTP_PASSWORD",
+              "host": ["{{baseUrl}}"],
+              "path": ["integration-secrets", "SMTP_PASSWORD"]
+            },
+            "description": "**Purpose:** set or rotate one secret (encrypted at rest, AES-256-GCM).\n\n**Auth:** bearer + the third party's `settings.secrets.<feature>.manage` (e.g. `SMTP_PASSWORD` → `settings.secrets.email.manage`, `R2_SECRET_KEY` → `settings.secrets.storage.manage`; admin `manage` covers all). Lacking it → 403.\n\n**Path:** `:key` ∈ `SecretKey` (`SMTP_PASSWORD` | `R2_SECRET_KEY`).\n\n**Body** (`.strict()`): `{ value }` (non-empty). The plaintext is never echoed back.\n\n**Returns** `data`: `SecretStatus` (masked)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "In-app notifications served by the notifications-service (P6). Scoped to the caller (their roles ∪ id) — you only see your own. Bearer + `notification.read`.",
+      "item": [
+        {
+          "name": "List notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "unread",
+                  "value": "true",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Purpose:** the caller's in-app notices, newest first.\n\n**Auth:** bearer + `notification.read`.\n\n**Query** (`.strict()`): `page`, `pageSize` (≤100), `search`, `sort`, `order`, optional `unread` (`'true'|'false'`, N7).\n\n**Returns** `data`: `{ items: Notification[], meta }`. Each `Notification` = `{ id, channel, type, payload, readAt|null, createdAt }`."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/{{notificationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications", "{{notificationId}}", "read"]
+            },
+            "description": "**Purpose:** mark one in-app notice read (only if it belongs to you).\n\n**Auth:** bearer + `notification.read`.\n\n**Path:** `:id` = the notification id (`{{notificationId}}`).\n\n**Returns** `data`: the updated `Notification`. 404 if not found/owned."
           },
           "response": []
         }

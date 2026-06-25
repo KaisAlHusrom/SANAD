@@ -4,7 +4,9 @@ import { BrandingModule } from './branding/branding.module.js';
 import { ContentModule } from './content/content.module.js';
 import { CoreModule } from './core/core.module.js';
 import { HealthModule } from './health/health.module.js';
+import { IntegrationSecretsModule } from './integration-secrets/integration-secrets.module.js';
 import { MediaModule } from './media/media.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 import { UsersModule } from './users/users.module.js';
 
 /**
@@ -23,6 +25,8 @@ import { UsersModule } from './users/users.module.js';
     BrandingModule,
     MediaModule,
     ContentModule,
+    IntegrationSecretsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

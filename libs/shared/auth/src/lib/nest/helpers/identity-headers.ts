@@ -1,7 +1,4 @@
-import {
-  identityContextSchema,
-  type IdentityContext,
-} from '../../identity-context.js';
+import { identityContextSchema, type IdentityContext } from '@sanad/contracts';
 
 /**
  * The RMQ message header the gateway forwards the validated identity in (MS4) — the

@@ -1,0 +1,37 @@
+{
+  "name": "@sanad/notifications-service",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/main.js",
+  "nx": {
+    "name": "notifications-service",
+    "tags": [
+      "scope:notifications",
+      "type:app"
+    ]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/microservices": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@sanad/auth": "workspace:*",
+    "@sanad/contracts": "workspace:*",
+    "@sanad/database": "workspace:*",
+    "@sanad/messaging": "workspace:*",
+    "@sanad/util": "workspace:*",
+    "amqp-connection-manager": "^4.1.14",
+    "amqplib": "^0.10.4",
+    "drizzle-orm": "^0.44.0",
+    "nodemailer": "^6.9.0",
+    "pg": "^8.13.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.3.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.0"
+  }
+}

@@ -38,6 +38,12 @@
     },
     {
       "path": "./apps/content-service"
+    },
+    {
+      "path": "./apps/notifications-service"
+    },
+    {
+      "path": "./apps/admin-portal"
     }
   ]
 }

@@ -8,11 +8,15 @@ import { SETTINGS_ENV, loadSettingsEnv } from './env.js';
 import { HealthController } from './health/health.controller.js';
 import { BrandingService } from './settings/application/branding.service.js';
 import { SettingsResolver } from './settings/application/settings.resolver.js';
+import { SecretCipherService } from './settings/application/crypto/secret-cipher.service.js';
+import { SecretsService } from './settings/application/secrets.service.js';
 import { SettingRepository } from './settings/infrastructure/setting.repository.js';
 import { SettingValueRepository } from './settings/infrastructure/setting-value.repository.js';
 import { SettingTranslationRepository } from './settings/infrastructure/setting-translation.repository.js';
+import { IntegrationSecretRepository } from './settings/infrastructure/integration-secret.repository.js';
 import { BrandingMessageController } from './settings/presentation/branding.message-controller.js';
 import { SettingsMessageController } from './settings/presentation/settings.message-controller.js';
+import { IntegrationSecretMessageController } from './settings/presentation/integration-secret.message-controller.js';
 import {
   OutboxRelayService,
   SETTINGS_EVENTS_CLIENT,
@@ -44,6 +48,7 @@ const env = loadSettingsEnv();
   controllers: [
     BrandingMessageController,
     SettingsMessageController,
+    IntegrationSecretMessageController,
     HealthController,
   ],
   providers: [
@@ -52,8 +57,11 @@ const env = loadSettingsEnv();
     SettingRepository,
     SettingValueRepository,
     SettingTranslationRepository,
+    IntegrationSecretRepository,
     SettingsResolver,
     BrandingService,
+    SecretCipherService,
+    SecretsService,
     SeedService,
     OutboxRelayService,
   ],

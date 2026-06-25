@@ -114,6 +114,8 @@ services:
         condition: service_started
       content-service:
         condition: service_started
+      notifications-service:
+        condition: service_started
     networks:
       - sanad-dev-net
 
@@ -161,6 +163,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sanad}:${POSTGRES_PASSWORD:-sanad}@postgres:5432/settings
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
       REDIS_URL: redis://redis:6379
+      # AES-256-GCM master key for the integration-secrets vault (N13). Dev throwaway here;
+      # a real base64-32-byte key is REQUIRED in staging/prod (OPS1).
+      APP_SECRETS_ENCRYPTION_KEY: ${APP_SECRETS_ENCRYPTION_KEY:-c2FuYWQtZGV2LXNlY3JldHMtZW5jcnlwdGlvbi1rZXk=}
+      # Env fallback for the SMTP password secret (the vault is the primary source).
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
     volumes:
       - ..:/workspace
       - settings_node_modules:/workspace/node_modules
@@ -238,6 +245,63 @@ services:
     networks:
       - sanad-dev-net
 
+  notifications-service:
+    build:
+      context: ..
+      dockerfile: infra/docker/notifications-service.dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      NX_DAEMON: 'false'
+      PORT: 3005
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sanad}:${POSTGRES_PASSWORD:-sanad}@postgres:5432/notifications
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
+      # SMTP transport — OPTIONAL: unset → emails are logged to the console (dev-safe). The
+      # SMTP PASSWORD is resolved from the settings-secrets vault (N13); SMTP_PASSWORD here
+      # is the env fallback. NOTIFICATIONS_TEAM_EMAIL receives new-lead alerts.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_FROM: ${SMTP_FROM:-Sanad Tech <no-reply@sanad.tech>}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      NOTIFICATIONS_TEAM_EMAIL: ${NOTIFICATIONS_TEAM_EMAIL:-team@sanad.tech}
+    volumes:
+      - ..:/workspace
+      - notifications_node_modules:/workspace/node_modules
+      - notifications_nx:/workspace/.nx
+    ports:
+      - '${NOTIFICATIONS_PORT:-3015}:3005'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - sanad-dev-net
+
+  # First frontend (P7): the Vite admin portal dev server, served under /admin/ by
+  # nginx. The browser calls the gateway at the relative /api (resolved against the
+  # nginx origin), so this container needs no DB/broker — it only serves the SPA.
+  admin-portal:
+    build:
+      context: ..
+      dockerfile: infra/docker/admin-portal.dev.Dockerfile
+    environment:
+      NODE_ENV: development
+      APP_ENV: development
+      VITE_APP_ENV: development
+      NX_DAEMON: 'false'
+    volumes:
+      - ..:/workspace
+      - admin_node_modules:/workspace/node_modules
+      - admin_nx:/workspace/.nx
+    ports:
+      - '${ADMIN_PORT:-4200}:4200'
+    networks:
+      - sanad-dev-net
+
   nginx:
     image: nginx:1.27-alpine
     volumes:
@@ -246,6 +310,7 @@ services:
       - '${NGINX_PORT:-8190}:80'
     depends_on:
       - api-gateway
+      - admin-portal
     networks:
       - sanad-dev-net
 
@@ -262,9 +327,13 @@ volumes:
   settings_node_modules:
   media_node_modules:
   content_node_modules:
+  notifications_node_modules:
+  admin_node_modules:
   # Per-container Nx state (masks the bind-mounted .nx so nx processes don't share state).
   gateway_nx:
   identity_nx:
   settings_nx:
   media_nx:
   content_nx:
+  notifications_nx:
+  admin_nx:

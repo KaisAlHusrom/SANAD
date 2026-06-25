@@ -8,6 +8,13 @@
       "when": 1782140222100,
       "tag": "0000_cooing_venus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782311101449,
+      "tag": "0001_oval_living_lightning",
+      "breakpoints": true
     }
   ]
 }

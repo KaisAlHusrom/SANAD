@@ -9,6 +9,10 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'node',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    // Run spec FILES serially: this service has two DB-integration specs that each
+    // migrate the shared `settings_test` at import time (TDD2) — parallel files would
+    // race on the Drizzle migration journal and skip one. Specs are fast, so serial is fine.
+    fileParallelism: false,
     reporters: ['default'],
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',

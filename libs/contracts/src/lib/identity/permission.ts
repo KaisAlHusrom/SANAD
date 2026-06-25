@@ -2,7 +2,7 @@
  * Permission keys follow `<resource>.<action>` (e.g. `identity.users.read`).
  * Authorization is enforced at the gateway against the access token's `permissions`
  * claim. The wildcard semantics (global `manage` + per-resource `<resource>.manage`)
- * and the matching logic live in `@sanad/auth` `hasPermission` (the policy lib, U3);
+ * and the matching logic live in `./rbac.ts` `hasPermission` (the policy, U3);
  * this file owns only the identity domain's permission catalog.
  */
 

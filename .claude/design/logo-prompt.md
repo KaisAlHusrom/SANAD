@@ -1,5 +1,9 @@
 # Sanad Tech — Logo prompt for ideogram.ai
 
+> ✅ **SUPERSEDED — the final logo is delivered** and lives in [`logo/`](./logo/) (the cyan
+> `سَنَد التقنية` wordmark). Use those files; this prompt is kept only as a historical record of
+> the generation workflow.
+
 The Claude-generated logo was discarded. Use these prompts at <https://ideogram.ai> to design the real
 mark. The brand: **سَنَد التقنية (Sanad Tech)** — a premium Arabic-first software house. *"Sanad" =
 support / backing / a pillar you lean on → trust, mastery, craft.* It must feel like a serious

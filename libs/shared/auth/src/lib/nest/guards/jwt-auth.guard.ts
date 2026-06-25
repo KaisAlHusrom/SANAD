@@ -5,7 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { identityContextSchema } from '../../identity-context.js';
+import { identityContextSchema } from '@sanad/contracts';
 import type { AccessTokenPayload } from '../../jwt-payload.js';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 import { TokenVerifier } from '../verifiers/token-verifier.js';

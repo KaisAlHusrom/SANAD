@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { IdentityContext } from '../../identity-context.js';
+import type { IdentityContext } from '@sanad/contracts';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 
 /**

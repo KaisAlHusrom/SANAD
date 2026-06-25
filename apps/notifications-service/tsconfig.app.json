@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "out-tsc/app",
+    "tsBuildInfoFile": "out-tsc/app/tsconfig.app.tsbuildinfo",
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["node", "reflect-metadata"]
+  },
+  "include": ["src/**/*.ts"],
+  "references": [
+    { "path": "../../libs/contracts/tsconfig.lib.json" },
+    { "path": "../../libs/shared/auth/tsconfig.lib.json" },
+    { "path": "../../libs/shared/database/tsconfig.lib.json" },
+    { "path": "../../libs/shared/messaging/tsconfig.lib.json" },
+    { "path": "../../libs/shared/util/tsconfig.lib.json" }
+  ],
+  "exclude": [
+    "vite.config.ts",
+    "vite.config.mts",
+    "vitest.config.ts",
+    "vitest.config.mts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts"
+  ]
+}

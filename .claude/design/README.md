@@ -11,8 +11,13 @@ interaction — instead of inventing values at build time (U6 / WEB9 / WEB10).
 >   as the product's default content. The real default copy is authored in
 >   [`content-defaults.md`](./content-defaults.md) and is what seeds the settings/content services
 >   (U9 coded defaults). Final content is admin-editable from the CMS.
-> - **The generated logo was discarded** (owner's call). The brand mark is produced separately from
->   [`logo-prompt.md`](./logo-prompt.md) via ideogram.ai.
+> - **The final logo is delivered** and lives in [`logo/`](./logo/) (the cyan `سَنَد التقنية`
+>   wordmark — cyan matches the locked accent `#22d3ee`). This **supersedes** the discarded
+>   generated mark and the [`logo-prompt.md`](./logo-prompt.md) placeholder workflow. Variants:
+>   `sanad-logo-primary.png` · `sanad-logo-white-on-black.png` · `sanad-logo-black-on-white.png` ·
+>   `sanad-logo-transparent.png` · `sanad-logo-geometric.png`. The dark/light runtime copies live in
+>   `apps/admin-portal/public/brand/` (the portal's coded-default logo; settings `branding.logoUrl`
+>   still wins at runtime, U9/WEB1).
 
 ## What's here
 
@@ -20,7 +25,8 @@ interaction — instead of inventing values at build time (U6 / WEB9 / WEB10).
 |---|---|
 | [`design-spec.md`](./design-spec.md) | The locked token system + shell + signature spec. **Build against this.** |
 | [`content-defaults.md`](./content-defaults.md) | Professional bilingual (ar-first / en) **default** copy that replaces the placeholders. |
-| [`logo-prompt.md`](./logo-prompt.md) | Paste-ready ideogram.ai prompt for the سَنَد التقنية mark. |
+| [`logo/`](./logo/) | **The delivered final logo** (سَنَد التقنية wordmark) — 5 variants. **Use these.** |
+| [`logo-prompt.md`](./logo-prompt.md) | *(superseded)* the ideogram.ai prompt used before the final mark was delivered. |
 | `source/Sanad Landing.dc.html` | Archived raw design (landing). |
 | `source/Sanad Admin.dc.html` | Archived raw design (admin portal). |
 

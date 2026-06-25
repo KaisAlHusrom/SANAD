@@ -9,3 +9,6 @@ export const MEDIA_CLIENT = 'MEDIA_CLIENT';
 
 /** DI token for the RMQ ClientProxy that talks to the content service's commands. */
 export const CONTENT_CLIENT = 'CONTENT_CLIENT';
+
+/** DI token for the RMQ ClientProxy that talks to the notifications service's commands. */
+export const NOTIFICATIONS_CLIENT = 'NOTIFICATIONS_CLIENT';

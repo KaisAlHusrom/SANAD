@@ -1,0 +1,17 @@
+<!doctype html>
+<!--
+  Arabic-first: ar/RTL + dark theme are the static fallback before JS runs; the
+  synchronous boot (main.tsx) corrects them from persisted storage (F12).
+-->
+<html lang="ar" dir="rtl" data-app data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <title>سَنَد التقنية — لوحة التحكّم</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
