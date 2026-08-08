@@ -16,6 +16,14 @@ const css = readFileSync(
   'utf8',
 );
 
+/**
+ * Compare whitespace-free: prettier owns `.css` formatting and re-spaces function arguments
+ * (`rgba(255,255,255,0.08)` → `rgba(255, 255, 255, 0.08)`), while the same token in `tokens.ts` is
+ * a TS string literal it never touches — so a literal match can never hold for those two values.
+ */
+const strip = (value: string) => value.replace(/\s+/g, '');
+const cssText = strip(css);
+
 describe('web-ui.css token parity with @sanad/config', () => {
   it('contains every website surface + text + hairline value', () => {
     const values = [
@@ -24,18 +32,18 @@ describe('web-ui.css token parity with @sanad/config', () => {
       ...Object.values(websiteTokens.hairline),
     ];
     for (const value of values) {
-      expect(css).toContain(value);
+      expect(cssText).toContain(strip(value));
     }
   });
 
   it('contains the website font families', () => {
-    expect(css).toContain(fonts.sans);
-    expect(css).toContain(fonts.mono);
+    expect(cssText).toContain(strip(fonts.sans));
+    expect(cssText).toContain(strip(fonts.mono));
   });
 
   it('contains the process phase-accent cycle (--web-phase-*)', () => {
     for (const value of processPhaseAccents) {
-      expect(css).toContain(value);
+      expect(cssText).toContain(strip(value));
     }
   });
 });
