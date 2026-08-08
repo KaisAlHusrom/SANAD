@@ -1,0 +1,51 @@
+{
+  "title": "Testimonials",
+  "subtitle": "Client quotes featured across the website.",
+  "columns": {
+    "author": "Author",
+    "company": "Company",
+    "quote": "Quote",
+    "rating": "Rating",
+    "featured": "Featured",
+    "updatedAt": "Updated"
+  },
+  "filters": {
+    "featured": "Featured"
+  },
+  "fields": {
+    "authorName": "Author name",
+    "companyName": "Company",
+    "rating": "Rating (1–5)",
+    "ratingPlaceholder": "e.g. 5",
+    "sortOrder": "Sort order",
+    "featured": "Featured",
+    "avatar": "Avatar",
+    "quote": "Quote",
+    "authorRole": "Author role",
+    "companyDescriptor": "Company descriptor"
+  },
+  "actions": {
+    "create": "New testimonial",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "createTitle": "New testimonial",
+    "editTitle": "Edit testimonial",
+    "created": "Testimonial created.",
+    "updated": "Testimonial updated."
+  },
+  "delete": {
+    "title": "Delete testimonial",
+    "message": "This testimonial will be permanently removed from the website.",
+    "confirm": "Delete",
+    "toastSuccess": "Testimonial deleted.",
+    "bulkTitle": "Delete testimonials",
+    "bulkMessage": "Delete {{count}} selected testimonials? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} testimonials deleted."
+  },
+  "errors": {
+    "deleteFailed": "Couldn't delete the testimonial.",
+    "updateFailed": "Couldn't update the testimonial."
+  }
+}

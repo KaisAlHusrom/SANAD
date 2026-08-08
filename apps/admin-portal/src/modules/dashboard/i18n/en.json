@@ -1,0 +1,17 @@
+{
+  "title": "Dashboard",
+  "subtitle": "An overview of activity across the website.",
+  "error": "Couldn't load the dashboard.",
+  "recentLeads": "Recent leads",
+  "recentActivity": "Recent activity",
+  "noLeads": "No leads yet.",
+  "noActivity": "Nothing here yet.",
+  "cards": {
+    "newLeads": "New leads",
+    "totalLeads": "Total leads",
+    "users": "Team members",
+    "services": "Services",
+    "blogPosts": "Blog posts",
+    "unread": "Unread notifications"
+  }
+}

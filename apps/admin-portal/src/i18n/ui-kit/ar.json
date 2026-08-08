@@ -15,7 +15,11 @@
     "columns": "الأعمدة",
     "rowActions": "إجراءات الصف",
     "noResults": "لا توجد نتائج",
-    "errorTitle": "تعذّر تحميل البيانات."
+    "errorTitle": "تعذّر تحميل البيانات.",
+    "dragHandle": "اسحب لإعادة الترتيب",
+    "reorderHint": "رتّب حسب الترتيب وامسح البحث وعوامل التصفية لسحب الصفوف.",
+    "reorderSaved": "تم حفظ الترتيب",
+    "reorderFailed": "تعذّر حفظ الترتيب الجديد"
   },
   "filter": {
     "filters": "عوامل التصفية",
@@ -43,6 +47,8 @@
   },
   "form": {
     "generate": "توليد",
+    "regenerateSlug": "إعادة التوليد من العنوان",
+    "slugAuto": "يُولّد تلقائيًا من العنوان",
     "save": "حفظ",
     "cancel": "إلغاء",
     "selectPlaceholder": "اختر…",

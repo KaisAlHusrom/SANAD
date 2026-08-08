@@ -6,6 +6,8 @@ description: Build the next phase of the Sanad Tech platform (reads rules + PROG
 
 You are continuing the **Sanad Tech (سند التقنية)** build. Work the spine in `.claude/plans/02-mvp.md`, one phase at a time, to the binding rules.
 
+> **⚠️ We are building the FINAL product — NOT an MVP.** `02-mvp.md` is a **filename**, not a quality bar (owner directive, 2026-07-20). **NEVER** narrow a scope, ship a weaker surface, leave an English string, or defer an axis on the grounds that "it's the MVP" / "good enough for now" — that reasoning is retired. Each phase ships its scope finished on every axis (U21) and every state (U23); a cross-cutting gap is fixed **platform-wide**, never patched only where it was noticed. Needs another session to do properly → **split the work, never lower the bar**.
+
 ## Procedure
 
 1. **Load context (in order):**
@@ -28,7 +30,7 @@ You are continuing the **Sanad Tech (سند التقنية)** build. Work the sp
 
 6. **Verify.** Run the **`verifier`** agent. It must report **PASS** (typecheck + lint + build + tests green; no rule-grep violations; "Done when" met). If FAIL, fix and re-run — do not proceed.
 
-7. **Close the phase.** On PASS, check the phase `- [x]` in `PROGRESS.md` and state the next phase. If a bug taught a lesson, **add a rule** to `.claude/rules.md` with a dated change-log entry (U13).
+7. **Close the phase.** On PASS, check the phase `- [x]` in `PROGRESS.md` and state the next phase. Record what happened in `PROGRESS.md`; touch `.claude/rules.md` **only** if a bug revealed a genuinely reusable, platform-wide rule (U13) — not for a one-off. Keep the law lean.
 
 ## Guardrails
 - One phase at a time, in order. Don't skip ahead or scaffold future feature code.

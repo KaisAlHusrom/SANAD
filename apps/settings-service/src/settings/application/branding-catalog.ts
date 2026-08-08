@@ -47,6 +47,13 @@ export const BRANDING_DEFAULTS: BrandingRecord = {
     youtube: null,
   },
   contact: { email: null, phone: null, address: null },
+  // Transcribed from the website's footer dictionary so making it editable changes nothing
+  // visually until the owner edits it (U9/F7). The brand name is NOT baked in — the footers
+  // compose `© {brand.name} — {copyright}`, keeping the company name single-sourced.
+  legal: {
+    copyright: { ar: 'جميع الحقوق محفوظة', en: 'All rights reserved' },
+  },
+  seo: { siteUrl: null, shareImageUrl: null },
 };
 
 /** One configurable branding leaf: its flat key, its path in the record, its type. */
@@ -166,6 +173,17 @@ export const BRANDING_FIELDS: readonly BrandingField[] = [
     key: 'branding.contact.address',
     path: ['contact', 'address'],
     type: 'localized_text',
+  },
+  {
+    key: 'branding.legal.copyright',
+    path: ['legal', 'copyright'],
+    type: 'localized_text',
+  },
+  { key: 'branding.seo.siteUrl', path: ['seo', 'siteUrl'], type: 'url' },
+  {
+    key: 'branding.seo.shareImageUrl',
+    path: ['seo', 'shareImageUrl'],
+    type: 'image',
   },
 ];
 

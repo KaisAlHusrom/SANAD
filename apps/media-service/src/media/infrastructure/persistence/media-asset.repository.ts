@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull, lt, sql } from 'drizzle-orm';
 import {
   BaseRepository,
   DateTimeService,
@@ -7,7 +7,11 @@ import {
   paginateArgsFromListQuery,
   type FilterSpec,
 } from '@sanad/database';
-import type { MediaListQuery, Paginated } from '@sanad/contracts';
+import {
+  MEDIA_ROOT_FOLDER,
+  type MediaListQuery,
+  type Paginated,
+} from '@sanad/contracts';
 import type { DbExecutor } from '../../../db/executor.js';
 import {
   mediaAssetTable,
@@ -42,6 +46,13 @@ const MEDIA_FILTERS: FilterSpec = {
   search: { kind: 'search', columns: ['filename'] },
   folderId: { kind: 'column', field: 'folderId', op: 'eq' },
   type: { kind: 'column', field: 'mimeType', op: 'contains' },
+  status: { kind: 'column', field: 'status', op: 'eq' },
+  /**
+   * "In no folder at all" — the explorer's root view. A separate whitelisted filter because
+   * `folderId eq null` matches nothing in SQL; the service sets it when the caller asks for
+   * `folderId=root` (N7: still a whitelisted spec, never raw passthrough).
+   */
+  rootOnly: { kind: 'column', field: 'folderId', op: 'isNull' },
 };
 
 /**
@@ -63,10 +74,38 @@ export class MediaAssetRepository extends BaseRepository<
     return this.where('key', 'eq', key).first();
   }
 
-  /** A paginated, searchable, filterable list of live assets. */
+  /**
+   * The live, `ready` assets for a set of ids (bulk, avoids N+1) — backs the public
+   * resolver. Soft-deleted rows are excluded by the default scope (N2); `pending` uploads
+   * are filtered out so an un-finished asset never resolves to a broken URL. Missing ids
+   * simply don't appear in the result. Empty input short-circuits (avoids an `IN ()`).
+   */
+  findManyReadyByIds(ids: readonly string[]): Promise<MediaAssetRow[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.whereIn('id', [...ids])
+      .where('status', 'eq', 'ready')
+      .all();
+  }
+
+  /**
+   * A paginated, searchable, filterable list of live assets.
+   *
+   * `folderId === MEDIA_ROOT_FOLDER` means "the root" — assets filed in NO folder — which a
+   * whitelisted `eq` filter cannot express (SQL `= NULL` matches nothing), so it becomes an
+   * explicit `IS NULL` predicate instead. Omitting `folderId` still means "everywhere".
+   */
   list(query: MediaListQuery): Promise<Paginated<MediaAssetRow>> {
+    const isRoot = query.folderId === MEDIA_ROOT_FOLDER;
     return this.paginateFiltered(
-      { search: query.search, folderId: query.folderId, type: query.type },
+      {
+        search: query.search,
+        folderId: isRoot ? undefined : query.folderId,
+        rootOnly: isRoot ? true : undefined,
+        type: query.type,
+        status: query.status,
+      },
       MEDIA_FILTERS,
       paginateArgsFromListQuery(query),
     );
@@ -121,6 +160,70 @@ export class MediaAssetRepository extends BaseRepository<
       throw new Error(`No media_asset to update for id ${id}`);
     }
     return row;
+  }
+
+  /**
+   * How many live assets sit in each folder, in ONE grouped query — the explorer's tree would
+   * otherwise need a count per node (N+1). Assets with no folder are keyed by `null`, which is
+   * the root's own count.
+   */
+  async countByFolder(): Promise<Map<string | null, number>> {
+    const rows = await this.db
+      .select({
+        folderId: mediaAssetTable.folderId,
+        total: sql<number>`count(*)::int`,
+      })
+      .from(mediaAssetTable)
+      .where(isNull(mediaAssetTable.deletedAt))
+      .groupBy(mediaAssetTable.folderId);
+    return new Map(rows.map((row) => [row.folderId, Number(row.total)]));
+  }
+
+  /** Whether any live asset is filed under a folder — the "is it empty?" delete guard. */
+  async countInFolder(folderId: string): Promise<number> {
+    return this.where('folderId', 'eq', folderId).count();
+  }
+
+  /**
+   * Move a set of assets into a folder (or to the root when `folderId` is null) in ONE
+   * statement — a multi-select drag is one write, not N. Returns the ids that actually moved so
+   * the caller can report the rest as missing rather than silently moving fewer than asked.
+   */
+  async moveMany(
+    ids: readonly string[],
+    folderId: string | null,
+  ): Promise<string[]> {
+    if (ids.length === 0) return [];
+    const moved = await this.db
+      .update(mediaAssetTable)
+      .set({ folderId, updatedAt: this.dateTime.now().toJSDate() })
+      .where(
+        and(
+          inArray(mediaAssetTable.id, [...ids]),
+          isNull(mediaAssetTable.deletedAt),
+        ),
+      )
+      .returning({ id: mediaAssetTable.id });
+    return moved.map((row) => row.id);
+  }
+
+  /**
+   * Delete `pending` rows whose presigned URL expired. Such a row can NEVER become `ready` — the
+   * signature it was created for is dead — so it is not an upload in progress, it is the residue
+   * of one that failed (the two rows the owner's blocked uploads left behind). Hard-deleted, not
+   * soft: no bytes ever landed in storage, so there is nothing to reconcile or restore.
+   */
+  async purgeExpiredPending(before: Date): Promise<number> {
+    const removed = await this.db
+      .delete(mediaAssetTable)
+      .where(
+        and(
+          eq(mediaAssetTable.status, 'pending'),
+          lt(mediaAssetTable.createdAt, before),
+        ),
+      )
+      .returning({ id: mediaAssetTable.id });
+    return removed.length;
   }
 
   /** Soft-delete an asset (`deleted_at`). Runs on `exec` (composes with the outbox, MS3). */

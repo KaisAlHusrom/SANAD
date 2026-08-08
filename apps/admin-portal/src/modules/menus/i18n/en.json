@@ -1,0 +1,49 @@
+{
+  "title": "Menus",
+  "subtitle": "Manage the website's navigation menus.",
+  "keys": {
+    "primary": "Header menu",
+    "footer": "Footer menu"
+  },
+  "menu": {
+    "notCreatedTitle": "This menu hasn't been created yet",
+    "notCreatedBody": "Create it to start adding navigation items.",
+    "create": "Create menu",
+    "created": "Menu created"
+  },
+  "editor": {
+    "items": "Items ({{count}})",
+    "addItem": "Add item",
+    "loadError": "Couldn't load this menu.",
+    "emptyTitle": "No items yet",
+    "emptyBody": "Add the first navigation item to this menu."
+  },
+  "item": {
+    "label": "Label",
+    "url": "Link",
+    "urlPlaceholder": "/services or https://…",
+    "icon": "Icon key",
+    "iconPlaceholder": "e.g. home",
+    "dragHandle": "Reorder item",
+    "untitled": "Untitled item",
+    "addChild": "Add sub-item",
+    "createTitle": "New item",
+    "editTitle": "Edit item",
+    "created": "Item added",
+    "updated": "Item updated",
+    "deleted": "Item deleted",
+    "reordered": "Items reordered",
+    "deleteTitle": "Delete item?",
+    "deleteMessage": "This removes the item and any sub-items. This can't be undone.",
+    "deleteConfirm": "Delete"
+  },
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "errors": {
+    "saveFailed": "Couldn't save. Please try again.",
+    "deleteFailed": "Couldn't delete. Please try again.",
+    "reorderFailed": "Couldn't reorder. Please try again."
+  }
+}

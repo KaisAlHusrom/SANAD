@@ -1,0 +1,1 @@
+ALTER TABLE "section" ADD COLUMN "config" jsonb DEFAULT 'null'::jsonb;

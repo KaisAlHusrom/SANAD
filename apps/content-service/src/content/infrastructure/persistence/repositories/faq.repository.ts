@@ -42,6 +42,14 @@ export class FaqRepository extends LocalizedRepository<
     super(db, dateTime, faqModelConfig, faqTranslationTable);
   }
 
+  /** Live FAQ base rows for a set of ids (the `picked` section-config hydration). */
+  findByIds(ids: readonly string[]): Promise<FaqRow[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.whereIn('id', [...ids]).all();
+  }
+
   /** A paginated, searchable, category-filterable list of live FAQs (base rows). */
   list(query: FaqListQuery): Promise<Paginated<FaqRow>> {
     return this.listFiltered(

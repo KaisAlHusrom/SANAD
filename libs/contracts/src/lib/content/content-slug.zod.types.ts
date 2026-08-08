@@ -9,10 +9,9 @@ export const slugSchema = z
   .trim()
   .min(1)
   .max(160)
-  .regex(
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-    'must be a lowercase slug (a-z, 0-9, hyphens)',
-  );
+  // The message is a CATALOG KEY, not prose — the validation pipe passes an author-written key
+  // through and the edge renders it in the caller's locale (U24).
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'validation.slug');
 
 /** Address a content entity by its slug (page tree / service detail payloads). Strict (N7). */
 export const contentSlugSchema = z

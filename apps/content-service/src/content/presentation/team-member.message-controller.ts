@@ -5,15 +5,18 @@ import {
   CONTENT_TEAM_MEMBER_DELETE,
   CONTENT_TEAM_MEMBER_GET,
   CONTENT_TEAM_MEMBER_LIST,
+  CONTENT_TEAM_MEMBER_REORDER,
   CONTENT_TEAM_MEMBER_UPDATE,
   contentIdSchema,
   contentSlugSchema,
+  reorderRequestSchema,
   teamMemberCreateSchema,
   teamMemberListQuerySchema,
   teamMemberUpdateSchema,
   type ContentId,
   type ContentSlug,
   type Paginated,
+  type ReorderRequest,
   type TeamMemberCreateRequest,
   type TeamMemberItem,
   type TeamMemberListQuery,
@@ -59,6 +62,14 @@ export class TeamMemberMessageController {
     body: TeamMemberUpdateRequest,
   ): Promise<TeamMemberItem> {
     return this.members.update(body);
+  }
+
+  @MessagePattern(CONTENT_TEAM_MEMBER_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.members.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_TEAM_MEMBER_DELETE)

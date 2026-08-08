@@ -8,15 +8,18 @@ import { SETTINGS_ENV, loadSettingsEnv } from './env.js';
 import { HealthController } from './health/health.controller.js';
 import { BrandingService } from './settings/application/branding.service.js';
 import { SettingsResolver } from './settings/application/settings.resolver.js';
+import { SettingsWriter } from './settings/application/settings.writer.js';
+import { SettingsCatalogService } from './settings/application/settings-catalog.service.js';
 import { SecretCipherService } from './settings/application/crypto/secret-cipher.service.js';
-import { SecretsService } from './settings/application/secrets.service.js';
 import { SettingRepository } from './settings/infrastructure/setting.repository.js';
 import { SettingValueRepository } from './settings/infrastructure/setting-value.repository.js';
 import { SettingTranslationRepository } from './settings/infrastructure/setting-translation.repository.js';
-import { IntegrationSecretRepository } from './settings/infrastructure/integration-secret.repository.js';
+import { IntegrationConfigRepository } from './settings/infrastructure/integration-config.repository.js';
+import { IntegrationActiveProviderRepository } from './settings/infrastructure/integration-active-provider.repository.js';
+import { IntegrationsService } from './settings/application/integrations.service.js';
 import { BrandingMessageController } from './settings/presentation/branding.message-controller.js';
 import { SettingsMessageController } from './settings/presentation/settings.message-controller.js';
-import { IntegrationSecretMessageController } from './settings/presentation/integration-secret.message-controller.js';
+import { IntegrationMessageController } from './settings/presentation/integration.message-controller.js';
 import {
   OutboxRelayService,
   SETTINGS_EVENTS_CLIENT,
@@ -48,7 +51,7 @@ const env = loadSettingsEnv();
   controllers: [
     BrandingMessageController,
     SettingsMessageController,
-    IntegrationSecretMessageController,
+    IntegrationMessageController,
     HealthController,
   ],
   providers: [
@@ -57,11 +60,14 @@ const env = loadSettingsEnv();
     SettingRepository,
     SettingValueRepository,
     SettingTranslationRepository,
-    IntegrationSecretRepository,
+    IntegrationConfigRepository,
+    IntegrationActiveProviderRepository,
     SettingsResolver,
+    SettingsWriter,
+    SettingsCatalogService,
     BrandingService,
     SecretCipherService,
-    SecretsService,
+    IntegrationsService,
     SeedService,
     OutboxRelayService,
   ],

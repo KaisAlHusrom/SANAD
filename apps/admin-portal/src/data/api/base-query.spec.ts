@@ -6,6 +6,7 @@ import {
   selectAccessToken,
   tokensReceived,
 } from '../auth/auth.slice';
+import { i18n } from '../../i18n/i18n';
 import { baseQueryWithAuth } from './base-query';
 
 type Store = ReturnType<typeof makeStore>;
@@ -41,6 +42,11 @@ function authHeaderOf(call: unknown): string | null {
     : null;
 }
 
+function headerOf(call: unknown, name: string): string | null {
+  const request = (call as [Request]).at(0);
+  return request instanceof Request ? request.headers.get(name) : null;
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -51,15 +57,13 @@ describe('baseQueryWithAuth', () => {
     const store = makeStore();
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          jsonResponse({
-            success: true,
-            message: 'ok',
-            data: { hello: 'world' },
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          success: true,
+          message: 'ok',
+          data: { hello: 'world' },
+        }),
+      ),
     );
 
     const result = await baseQueryWithAuth('/branding', apiFor(store), {});
@@ -179,5 +183,27 @@ describe('baseQueryWithAuth', () => {
     const result = await baseQueryWithAuth('/leads', apiFor(store), {});
 
     expect(result.error).toEqual({ status: 400, message: 'Validation failed' });
+  });
+
+  it('attaches the in-app locale so the backend answers in it (U24c)', async () => {
+    const store = makeStore();
+    // A FRESH Response per call — a Response body can only be consumed once.
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() =>
+        Promise.resolve(
+          jsonResponse({ success: true, message: 'ok', data: null }),
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await i18n.changeLanguage('en');
+    await baseQueryWithAuth('/things', apiFor(store), {});
+    expect(headerOf(fetchMock.mock.calls.at(0), 'x-sanad-locale')).toBe('en');
+
+    // Arabic is the default and is sent EXPLICITLY — never left for the backend to guess (U8).
+    await i18n.changeLanguage('ar');
+    await baseQueryWithAuth('/things', apiFor(store), {});
+    expect(headerOf(fetchMock.mock.calls.at(1), 'x-sanad-locale')).toBe('ar');
   });
 });

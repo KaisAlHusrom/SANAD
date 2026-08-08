@@ -6,6 +6,7 @@ import {
   CONTENT_MENU_GET,
   CONTENT_MENU_ITEM_CREATE,
   CONTENT_MENU_ITEM_DELETE,
+  CONTENT_MENU_ITEM_REORDER,
   CONTENT_MENU_ITEM_UPDATE,
   CONTENT_MENU_LIST,
   contentIdSchema,
@@ -13,6 +14,7 @@ import {
   menuItemCreateSchema,
   menuItemUpdateSchema,
   menuKeyParamSchema,
+  reorderRequestSchema,
   type ContentId,
   type MenuCreateRequest,
   type MenuItemCreateRequest,
@@ -21,6 +23,7 @@ import {
   type MenuKeyParam,
   type MenuSummary,
   type MenuTree,
+  type ReorderRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import { MenuService } from '../application/services/menu.service.js';
@@ -73,6 +76,14 @@ export class MenuMessageController {
     body: MenuItemUpdateRequest,
   ): Promise<MenuItemNode> {
     return this.menus.updateItem(body);
+  }
+
+  @MessagePattern(CONTENT_MENU_ITEM_REORDER)
+  async reorderItems(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.menus.reorderItems(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_MENU_ITEM_DELETE)

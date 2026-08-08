@@ -15,7 +15,11 @@
     "columns": "Columns",
     "rowActions": "Row actions",
     "noResults": "No results",
-    "errorTitle": "Couldn't load the data."
+    "errorTitle": "Couldn't load the data.",
+    "dragHandle": "Drag to reorder",
+    "reorderHint": "Sort by order and clear search/filters to drag rows.",
+    "reorderSaved": "Order saved",
+    "reorderFailed": "Couldn't save the new order"
   },
   "filter": {
     "filters": "Filters",
@@ -43,6 +47,8 @@
   },
   "form": {
     "generate": "Generate",
+    "regenerateSlug": "Regenerate from title",
+    "slugAuto": "Auto-generated from the title",
     "save": "Save",
     "cancel": "Cancel",
     "selectPlaceholder": "Select…",

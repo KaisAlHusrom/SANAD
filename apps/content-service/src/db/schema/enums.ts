@@ -19,6 +19,8 @@ export const sectionTypeEnum = pgEnum('section_type', [
   'blog',
   'cta',
   'richtext',
+  'faq',
+  'team',
 ]);
 
 export const blockTypeEnum = pgEnum('block_type', [

@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Inject, Put, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import {
-  identityToHeaders,
   JwtAuthGuard,
   PermissionsGuard,
   RequirePermissions,
@@ -15,9 +14,12 @@ import {
   SETTINGS_PERMISSIONS,
   type BrandingRecord,
   type BrandingUpdateRequest,
+  type Locale,
 } from '@sanad/contracts';
 import { sendRequest } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
+import { RequestLocale } from '../core/decorators/index.js';
+import { forwardHeaders } from '../core/helpers/index.js';
 import { SETTINGS_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
 
@@ -32,12 +34,13 @@ export class BrandingController {
   constructor(@Inject(SETTINGS_CLIENT) private readonly client: ClientProxy) {}
 
   @Get()
-  async get(): Promise<BrandingRecord> {
+  async get(@RequestLocale() locale: Locale): Promise<BrandingRecord> {
     try {
       return await sendRequest<BrandingRecord>(
         this.client,
         SETTINGS_BRANDING_GET,
         { scope: 'global' },
+        { headers: forwardHeaders(null, locale) },
       );
     } catch (error) {
       throw toHttpException(error);
@@ -49,6 +52,7 @@ export class BrandingController {
   @RequirePermissions(SETTINGS_PERMISSIONS.manage)
   async update(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(brandingUpdateRequestSchema))
     body: BrandingUpdateRequest,
   ): Promise<BrandingRecord> {
@@ -57,7 +61,7 @@ export class BrandingController {
         this.client,
         SETTINGS_BRANDING_UPDATE,
         body,
-        { headers: identityToHeaders(identity) },
+        { headers: forwardHeaders(identity, locale) },
       );
     } catch (error) {
       throw toHttpException(error);

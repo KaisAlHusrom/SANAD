@@ -4,17 +4,20 @@ import {
   CONTENT_BLOG_TAG_CREATE,
   CONTENT_BLOG_TAG_DELETE,
   CONTENT_BLOG_TAG_LIST,
+  CONTENT_BLOG_TAG_REORDER,
   CONTENT_BLOG_TAG_UPDATE,
   blogTagCreateSchema,
   blogTagListQuerySchema,
   blogTagUpdateSchema,
   contentIdSchema,
+  reorderRequestSchema,
   type BlogTagCreateRequest,
   type BlogTagItem,
   type BlogTagListQuery,
   type BlogTagUpdateRequest,
   type ContentId,
   type Paginated,
+  type ReorderRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import { BlogTagService } from '../application/services/blog-tag.service.js';
@@ -49,6 +52,14 @@ export class BlogTagMessageController {
     body: BlogTagUpdateRequest,
   ): Promise<BlogTagItem> {
     return this.tags.update(body);
+  }
+
+  @MessagePattern(CONTENT_BLOG_TAG_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.tags.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_BLOG_TAG_DELETE)

@@ -1,0 +1,30 @@
+{
+  "title": "صندوق العملاء المحتملين",
+  "subtitle": "الطلبات الواردة من الموقع.",
+  "noCompany": "—",
+  "changeStatus": "تغيير الحالة",
+  "columns": {
+    "client": "العميل",
+    "company": "الجهة",
+    "source": "المصدر",
+    "status": "الحالة",
+    "createdAt": "تاريخ الورود"
+  },
+  "filters": {
+    "status": "الحالة",
+    "source": "المصدر"
+  },
+  "statuses": {
+    "new": "جديد",
+    "contacted": "تمت المتابعة",
+    "archived": "مؤرشف"
+  },
+  "sources": {
+    "contact": "نموذج التواصل",
+    "request-project": "طلب مشروع"
+  },
+  "statusUpdate": {
+    "toastSuccess": "تم تحديث حالة العميل.",
+    "toastError": "تعذّر تحديث حالة العميل."
+  }
+}

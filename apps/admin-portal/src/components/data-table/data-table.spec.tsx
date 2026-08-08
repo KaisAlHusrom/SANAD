@@ -69,6 +69,8 @@ function selection(
     toggle: vi.fn(),
     toggleAll: vi.fn(),
     clear: vi.fn(),
+    selectOnly: vi.fn(),
+    selectRange: vi.fn(),
     ...over,
   };
 }
@@ -230,5 +232,42 @@ describe('DataTable', () => {
     await user.click(triggers[0] as HTMLElement);
     await user.click(await screen.findByText('Edit'));
     expect(onSelect).toHaveBeenCalledWith(rows[0]);
+  });
+
+  it('shows a drag handle per row when reorder is enabled (natural order)', () => {
+    renderWithProviders(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getRowId={(row) => row.id}
+        total={2}
+        isLoading={false}
+        list={makeList()}
+        reorder={{ onReorder: vi.fn().mockResolvedValue(undefined) }}
+      />,
+    );
+    expect(
+      screen.getAllByRole('button', { name: 'Drag to reorder' }),
+    ).toHaveLength(2);
+  });
+
+  it('disables dragging and shows a hint when a search is active', () => {
+    renderWithProviders(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getRowId={(row) => row.id}
+        total={2}
+        isLoading={false}
+        list={makeList({ search: 'alp' })}
+        reorder={{ onReorder: vi.fn().mockResolvedValue(undefined) }}
+      />,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Drag to reorder' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/clear search\/filters to drag rows/i),
+    ).toBeInTheDocument();
   });
 });

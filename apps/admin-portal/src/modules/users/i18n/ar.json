@@ -1,0 +1,52 @@
+{
+  "title": "المستخدمون والصلاحيات",
+  "subtitle": "إدارة أعضاء الفريق وصلاحياتهم.",
+  "noRoles": "لا أدوار",
+  "toggleActive": "تبديل التفعيل",
+  "columns": {
+    "member": "العضو",
+    "roles": "الأدوار",
+    "status": "الحالة"
+  },
+  "status": {
+    "active": "مفعّل",
+    "inactive": "موقوف"
+  },
+  "roles": {
+    "title": "أدوار {{name}}",
+    "hint": "بدّل الدور لمنحه أو سحبه.",
+    "admin": "مدير",
+    "developer": "مطوّر",
+    "designer": "مصمّم",
+    "qa": "ضمان الجودة",
+    "blog_writer": "كاتب محتوى",
+    "business_manager": "مدير أعمال",
+    "client": "عميل"
+  },
+  "fields": {
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "isActive": "مفعّل",
+    "roles": "الأدوار"
+  },
+  "actions": {
+    "invite": "دعوة عضو",
+    "edit": "تعديل",
+    "manageRoles": "إدارة الأدوار"
+  },
+  "form": {
+    "createTitle": "دعوة عضو",
+    "editTitle": "تعديل عضو",
+    "created": "تمت دعوة العضو.",
+    "updated": "تم تحديث العضو."
+  },
+  "toast": {
+    "activated": "تم تفعيل العضو.",
+    "deactivated": "تم إيقاف العضو.",
+    "updateError": "تعذّر تحديث العضو.",
+    "roleAssigned": "تم منح الدور.",
+    "roleRevoked": "تم سحب الدور.",
+    "roleError": "تعذّر تحديث الدور."
+  }
+}

@@ -3,9 +3,22 @@ import { i18n } from './index';
 // Register every feature module's catalog so parity is checked across ALL namespaces
 // (U8/F13), not just `common`. Add new modules here as they land.
 import '../modules/auth/i18n';
-import '../modules/integration-secrets/i18n';
+import '../modules/integrations/i18n';
 import '../modules/media/i18n';
 import '../modules/settings/i18n';
+import '../modules/services/i18n';
+import '../modules/testimonials/i18n';
+import '../modules/faqs/i18n';
+import '../modules/team/i18n';
+import '../modules/portfolio/i18n';
+import '../modules/blog/i18n';
+import '../modules/pages/i18n';
+import '../modules/menus/i18n';
+import '../modules/content-hub/i18n';
+import '../modules/notifications/i18n';
+import '../modules/leads/i18n';
+import '../modules/dashboard/i18n';
+import '../modules/users/i18n';
 
 function flattenKeys(value: unknown, prefix = ''): string[] {
   if (value && typeof value === 'object' && !Array.isArray(value)) {

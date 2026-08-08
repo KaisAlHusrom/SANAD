@@ -67,30 +67,52 @@ message-pattern constants.
 
 ## Integration-secrets vault (N13)
 
-Vault patterns (MS2):
+Integrations patterns (MS2):
 
-| Pattern                              | Payload                            | Reply                        |
-| ------------------------------------ | ---------------------------------- | ---------------------------- |
-| `settings.resolve-secret`            | `{ key }` (**internal only**, N13) | `string \| null` (decrypted) |
-| `settings.integration-secret.set`    | `{ key, value }` (+ identity, MS4) | `SecretStatus` (masked)      |
-| `settings.integration-secret.status` | `{}`                               | `SecretStatus[]` (masked)    |
+| Pattern                          | Payload                                         | Reply                             |
+| -------------------------------- | ----------------------------------------------- | --------------------------------- |
+| `settings.integration.status`    | `{}`                                            | `IntegrationCapabilityStatus[]`   |
+| `settings.integration.configure` | `{ capability, provider, values }` (+ identity) | refreshed status                  |
+| `settings.integration.activate`  | `{ capability, provider }` (+ identity)         | refreshed status                  |
+| `settings.integration.resolve`   | `{ capability, provider? }` (**internal only**) | `ResolvedIntegrationConfig\|null` |
 
-A dedicated, non-public `integration_secret` table holds third-party credentials (the
-**SMTP password** today; `R2_SECRET_KEY` registered-but-deferred) **encrypted at rest**
-(AES-256-GCM via `SecretCipherService`, master key `APP_SECRETS_ENCRYPTION_KEY`). The
-`ciphertext`/`iv`/`auth_tag` columns are `hidden` (N2); a partial unique index keeps one
-live row per key (clear = soft-delete, so rotate is clear-then-insert). `SecretsService`
-exposes **masked status** (`isSet`/`fromEnv`/`last4`/`updatedAt`/`updatedByUserId` — never
-the value), **set/rotate/clear**, and a server-side **resolve** (decrypt) whose plaintext
-crosses only the internal `settings.resolve-secret` reply, never a client. Resolution order
-**vault row → env fallback → null**. Consumed by the notifications-service for SMTP.
+### The integrations vault (N13, reworked 2026-07-19)
 
-**Per-integration RBAC (N13, P7.B):** the gateway gates the admin surface per third party,
-not under blanket `settings.manage`. Each `SECRET_REGISTRY` entry carries a
-`managePermission` (`settings.secrets.<feature>.manage`, e.g. `email`/`storage`); viewing
-the masked statuses needs `settings.secrets.read`. The gateway's `SecretPermissionGuard`
-resolves the `:key` route param to its entry and enforces that key (admin's global `manage`
-covers all). These permission keys are seeded into the identity RBAC catalog.
+The model is **capability → many provider configs → one active** (the driver/disk pattern), driven
+entirely by `INTEGRATION_CATALOG` in `@sanad/contracts`. It replaces the flat `integration_secret`
+table (one row per global credential key), which could not express "R2's bucket" vs "S3's bucket".
+
+- **`integration_config`** — one row per `(capability, provider, field_key)`, partial-unique on the
+  live rows. Per the field's descriptor: **secret** fields are AES-256-GCM encrypted into
+  `ciphertext`/`iv`/`auth_tag` (`hidden`, N2) with `last4` for masked recognition; **non-secret**
+  fields (bucket, endpoint, host…) are plaintext in `value` so the owner can see and edit them.
+- **`integration_active_provider`** — one row per capability (unique index), so two providers can
+  never be active at once.
+- **`IntegrationsService`** — `getStatuses()` (masked, batch-read: no per-key N+1),
+  `configureProvider()` (a field ABSENT from `values` is left untouched — how a masked secret
+  survives an edit; `''` clears it), `activateProvider()`, and `resolveConfig()` whose decrypted
+  plaintext crosses only the internal resolve reply, never a client.
+- **Migration `0002`** created both tables and **backfilled** the two live flat rows
+  (`SMTP_PASSWORD → email/smtp/password`, `R2_SECRET_KEY → storage/r2/secretAccessKey`) carrying
+  the ciphertext verbatim — same key, no re-encryption, no value lost. `integration_secret` is
+  retained (unused) for rollback safety and can be dropped in a later migration.
+
+**Env fallback lives in the CONSUMER,** not here: media/notifications merge each field
+**vault → their own env → missing** using the descriptor's `envVar` (U19 keeps each service's env
+its own). So `getStatuses()` reports the vault only — an env-only deploy reads "not configured"
+while still working, and "Test connection" is what proves the effective config.
+
+**Per-capability RBAC (N13):** the gateway gates writes per capability, not under blanket
+`settings.manage`. `integrationManagePermission(capability)` →
+`settings.integrations.<capability>.manage`; viewing the masked page needs
+`settings.integrations.read`. The gateway's `IntegrationPermissionGuard` resolves the
+`:capability` route param and enforces it (admin's global `manage` covers all). These keys are
+derived from the catalog and seeded into the identity RBAC catalog.
+
+**Testing a provider is NOT done here (MS1):** the gateway routes
+`POST /api/integrations/:capability/:provider/test` to the service that owns the adapter
+(storage → media-service `media.storage.test`, email → notifications `notification.email.test`),
+so settings-service never learns S3 or SMTP.
 
 ## Events emitted (MS3 — Outbox)
 
@@ -102,6 +124,70 @@ covers all). These permission keys are seeded into the identity RBAC catalog.
 
 `GET /api/branding` (**public** — website renders unauthenticated; returns coded
 defaults when unset) and `PUT /api/branding` (guarded `settings.manage`, MS4).
+
+## Generic settings catalog + writer (2026-06-27)
+
+The descriptor catalog is now surfaced generically for the admin settings page:
+
+- **`SETTING_DESCRIPTORS`** (`application/settings-catalog.descriptors.ts`) — the UI catalog
+  (group → section → key → type/requirement/options), derived from `BRANDING_FIELDS` + a
+  section map (today only `branding`; future groups append here). Structure source of truth.
+  **Filtered to `EDITABLE_SETTING_KEYS`** (2026-07-19): the catalog exposes only settings that
+  **actually take effect somewhere**, in six sections — `identity` (`brand.name`, `brand.tagline`,
+  `logoUrl`, `faviconUrl`), `colors` (`primary`/`secondary` → the **portal** accent, live),
+  `contact`, `social`, `legal` (`copyright`) and `seo` (`siteUrl`, `shareImageUrl`). The website
+  renders the contact/social/legal/seo leaves (both footers, OG/canonical, `sitemap.xml`,
+  `robots.txt`, Organization JSON-LD); the portal renders identity + colors.
+  **Excluded** because nothing consumes them (they would be dead controls): `colors.pageAccents.*`
+  (per-page website color lives in the CMS pages settings), `colors.surface.*`/`colors.text.*` (the
+  website's fixed art direction), `fonts.*` (no runtime font-by-name swap), `brand.shortDesc`.
+  Those stay in `BRANDING_FIELDS`/`BRANDING_DEFAULTS`/`assembleBranding` so `GET /branding` is
+  unchanged. Guarded by `settings-catalog.descriptors.spec.ts`.
+- **New leaves (2026-07-19):** `branding.legal.copyright` (`localized_text`, defaulted from the
+  website's footer dictionary so nothing changes visually until edited) and `branding.seo.siteUrl` /
+  `branding.seo.shareImageUrl`. Added to the contract `BrandingRecord`, `BRANDING_DEFAULTS`,
+  `BRANDING_FIELDS` (so `SETTINGS_CATALOG` seeds them automatically) and the
+  `brandingUpdateRequestSchema` + `branding-update.flatten.ts` deep-partial write path. The
+  copyright deliberately holds only the notice — the brand name is composed in at render time, so
+  renaming the company updates every footer instead of stranding a baked-in name.
+- **`SettingsCatalogService`** (`SETTINGS_CATALOG_GET`) — assembles `SettingsCatalog` (groups →
+  sections → fields with descriptor + **resolved** value via `SettingsResolver.resolveGroup`,
+  coded default when unset, F7). Read-only.
+- **Clearing a value (2026-07-19 fix).** `assertValidSettingValue` accepts `null` for **every**
+  nullable leaf — including `localized_text` (`contact.address` is `LocalizedText | null`). It used
+  to reject null there, so emptying that field 500'd. When a `localized_text` is cleared the writer
+  now also **deletes its `setting_translation` rows** (`SettingTranslationRepository.deleteForValue`,
+  same transaction) — otherwise the resolver re-assembles the stale per-locale text over the cleared
+  value instead of falling through to the coded default (U9). Covered by
+  `settings-value.validate.spec.ts` + a `settings-db.int.spec.ts` clear→re-resolve case.
+- **`SettingsWriter`** (`SETTINGS_SET`) — the single generic value-write seam (U3): validates
+  each value against its descriptor `type` (`settings-value.validate.ts`, N7), then persists
+  values (+ per-locale translations for `localized_text`) and one `settings.changed` Outbox
+  event per touched group in ONE transaction via the **`TransactionRunner`** (N14 — no
+  `DRIZZLE`), and bumps each group's Redis version key (`settingsVersionKey`). **`BrandingService`
+  now delegates its writes here** (its flatten → `setMany`) and holds no `db` handle — the N14
+  grandfather debt for branding is cleared.
+
+Gateway: `GET /api/settings` (`settings.read`) + `PUT /api/settings` (`settings.manage`).
+
+## Errors — keys, never prose (U24)
+
+Both failure paths now return `rpcError(status, key, params)` from
+[`@sanad/i18n`](../../libs/shared/i18n/i18n.md); the text lives only in the ar/en catalogs and is
+rendered once at the gateway edge.
+
+- **Integrations** (`application/integrations.service.ts`) — `settings.unknownProvider` (a
+  capability/provider pair not in `INTEGRATION_CATALOG`) and `settings.unknownField` (a value
+  for a key the provider's descriptor doesn't declare), both 400.
+- **Setting values** (`application/settings-value.validate.ts`) — the descriptor type mismatch
+  rejects with `settings.value.expected.localizedText` / `.boolean` / `.number` / `.string`,
+  400, carrying the offending `key` as a param.
+
+**Status fix that came with the migration.** These used to be `BadRequestException`s thrown
+inside a `@MessagePattern` handler — a plain Nest `HttpException` does **not** serialize its
+status across the broker, so a validation failure surfaced to the client as a **500** instead of
+a 400. As `RpcException`s carrying `{ statusCode, messageKey, params }`, `toHttpException` now
+maps the real status (MS2).
 
 ## Settings used
 

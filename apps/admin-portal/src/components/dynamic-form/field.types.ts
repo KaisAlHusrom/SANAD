@@ -8,6 +8,7 @@ import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
  */
 export type FieldType =
   | 'text'
+  | 'slug'
   | 'email'
   | 'number'
   | 'password'
@@ -58,6 +59,12 @@ export interface FieldConfig<TValues extends FieldValues> {
   rows?: number;
   /** Password fields: show a "generate" button. */
   generate?: boolean;
+  /**
+   * `slug` fields: the field(s) the slug auto-derives from (e.g. a translatable title's
+   * `translations.en.title` then `translations.ar.title`). The first non-empty source wins;
+   * auto-sync stops once the user edits the slug, and a regenerate button resumes it.
+   */
+  slugSource?: Path<TValues> | Path<TValues>[];
   /** `custom` fields: render any control bound to the form (e.g. `<ServerSelect>`). */
   render?: (args: FieldRenderArgs<TValues>) => ReactNode;
   /** `image` fields: upload a File → its URL (presigned R2 via the caller's media flow). */

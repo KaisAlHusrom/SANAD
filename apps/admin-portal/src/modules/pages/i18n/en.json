@@ -1,0 +1,191 @@
+{
+  "title": "Pages",
+  "subtitle": "Build the website's pages from sections and blocks.",
+  "fields": {
+    "slug": "Slug",
+    "status": "Status",
+    "title": "Title",
+    "metaTitle": "SEO title",
+    "metaDescription": "SEO description"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "form": {
+    "createTitle": "New page",
+    "editTitle": "Edit page",
+    "created": "Page created",
+    "updated": "Page updated"
+  },
+  "columns": {
+    "title": "Title",
+    "slug": "Slug",
+    "status": "Status",
+    "updatedAt": "Updated"
+  },
+  "actions": {
+    "create": "New page",
+    "openBuilder": "Open builder",
+    "editMeta": "Edit details",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "delete": {
+    "title": "Delete page?",
+    "message": "This removes the page and all of its sections and blocks. This can't be undone.",
+    "confirm": "Delete",
+    "toastSuccess": "Page deleted",
+    "bulkTitle": "Delete pages?",
+    "bulkMessage": "This removes {{count}} pages and all their content. This can't be undone.",
+    "bulkToastSuccess": "{{count}} pages deleted"
+  },
+  "errors": {
+    "deleteFailed": "Couldn't delete. Please try again.",
+    "saveFailed": "Couldn't save. Please try again.",
+    "reorderFailed": "Couldn't reorder. Please try again."
+  },
+  "builder": {
+    "backToPages": "Back to pages",
+    "editMeta": "Page details",
+    "loadError": "Couldn't load this page.",
+    "emptyTitle": "No sections yet",
+    "emptyBody": "Add your first section to start building this page.",
+    "selectTitle": "Select a section",
+    "selectBody": "Pick a section above to edit its content, or add a new one."
+  },
+  "section": {
+    "strip": "Sections ({{count}})",
+    "clickToEdit": "Click a section to edit it",
+    "add": "Section",
+    "dragHandle": "Reorder section",
+    "hide": "Hide section",
+    "show": "Show section",
+    "type": "Type",
+    "published": "Visible",
+    "eyebrow": "Eyebrow",
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "kind": "Section · {{type}}",
+    "save": "Save changes",
+    "reset": "Reset",
+    "saved": "Section saved",
+    "added": "Section added",
+    "deleted": "Section deleted",
+    "reordered": "Sections reordered",
+    "deleteTitle": "Delete section?",
+    "deleteMessage": "This removes the section and its blocks. This can't be undone.",
+    "unsavedTitle": "Discard changes?",
+    "unsavedBody": "You have unsaved changes to this section.",
+    "discard": "Discard",
+    "keepEditing": "Keep editing"
+  },
+  "sectionTypes": {
+    "hero": "Hero",
+    "trust": "Trust",
+    "services": "Services",
+    "process": "Process",
+    "work": "Work",
+    "stats": "Stats",
+    "testimonials": "Testimonials",
+    "blog": "Blog",
+    "cta": "Call to action",
+    "richtext": "Rich text"
+  },
+  "config": {
+    "title": "Linked collection",
+    "description": "This section shows records from the {{collection}} collection.",
+    "mode": "Show",
+    "modes": {
+      "all": "All (newest first)",
+      "featured": "Featured only",
+      "picked": "Hand-picked"
+    },
+    "limit": "Limit",
+    "limitPlaceholder": "e.g. 4",
+    "limitHint": "Maximum records to show (1–50).",
+    "picked": "Picked records",
+    "pickedPlaceholder": "Search to add…",
+    "manage": "Manage {{collection}} →",
+    "save": "Save collection",
+    "saved": "Collection updated",
+    "saveFailed": "Couldn't save the collection. Please try again.",
+    "collections": {
+      "services": "services",
+      "portfolio": "portfolio",
+      "testimonials": "testimonials",
+      "blog": "blog",
+      "faq": "FAQs",
+      "team": "team"
+    }
+  },
+  "block": {
+    "list": "Blocks ({{count}})",
+    "add": "Block",
+    "dragHandle": "Reorder block",
+    "untitled": "Untitled block",
+    "empty": "No blocks yet. Add one to fill this section.",
+    "title": "Title",
+    "value": "Value",
+    "suffix": "Suffix",
+    "suffixPlaceholder": "e.g. + or %",
+    "icon": "Icon key",
+    "iconPlaceholder": "e.g. rocket",
+    "href": "Link",
+    "hrefPlaceholder": "/contact or https://…",
+    "variant": "Style",
+    "image": "Image",
+    "body": "Body",
+    "createTitle": "New block",
+    "editTitle": "Edit block",
+    "created": "Block created",
+    "updated": "Block updated",
+    "deleted": "Block deleted",
+    "reordered": "Blocks reordered",
+    "deleteTitle": "Delete block?",
+    "deleteMessage": "This removes the block. This can't be undone."
+  },
+  "blockTypes": {
+    "text": "Text",
+    "richtext": "Rich text",
+    "stat": "Stat",
+    "step": "Step",
+    "feature": "Feature",
+    "image": "Image",
+    "cta": "Call to action"
+  },
+  "blockVariants": {
+    "primary": "Primary",
+    "secondary": "Secondary"
+  },
+  "preview": {
+    "title": "Live preview",
+    "edit": "Edit",
+    "editing": "Editing",
+    "pickImage": "Change image",
+    "editRecord": "Edit record",
+    "locale": {
+      "ar": "Arabic",
+      "en": "English"
+    },
+    "desktop": "Desktop",
+    "mobile": "Mobile"
+  },
+  "studio": {
+    "structure": "Structure",
+    "structureHint": "Add, reorder & hide sections",
+    "editHint": "Click any text or image on the page to edit it in place.",
+    "focusSection": "Focus this section",
+    "emptyTitle": "This page is empty",
+    "emptyBody": "Open Structure to add your first section."
+  },
+  "rail": {
+    "title": "Page structure",
+    "sections": "Sections ({{count}})",
+    "back": "All sections",
+    "close": "Close",
+    "empty": "No sections yet — add your first below.",
+    "settings": "Content & data",
+    "blocksTitle": "Blocks"
+  }
+}

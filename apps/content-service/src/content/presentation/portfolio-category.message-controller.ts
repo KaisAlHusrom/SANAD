@@ -4,17 +4,20 @@ import {
   CONTENT_PORTFOLIO_CATEGORY_CREATE,
   CONTENT_PORTFOLIO_CATEGORY_DELETE,
   CONTENT_PORTFOLIO_CATEGORY_LIST,
+  CONTENT_PORTFOLIO_CATEGORY_REORDER,
   CONTENT_PORTFOLIO_CATEGORY_UPDATE,
   contentIdSchema,
   portfolioCategoryCreateSchema,
   portfolioCategoryListQuerySchema,
   portfolioCategoryUpdateSchema,
+  reorderRequestSchema,
   type ContentId,
   type Paginated,
   type PortfolioCategoryCreateRequest,
   type PortfolioCategoryItem,
   type PortfolioCategoryListQuery,
   type PortfolioCategoryUpdateRequest,
+  type ReorderRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import { PortfolioCategoryService } from '../application/services/portfolio-category.service.js';
@@ -49,6 +52,14 @@ export class PortfolioCategoryMessageController {
     body: PortfolioCategoryUpdateRequest,
   ): Promise<PortfolioCategoryItem> {
     return this.categories.update(body);
+  }
+
+  @MessagePattern(CONTENT_PORTFOLIO_CATEGORY_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.categories.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_PORTFOLIO_CATEGORY_DELETE)

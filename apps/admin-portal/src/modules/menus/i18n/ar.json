@@ -1,0 +1,49 @@
+{
+  "title": "القوائم",
+  "subtitle": "أدِر قوائم تنقّل الموقع.",
+  "keys": {
+    "primary": "قائمة الرأس",
+    "footer": "قائمة التذييل"
+  },
+  "menu": {
+    "notCreatedTitle": "لم تُنشأ هذه القائمة بعد",
+    "notCreatedBody": "أنشئها لتبدأ بإضافة عناصر التنقّل.",
+    "create": "إنشاء القائمة",
+    "created": "تم إنشاء القائمة"
+  },
+  "editor": {
+    "items": "العناصر ({{count}})",
+    "addItem": "إضافة عنصر",
+    "loadError": "تعذّر تحميل هذه القائمة.",
+    "emptyTitle": "لا عناصر بعد",
+    "emptyBody": "أضِف أول عنصر تنقّل إلى هذه القائمة."
+  },
+  "item": {
+    "label": "التسمية",
+    "url": "الرابط",
+    "urlPlaceholder": "‎/services أو https://…",
+    "icon": "مفتاح الأيقونة",
+    "iconPlaceholder": "مثل home",
+    "dragHandle": "إعادة ترتيب العنصر",
+    "untitled": "عنصر بلا عنوان",
+    "addChild": "إضافة عنصر فرعي",
+    "createTitle": "عنصر جديد",
+    "editTitle": "تعديل العنصر",
+    "created": "تمت إضافة العنصر",
+    "updated": "تم تحديث العنصر",
+    "deleted": "تم حذف العنصر",
+    "reordered": "تمت إعادة ترتيب العناصر",
+    "deleteTitle": "حذف العنصر؟",
+    "deleteMessage": "سيؤدي هذا إلى حذف العنصر وأي عناصر فرعية. لا يمكن التراجع عن ذلك.",
+    "deleteConfirm": "حذف"
+  },
+  "actions": {
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "errors": {
+    "saveFailed": "تعذّر الحفظ. حاول مرة أخرى.",
+    "deleteFailed": "تعذّر الحذف. حاول مرة أخرى.",
+    "reorderFailed": "تعذّرت إعادة الترتيب. حاول مرة أخرى."
+  }
+}

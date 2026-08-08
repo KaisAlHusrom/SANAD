@@ -9,7 +9,9 @@
     "confirm": "Confirm",
     "close": "Close",
     "retry": "Retry",
-    "logout": "Log out"
+    "logout": "Log out",
+    "clear": "Clear",
+    "back": "Back"
   },
   "states": {
     "loading": "Loading…",
@@ -40,9 +42,38 @@
     "choose": "Choose from library",
     "title": "Media library",
     "empty": "No images yet.",
-    "errorLoad": "Couldn't load media."
+    "errorLoad": "Couldn't load media.",
+    "none": "No image selected",
+    "select": "Select",
+    "upload": "Upload",
+    "uploading": "Uploading…",
+    "uploadFailed": "The upload failed.",
+    "storageUnconfigured": "Storage isn't configured yet — set the R2 keys in Integrations.",
+    "allFolders": "All folders",
+    "newFolder": "New folder",
+    "folderNameLabel": "Folder name",
+    "folderNamePlaceholder": "e.g. Logos",
+    "createFolder": "Create",
+    "prev": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {{page}} of {{total}}",
+    "errors": {
+      "cors": "Your storage bucket is blocking uploads from this site. Open Settings → Integrations → Storage and configure CORS.",
+      "offline": "You appear to be offline — the file never reached storage.",
+      "storageUnconfigured": "Storage isn't configured yet — set it up in Integrations.",
+      "tooLarge": "That file is larger than the upload limit.",
+      "forbidden": "You don't have permission to upload media. Ask an administrator.",
+      "uploadRejected": "Storage rejected the upload. Check the bucket's keys and permissions in Integrations.",
+      "uploadFailed": "The upload failed.",
+      "unknown": "Something went wrong."
+    },
+    "retry": "Retry",
+    "folderCreated": "Folder “{{name}}” created.",
+    "folderFailed": "Couldn't create the folder."
   },
   "errors": {
-    "forbidden": "You don't have permission to view this page."
+    "forbidden": "You don't have permission to view this page.",
+    "network": "Couldn't reach the server. Check your connection and try again.",
+    "request": "The request could not be completed ({{status}})."
   }
 }

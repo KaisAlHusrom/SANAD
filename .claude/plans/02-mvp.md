@@ -103,6 +103,22 @@
 
 ---
 
+## P8.6 — Currency & budget bands → configurable (owner-requested, do it FULLY in its own session)
+**Why:** the request-a-project budget bands + the `SAR` currency are frozen in code
+(`apps/website/src/components/marketing/request/request.constants.ts:32-35`), and those exact
+display strings are **persisted onto every lead record** — so renaming a band silently breaks the
+comparability of historical leads. Owner directive (2026-07-19): *"currency has effect in a lot of
+places, so yes we need to make it editable — but not this session; do it fully and correctly
+without missing anything."*
+**Done when:** currency (code + symbol + placement) and the budget bands are admin-configurable and
+take effect everywhere they render; leads store a **stable band code** (not the display label) with
+the label resolved at read time, and existing lead rows are migrated/back-filled so old leads stay
+readable and comparable; every place that renders a money value (request form, lead admin, exports,
+notification emails) resolves from the one source. Needs a deliberate sweep for money literals
+first — do not guess the call sites.
+
+---
+
 ## After P9 (later — each gets its own feature plan when reached)
 P10 client-portal + projects-service · P11 crm-service · P12 hr-service · P13 finance-service · P14 support-service · P15 documents/e-sign · P16 ai-assistant (`06-ai-assistant.md`). Scope in `00-full-system.md`.
 

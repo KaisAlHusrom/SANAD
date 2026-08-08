@@ -1,6 +1,8 @@
 import type { LocalizedText } from '../common/localized-text.js';
 import type { BlockType } from './block-type.zod.types.js';
 import type { PageStatus } from './page-status.zod.types.js';
+import type { SectionCollectionConfig } from './section-config.zod.types.js';
+import type { HydratedCollection } from './section-collection.types.js';
 import type { SectionType } from './section-type.zod.types.js';
 
 /**
@@ -29,6 +31,10 @@ export interface SectionNode {
   title: LocalizedText;
   subtitle: LocalizedText;
   blocks: BlockNode[];
+  /** How this section selects its linked collection records (`null` = no link). */
+  config: SectionCollectionConfig | null;
+  /** The linked collection hydrated in-service (`null` = no link / no hydrator). F7. */
+  collection: HydratedCollection | null;
 }
 
 export interface PageTree {

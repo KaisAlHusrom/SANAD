@@ -11,7 +11,6 @@ import {
   NotificationQueryService,
 } from './notification/application/services/index.js';
 import {
-  ConsoleEmailProvider,
   EmailProvider,
   SmtpEmailProvider,
 } from './notification/infrastructure/email/index.js';
@@ -21,6 +20,7 @@ import {
   ProcessedMessageRepository,
 } from './notification/infrastructure/persistence/repositories/index.js';
 import { NotificationMessageController } from './notification/presentation/index.js';
+import { EmailTestMessageController } from './notification/presentation/email-test.message-controller.js';
 import type { ClientProxy } from '@nestjs/microservices';
 import type { NotificationsEnv } from './env.js';
 
@@ -28,17 +28,20 @@ import type { NotificationsEnv } from './env.js';
 const env = loadNotificationsEnv();
 
 /**
- * Email provider seam (N13): bind SMTP when a host is configured, else the console logger
- * (dev-safe default). The SMTP password resolves lazily from the settings vault → env at
- * send-time, so the binding decision needs only the (sync) host.
+ * Email provider seam (N13). Always bind the SMTP provider: the WHOLE config (host/port/secure/
+ * user/password/from) now resolves lazily from the settings vault → env at send-time, so the
+ * binding can no longer be decided from env at boot — the owner may configure email in the admin
+ * after the service started. When it isn't fully configured the provider delegates to the console
+ * logger internally (the dev-safe default is preserved).
  */
 const emailProvider: Provider = {
   provide: EmailProvider,
-  inject: [NOTIFICATIONS_ENV, SETTINGS_CLIENT],
-  useFactory: (cfg: NotificationsEnv, settingsClient: ClientProxy) =>
-    cfg.SMTP_HOST
-      ? new SmtpEmailProvider(cfg, settingsClient)
-      : new ConsoleEmailProvider(),
+  inject: [NOTIFICATIONS_ENV, SETTINGS_CLIENT, DateTimeService],
+  useFactory: (
+    cfg: NotificationsEnv,
+    settingsClient: ClientProxy,
+    clock: DateTimeService,
+  ) => new SmtpEmailProvider(cfg, settingsClient, clock),
 };
 
 /**
@@ -63,6 +66,7 @@ const emailProvider: Provider = {
   controllers: [
     LeadCreatedConsumer,
     NotificationMessageController,
+    EmailTestMessageController,
     HealthController,
   ],
   providers: [

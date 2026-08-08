@@ -1,0 +1,144 @@
+{
+  "root": "All files",
+  "summary": "{{files}} files · {{size}}",
+  "fileCount": "{{count}} files",
+  "summaryEmpty": "No files here",
+  "searchingEverywhere": "Searching the whole library",
+  "backTo": "Back to “{{name}}”",
+  "readOnly": "You have view-only access — ask an administrator to upload or organize.",
+  "pending": "Uploading",
+  "tree": {
+    "label": "Folders",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "empty": "No folders yet.",
+    "error": "Couldn't load the folders.",
+    "menu": "Folder options",
+    "newRoot": "New top-level folder"
+  },
+  "toolbar": {
+    "searchPlaceholder": "Search files…",
+    "clearSearch": "Clear search",
+    "grid": "Grid view",
+    "list": "List view",
+    "newFolder": "New folder",
+    "upload": "Upload files",
+    "type": "Type"
+  },
+  "types": {
+    "all": "All types",
+    "image": "Images",
+    "video": "Video",
+    "audio": "Audio",
+    "document": "Documents"
+  },
+  "breadcrumb": {
+    "label": "Path"
+  },
+  "columns": {
+    "name": "Name",
+    "size": "Size",
+    "modified": "Modified"
+  },
+  "empty": {
+    "library": {
+      "title": "The library is empty",
+      "description": "Upload your first image, or create a folder to start organizing."
+    },
+    "folder": {
+      "title": "This folder is empty",
+      "description": "Drag files here, or upload a new one."
+    },
+    "search": {
+      "title": "Nothing matches “{{term}}”",
+      "description": "Try another word, or clear the search to go back to browsing."
+    }
+  },
+  "errors": {
+    "loadFailed": "Couldn't load the files.",
+    "cors": "Your storage bucket is blocking uploads from this site. Open Settings → Integrations → Storage and configure CORS.",
+    "offline": "You appear to be offline — the file never reached storage.",
+    "storageUnconfigured": "Storage isn't configured yet — set it up in Integrations.",
+    "tooLarge": "That file is larger than the upload limit.",
+    "forbidden": "You don't have permission to upload media. Ask an administrator.",
+    "uploadRejected": "Storage rejected the upload. Check the bucket's keys and permissions in Integrations.",
+    "uploadFailed": "The upload failed.",
+    "unknown": "Something went wrong."
+  },
+  "folder": {
+    "new": "New folder",
+    "open": "Open",
+    "newSub": "New subfolder",
+    "nameLabel": "Folder name",
+    "namePlaceholder": "e.g. Logos",
+    "create": "Create",
+    "rename": "Rename",
+    "delete": "Delete folder",
+    "created": "Folder “{{name}}” created.",
+    "renamed": "Renamed to “{{name}}”.",
+    "deleted": "Folder deleted.",
+    "createFailed": "Couldn't create the folder.",
+    "renameFailed": "Couldn't rename the folder.",
+    "deleteFailed": "Couldn't delete the folder.",
+    "deleteTitle": "Delete “{{name}}”?",
+    "deleteEmpty": "This folder is empty and will be deleted for good.",
+    "deleteNonEmpty": "This folder holds {{assets}} files and {{folders}} subfolders. They'll be moved up one level — no file is deleted.",
+    "deleteConfirm": "Delete",
+    "deleteReparentConfirm": "Move contents up & delete"
+  },
+  "selection": {
+    "count": "{{count}} selected",
+    "clear": "Clear selection",
+    "move": "Move to…",
+    "delete": "Delete"
+  },
+  "move": {
+    "success": "Moved {{count}} items.",
+    "failed": "The move failed — everything was put back.",
+    "missing": "{{count}} items no longer exist and were skipped."
+  },
+  "drop": {
+    "hint": "Drop here to move",
+    "uploadHint": "Drop files here to upload",
+    "sameFolder": "These items are already in this folder.",
+    "self": "A folder can't be dropped onto itself.",
+    "descendant": "A folder can't move into one of its own subfolders."
+  },
+  "upload": {
+    "trayTitle": "Uploads",
+    "trayProgress": "{{done}} of {{total}}",
+    "trayFailed": "{{count}} failed",
+    "collapse": "Collapse uploads",
+    "expand": "Expand uploads",
+    "queued": "Waiting",
+    "uploading": "Uploading… {{percent}}%",
+    "confirming": "Finishing…",
+    "done": "Done",
+    "retry": "Retry",
+    "retryAll": "Retry all",
+    "dismiss": "Dismiss",
+    "clearDone": "Clear finished",
+    "success": "Uploaded {{count}} files."
+  },
+  "asset": {
+    "select": "Select “{{name}}”",
+    "preview": "Preview",
+    "download": "Download",
+    "delete": "Delete",
+    "deleteTitle": "Delete file",
+    "deleteDescription": "This file will be permanently deleted. This can't be undone.",
+    "deleted": "File deleted.",
+    "deleteFailed": "Couldn't delete the file."
+  },
+  "preview": {
+    "close": "Close",
+    "select": "Use this image",
+    "prev": "Previous file",
+    "next": "Next file"
+  },
+  "pagination": {
+    "prev": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {{page}} of {{total}}"
+  }
+}

@@ -1,10 +1,6 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
-import {
-  ExecutionContext,
-  ForbiddenException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, ExecutionContext } from '@nestjs/common';
 import type { Reflector } from '@nestjs/core';
 import {
   JwtAuthGuard,
@@ -57,6 +53,27 @@ const reflector = {
 const authGuard = new JwtAuthGuard(new FakeVerifier());
 const permGuard = new PermissionsGuard(reflector);
 
+/**
+ * The guards throw a keyed `HttpException` now (U24) — assert the STATUS + message KEY rather
+ * than a Nest exception subclass, since the key is what the edge renders into ar/en.
+ */
+function expectRejection(
+  run: () => unknown,
+  status: HttpStatus,
+  messageKey: string,
+): void {
+  try {
+    run();
+    expect.unreachable();
+  } catch (error) {
+    expect(error).toBeInstanceOf(HttpException);
+    expect((error as HttpException).getStatus()).toBe(status);
+    expect((error as HttpException).getResponse()).toMatchObject({
+      messageKey,
+    });
+  }
+}
+
 describe('GET /api/identity/users RBAC chain (P2 "Done when")', () => {
   it('admin (manage wildcard) passes both guards', () => {
     const ctx = context(bearer(['admin'], ['manage']));
@@ -67,11 +84,19 @@ describe('GET /api/identity/users RBAC chain (P2 "Done when")', () => {
   it('a client lacking identity.users.read is rejected with 403', () => {
     const ctx = context(bearer(['client'], []));
     expect(authGuard.canActivate(ctx)).toBe(true); // authenticated…
-    expect(() => permGuard.canActivate(ctx)).toThrow(ForbiddenException); // …not authorized
+    expectRejection(
+      () => permGuard.canActivate(ctx),
+      HttpStatus.FORBIDDEN,
+      'auth.forbidden',
+    ); // …not authorized
   });
 
   it('a missing token is rejected with 401', () => {
     const ctx = context({ headers: {} });
-    expect(() => authGuard.canActivate(ctx)).toThrow(UnauthorizedException);
+    expectRejection(
+      () => authGuard.canActivate(ctx),
+      HttpStatus.UNAUTHORIZED,
+      'auth.missingToken',
+    );
   });
 });

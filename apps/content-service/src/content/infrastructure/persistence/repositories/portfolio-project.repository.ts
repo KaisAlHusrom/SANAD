@@ -55,6 +55,14 @@ export class PortfolioProjectRepository extends LocalizedRepository<
     return this.where('slug', 'eq', slug).first();
   }
 
+  /** Live projects for a set of ids (the `picked` section hydration; caller maps by id). */
+  findByIds(ids: readonly string[]): Promise<PortfolioProjectRow[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.whereIn('id', [...ids]).all();
+  }
+
   /** A paginated, searchable, category/featured/status-filterable list of live projects. */
   list(query: PortfolioListQuery): Promise<Paginated<PortfolioProjectRow>> {
     return this.listFiltered(

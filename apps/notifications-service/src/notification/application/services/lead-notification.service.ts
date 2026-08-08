@@ -110,10 +110,12 @@ export class LeadNotificationService {
     payload: LeadNotificationPayload,
   ): Promise<void> {
     for (const row of rows.filter((r) => r.channel === 'email')) {
+      // The visitor's acknowledgement follows the LEAD's locale; the team's alert follows the
+      // TEAM's (`NOTIFICATIONS_TEAM_LOCALE`, ar by default) — two different readers (U24d).
       const body =
         row.type === 'lead.received.ack'
           ? visitorAckEmail(payload)
-          : teamAlertEmail(payload);
+          : teamAlertEmail(payload, this.env.NOTIFICATIONS_TEAM_LOCALE);
       try {
         await this.email.send({ to: row.recipient, ...body });
         await this.notifications.markEmailSent(row.id);

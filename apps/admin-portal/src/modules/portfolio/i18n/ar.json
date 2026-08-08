@@ -1,0 +1,91 @@
+{
+  "title": "معرض الأعمال",
+  "subtitle": "دراسات الحالة المعروضة في قسم الأعمال على الموقع.",
+  "columns": {
+    "title": "العنوان",
+    "category": "الفئة",
+    "status": "الحالة",
+    "featured": "مميّز",
+    "updatedAt": "آخر تحديث"
+  },
+  "filters": {
+    "status": "الحالة",
+    "featured": "مميّز"
+  },
+  "status": {
+    "draft": "مسودة",
+    "published": "منشور"
+  },
+  "fields": {
+    "slug": "المعرّف",
+    "status": "الحالة",
+    "category": "الفئة",
+    "categoryPlaceholder": "اختر فئة",
+    "featured": "مميّز",
+    "clientName": "اسم العميل",
+    "projectUrl": "رابط المشروع",
+    "projectUrlPlaceholder": "https://example.com",
+    "sortOrder": "ترتيب العرض",
+    "cover": "صورة الغلاف",
+    "title": "العنوان",
+    "summary": "الملخّص",
+    "challenge": "التحدّي",
+    "solution": "الحل",
+    "result": "النتيجة"
+  },
+  "actions": {
+    "create": "مشروع جديد",
+    "manageCategories": "إدارة الفئات",
+    "createCategory": "فئة جديدة",
+    "backToProjects": "العودة إلى المشاريع",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "form": {
+    "createTitle": "مشروع جديد",
+    "editTitle": "تعديل المشروع",
+    "created": "تم إنشاء المشروع.",
+    "updated": "تم تحديث المشروع."
+  },
+  "delete": {
+    "title": "حذف المشروع",
+    "message": "سيُحذف هذا المشروع نهائيًا من الموقع.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف المشروع.",
+    "bulkTitle": "حذف المشاريع",
+    "bulkMessage": "حذف {{count}} مشاريع محددة؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} مشاريع."
+  },
+  "categoryTitle": "فئات معرض الأعمال",
+  "categorySubtitle": "صنّف دراسات الحالة وفلتر شبكة الأعمال على الموقع.",
+  "categoryColumns": {
+    "name": "الاسم",
+    "slug": "المعرّف",
+    "sortOrder": "الترتيب",
+    "updatedAt": "آخر تحديث"
+  },
+  "categoryFields": {
+    "slug": "المعرّف",
+    "sortOrder": "ترتيب العرض",
+    "name": "الاسم"
+  },
+  "categoryForm": {
+    "createTitle": "فئة جديدة",
+    "editTitle": "تعديل الفئة",
+    "created": "تم إنشاء الفئة.",
+    "updated": "تم تحديث الفئة."
+  },
+  "categoryDelete": {
+    "title": "حذف الفئة",
+    "message": "ستحتفظ مشاريع هذه الفئة بمحتواها لكنها ستفقد الفئة.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف الفئة.",
+    "bulkTitle": "حذف الفئات",
+    "bulkMessage": "حذف {{count}} فئات محددة؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} فئات."
+  },
+  "errors": {
+    "deleteFailed": "تعذّر حذف العنصر.",
+    "updateFailed": "تعذّر حفظ التغيير."
+  }
+}

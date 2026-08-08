@@ -1,4 +1,4 @@
-import type { SecretFeature } from './secret-key.zod.types.js';
+import type { IntegrationCapability } from './integration-catalog.js';
 
 /**
  * Permission catalog owned by the settings domain (seeded by the identity service's
@@ -13,16 +13,18 @@ export const SETTINGS_PERMISSIONS = {
 } as const;
 
 /**
- * Integration-secret permissions (N13 — "gated per-integration"). The vault is NOT under
- * `settings.manage`: viewing the masked statuses needs `settings.secrets.read`, and each
- * third party owns a `settings.secrets.<feature>.manage` key so an operator can be granted
- * exactly the providers they administer. Admin's global `manage` wildcard still covers all.
+ * Integrations permissions (N13, the capability→providers rework). Viewing the masked
+ * integrations page needs `settings.integrations.read`; each **capability** owns a manage key so
+ * an operator can be granted exactly the integrations they administer (configuring a provider,
+ * activating one, and testing all require it). Admin's global `manage` wildcard still covers all.
  */
-export const SECRET_PERMISSIONS = {
-  read: 'settings.secrets.read',
+export const INTEGRATION_PERMISSIONS = {
+  read: 'settings.integrations.read',
 } as const;
 
-/** The manage permission a third party (by feature) owns — `settings.secrets.<feature>.manage`. */
-export function secretManagePermission(feature: SecretFeature): string {
-  return `settings.secrets.${feature}.manage`;
+/** The manage permission a capability owns — `settings.integrations.<capability>.manage`. */
+export function integrationManagePermission(
+  capability: IntegrationCapability,
+): string {
+  return `settings.integrations.${capability}.manage`;
 }

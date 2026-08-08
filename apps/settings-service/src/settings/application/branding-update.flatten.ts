@@ -93,5 +93,14 @@ export function flattenBrandingUpdate(
     add('branding.contact.address', 'localized_text', body.contact.address);
   }
 
+  if (body.legal) {
+    add('branding.legal.copyright', 'localized_text', body.legal.copyright);
+  }
+
+  if (body.seo) {
+    add('branding.seo.siteUrl', 'url', body.seo.siteUrl);
+    add('branding.seo.shareImageUrl', 'image', body.seo.shareImageUrl);
+  }
+
   return writes;
 }

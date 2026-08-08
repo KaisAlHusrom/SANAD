@@ -345,48 +345,121 @@
       ]
     },
     {
-      "name": "Integration Secrets",
-      "description": "Encrypted third-party credentials owned by the settings-service (N13 — gated per-integration). Masked status + set/rotate only — the decrypted value is NEVER returned (resolution is server-side over RMQ, internal-only). Viewing statuses needs `settings.secrets.read`; set/rotate is gated **per third party** by `settings.secrets.<feature>.manage` (admin `manage` covers all).",
+      "name": "Integrations",
+      "description": "Capability -> providers -> active provider (N13). Masked reads need settings.integrations.read; configure/activate/test need settings.integrations.<capability>.manage.",
       "item": [
         {
-          "name": "Get statuses",
+          "name": "List integrations (masked)",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/integration-secrets",
+              "raw": "{{baseUrl}}/integrations",
               "host": ["{{baseUrl}}"],
-              "path": ["integration-secrets"]
-            },
-            "description": "**Purpose:** the masked status of every registered secret.\n\n**Auth:** bearer + `settings.secrets.read`.\n\n**Returns** `data`: `SecretStatus[]` — each `{ key, isSet, fromEnv, last4|null, updatedAt|null, updatedByUserId|null }`. Never the value (N13)."
-          },
-          "response": []
+              "path": ["integrations"]
+            }
+          }
         },
         {
-          "name": "Set secret",
+          "name": "Configure a provider",
           "request": {
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/integrations/storage/r2",
+              "host": ["{{baseUrl}}"],
+              "path": ["integrations", "storage", "r2"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"value\": \"super-secret-smtp-password\"\n}",
+              "raw": "{\n  \"values\": {\n    \"accountId\": \"...\",\n    \"bucket\": \"...\",\n    \"accessKeyId\": \"...\",\n    \"secretAccessKey\": \"...\",\n    \"endpoint\": \"https://...\",\n    \"publicUrl\": \"https://...\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
-            },
+            }
+          }
+        },
+        {
+          "name": "Configure SMTP",
+          "request": {
+            "method": "PUT",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/integration-secrets/SMTP_PASSWORD",
+              "raw": "{{baseUrl}}/integrations/email/smtp",
               "host": ["{{baseUrl}}"],
-              "path": ["integration-secrets", "SMTP_PASSWORD"]
+              "path": ["integrations", "email", "smtp"]
             },
-            "description": "**Purpose:** set or rotate one secret (encrypted at rest, AES-256-GCM).\n\n**Auth:** bearer + the third party's `settings.secrets.<feature>.manage` (e.g. `SMTP_PASSWORD` → `settings.secrets.email.manage`, `R2_SECRET_KEY` → `settings.secrets.storage.manage`; admin `manage` covers all). Lacking it → 403.\n\n**Path:** `:key` ∈ `SecretKey` (`SMTP_PASSWORD` | `R2_SECRET_KEY`).\n\n**Body** (`.strict()`): `{ value }` (non-empty). The plaintext is never echoed back.\n\n**Returns** `data`: `SecretStatus` (masked)."
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": {\n    \"host\": \"smtp.example.com\",\n    \"port\": \"587\",\n    \"secure\": \"false\",\n    \"user\": \"...\",\n    \"password\": \"...\",\n    \"from\": \"Sanad <no-reply@sanad.tech>\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Set active provider",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/integrations/storage/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["integrations", "storage", "active"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"r2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Test connection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/integrations/storage/r2/test",
+              "host": ["{{baseUrl}}"],
+              "path": ["integrations", "storage", "r2", "test"]
+            }
+          }
+        },
+        {
+          "name": "Storage CORS status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/integrations/storage/r2/cors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "integrations", "storage", "r2", "cors"]
+            },
+            "description": "Can the BROWSER upload to this bucket? Separate from \"Test connection\" because the two fail independently: credentials can be perfect while every browser upload 403s in preflight for want of a bucket CORS rule.\n\n**Auth:** bearer · requires `settings.integrations.storage.manage`.\n\n**Returns:** `{ state, requiredOrigins, allowedOrigins, canApply, message, detail, policy }` where `state` is one of:\n- `ok` — every required origin may PUT;\n- `missing` — the bucket has no CORS configuration at all;\n- `origin-not-allowed` — rules exist but not for our origin (`allowedOrigins` says which);\n- `cannot-check` — the credentials may not read bucket config (an object-scoped R2 token); `canApply:false`, and `detail` carries the vendor's own words;\n- `unconfigured` — no storage provider configured yet.\n\n`policy` is the exact JSON to paste into the Cloudflare dashboard when we can't apply it."
+          },
+          "response": []
+        },
+        {
+          "name": "Apply storage CORS",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/integrations/storage/r2/cors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "integrations", "storage", "r2", "cors"]
+            },
+            "description": "Write the CORS policy that unblocks browser uploads, then RE-READ it — the response is the observed status, not an assumed one.\n\n**Auth:** bearer · requires `settings.integrations.storage.manage`.\n\nNeeds an R2 API token with **bucket-configuration write** (\"Admin Read & Write\"). An object-scoped token comes back as `cannot-check` + the vendor message rather than an error — the UI then offers the copy-paste policy instead of a button that would fail.\n\nAllowed origins come from the service's `ADMIN_PUBLIC_ORIGINS` (APP_ENV-driven)."
           },
           "response": []
         }
@@ -555,6 +628,30 @@
           "response": []
         },
         {
+          "name": "Resolve public media (batch)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/media/public?ids={{mediaAssetId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["media", "public"],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{mediaAssetId}}",
+                  "description": "Comma-separated media UUIDs (deduped, max 100)."
+                }
+              ]
+            },
+            "description": "**Purpose:** batch-resolve content media ids → public CDN refs so the website (an anonymous visitor) renders images without a token (WEB1).\n\n**Auth:** NONE — the only UNGUARDED media route. Declared before `GET /media/:id` so the literal path wins.\n\n**Query:** `ids` = comma-separated UUIDs (blanks/dupes dropped; max 100).\n\n**Returns** `data`: `PublicMediaRef[]` = `{ id, url, alt, width, height }` — only `ready`, non-deleted assets that exist (unknown ids absent; `[]` when none). A malformed id → 400."
+          },
+          "response": []
+        },
+        {
           "name": "Create folder",
           "request": {
             "method": "POST",
@@ -609,6 +706,86 @@
             "description": "**Purpose:** soft-delete an asset; emits `media.deleted` (Outbox, MS3) and best-effort removes the R2 object.\n\n**Auth:** bearer + `media.manage`.\n\n**Path:** `:id` (`{{mediaAssetId}}`).\n\n**Returns** `data`: `{ id }`."
           },
           "response": []
+        },
+        {
+          "name": "Folder tree",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/media/folders/tree",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "media", "folders", "tree"]
+            },
+            "description": "The whole folder tree with per-folder asset counts — the media explorer's side pane in ONE request (a count per node would be N+1).\n\n**Auth:** bearer · requires `media.read`.\n\n**Returns:** `{ roots: MediaFolderNode[], rootAssetCount }` where a node is a `MediaFolder` plus `assetCount` (DIRECT children only, not recursive) and `children[]`. Siblings come back name-sorted; a folder whose parent is missing is rescued to the root rather than dropped. `rootAssetCount` is the number of assets in NO folder."
+          },
+          "response": []
+        },
+        {
+          "name": "Update folder (rename / move)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Logos\",\n  \"parentId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/media/folders/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "media", "folders", ":id"]
+            },
+            "description": "Rename and/or re-parent a folder — the tree's inline rename and its drag-to-reparent.\n\n**Auth:** bearer · requires `media.manage`.\n\n**Body** (`.strict()`, at least one key required):\n- `name` — 1..120 chars, optional.\n- `parentId` — **tri-state**: omit to keep the current parent, `null` to move to the root, a uuid to move under that folder.\n\n**Errors:** `404` unknown folder · `409` a live sibling already uses that name (case-insensitive) · `400` the move would put the folder inside itself or a descendant."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete folder",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/media/folders/:id?strategy=block",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "media", "folders", ":id"],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "block"
+                }
+              ]
+            },
+            "description": "Delete a folder. Assets are NEVER destroyed as a side effect.\n\n**Auth:** bearer · requires `media.manage`.\n\n**Query:** `strategy` = `block` (default — refuse a non-empty folder and report what is inside) or `reparent` (move its assets + subfolders up one level, then delete). There is deliberately no recursive delete.\n\n**Errors:** `404` unknown folder · `409` non-empty under `block` (the message names how many files and subfolders remain)."
+          },
+          "response": []
+        },
+        {
+          "name": "Move assets (bulk)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\n    \"{{mediaAssetId}}\"\n  ],\n  \"folderId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/media/move",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "media", "move"]
+            },
+            "description": "Move assets into a folder — what a drag-and-drop in the explorer performs. Bulk by design: a multi-select drag is ONE request, not N.\n\n**Auth:** bearer · requires `media.manage`.\n\n**Body** (`.strict()`): `ids` — 1..200 asset uuids · `folderId` — destination uuid, or `null` for the root (nullable, not optional: dropping onto the root is an explicit destination).\n\n**Returns:** `{ movedIds, missingIds }` — ids that no longer exist are REPORTED, never silently skipped, so the caller can reconcile its optimistic state."
+          },
+          "response": []
         }
       ]
     },
@@ -629,7 +806,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["content", "pages", "landing"]
             },
-            "description": "**Purpose:** the assembled, published Page→Section→Block tree the website renders (WEB2).\n\n**Auth:** none (public).\n\n**Returns** `data`: `PageTree` — `{ id, slug, status, title{ar,en}, metaTitle, metaDescription, sections: [{ type, eyebrow, title, subtitle, blocks: [{ type, data, imageMediaId, title, body }] }] }`. 404 if no published page matches the slug."
+            "description": "**Purpose:** the assembled, published Page→Section→Block tree the website renders (WEB2).\n\n**Auth:** none (public).\n\n**Returns** `data`: `PageTree` — `{ id, slug, status, title{ar,en}, metaTitle, metaDescription, sections: [{ type, eyebrow, title, subtitle, blocks: [{ type, data, imageMediaId, title, body }], config, collection }] }`. A collection-backed section carries `config` (`{ mode:'featured'|'picked'|'all', limit?, ids }` or `null`) and `collection` — the records hydrated in-service: `services` → `{ collection:'services', items:[ServiceItem] }`, `trust` → `{ collection:'portfolio', items:[PortfolioProjectItem] }` (the domain constellation groups them by category), `work` → `{ collection:'portfolio', items:[PortfolioProjectItem] }` (the WEB10 case-study orbit, covers resolved from `coverMediaId`), `testimonials` → `{ collection:'testimonials', items:[TestimonialItem] }` (the quote wall, author photos resolved from `avatarMediaId`), `blog` → `{ collection:'blog', items:[BlogPostItem] }` (the log teaser, covers resolved from `coverMediaId`, published-only on the public path), `faq` → `{ collection:'faq', items:[FaqItem] }` (the `/faq` accordion, Phase 5), `team` → `{ collection:'team', items:[TeamMemberItem] }` (the `/about` roster, avatars resolved from `avatarMediaId`, Phase 5), else `null`. Seeded page slugs: `landing`, `privacy`, `terms`, and the Phase-5 marketing pages `about` + `faq`. `section.type` now includes `richtext`/`faq`/`team`. 404 if no published page matches the slug."
           },
           "response": []
         },
@@ -733,7 +910,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["content", "sections"]
             },
-            "description": "**Purpose:** create or update a section within a page. `id` present → update.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `pageId`, `type` (hero/trust/services/process/work/stats/testimonials/blog/cta/richtext), `sortOrder`, `published`, optional `eyebrow`/`title`/`subtitle` `{ar,en}`.\n\n**Returns** `data`: `SectionNode` (with its blocks). Captures `contentSectionId`."
+            "description": "**Purpose:** create or update a section within a page. `id` present → update.\n\n**Auth:** bearer + `content.manage`.\n\n**Body** (`.strict()`): `pageId`, `type` (hero/trust/services/process/work/stats/testimonials/blog/cta/richtext), `sortOrder`, `published`, optional `eyebrow`/`title`/`subtitle` `{ar,en}`, optional `config` (`{ mode:'featured'|'picked'|'all', limit?, ids }` — the collection link for a collection-backed section, Phase 3; written only when present, so an inline copy edit never wipes it).\n\n**Returns** `data`: `SectionNode` (with its blocks + hydrated `collection`). Captures `contentSectionId`."
           },
           "response": []
         },
@@ -1203,7 +1380,9 @@
         {
           "name": "List portfolio categories (public)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1231,11 +1410,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"slug\": \"payments\",\n  \"sortOrder\": 0,\n  \"name\": {\n    \"ar\": \"المدفوعات\",\n    \"en\": \"Payments\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/portfolio-categories",
@@ -1250,11 +1438,20 @@
           "name": "Update portfolio category",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": {\n    \"ar\": \"المدفوعات الرقمية\",\n    \"en\": \"Digital payments\"\n  }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/portfolio-categories/{{contentPortfolioCategoryId}}",
@@ -1290,7 +1487,9 @@
         {
           "name": "List portfolio projects (public, published)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1298,15 +1497,29 @@
               "host": ["{{baseUrl}}"],
               "path": ["content", "portfolio"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "20" },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
                 {
                   "key": "categoryId",
                   "value": "{{contentPortfolioCategoryId}}",
                   "disabled": true
                 },
-                { "key": "featured", "value": "true", "disabled": true },
-                { "key": "search", "value": "", "disabled": true }
+                {
+                  "key": "featured",
+                  "value": "true",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             },
             "description": "**Purpose:** the public work grid. The gateway FORCES `status=published` — a client can never see drafts (N7).\n\n**Auth:** none.\n\n**Query** (`.strict()`): standard list + whitelisted `categoryId`/`featured`. `search` matches the translatable title/summary in either locale.\n\n**Returns** `data`: `Paginated<PortfolioProjectItem>` (category embedded)."
@@ -1323,9 +1536,19 @@
               "host": ["{{baseUrl}}"],
               "path": ["content", "portfolio", "manage"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "20" },
-                { "key": "status", "value": "draft", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "draft",
+                  "disabled": true
+                }
               ]
             },
             "description": "**Purpose:** the admin project list — sees drafts. Honors the supplied `status` (or omit to see all).\n\n**Auth:** bearer + `content.read`.\n\n**Returns** `data`: `Paginated<PortfolioProjectItem>`."
@@ -1335,7 +1558,9 @@
         {
           "name": "Get portfolio project (public)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1363,11 +1588,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"slug\": \"tadawul-pay\",\n  \"categoryId\": \"{{contentPortfolioCategoryId}}\",\n  \"clientName\": \"Tadawul Pay\",\n  \"status\": \"draft\",\n  \"featured\": true,\n  \"sortOrder\": 0,\n  \"title\": { \"ar\": \"تداول باي\", \"en\": \"Tadawul Pay\" },\n  \"summary\": { \"ar\": \"منصّة مدفوعات\", \"en\": \"A payments platform\" },\n  \"challenge\": { \"ar\": \"التحدي\", \"en\": \"The challenge\" },\n  \"solution\": { \"ar\": \"الحل\", \"en\": \"The solution\" },\n  \"result\": { \"ar\": \"النتيجة\", \"en\": \"The result\" }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/portfolio",
@@ -1382,11 +1616,20 @@
           "name": "Update / publish portfolio project",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"published\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/portfolio/{{contentPortfolioId}}",
@@ -1420,7 +1663,9 @@
         {
           "name": "List blog categories (public)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1448,11 +1693,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"slug\": \"engineering\",\n  \"sortOrder\": 0,\n  \"name\": { \"ar\": \"الهندسة\", \"en\": \"Engineering\" },\n  \"description\": { \"ar\": \"كيف نبني\", \"en\": \"How we build\" }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/blog-categories",
@@ -1467,11 +1721,20 @@
           "name": "Update blog category",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": { \"ar\": \"الهندسة والمعمارية\", \"en\": \"Engineering & Architecture\" }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/blog-categories/{{contentBlogCategoryId}}",
@@ -1507,7 +1770,9 @@
         {
           "name": "List blog tags (public)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1535,11 +1800,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"slug\": \"microservices\",\n  \"sortOrder\": 0,\n  \"name\": { \"ar\": \"الخدمات المصغّرة\", \"en\": \"Microservices\" }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/blog-tags",
@@ -1554,11 +1828,20 @@
           "name": "Update blog tag",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"name\": { \"ar\": \"معمارية الخدمات\", \"en\": \"Service architecture\" }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/blog-tags/{{contentBlogTagId}}",
@@ -1586,7 +1869,9 @@
         {
           "name": "List blog posts (public, published)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1594,14 +1879,24 @@
               "host": ["{{baseUrl}}"],
               "path": ["content", "blog"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "20" },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
                 {
                   "key": "categoryId",
                   "value": "{{contentBlogCategoryId}}",
                   "disabled": true
                 },
-                { "key": "search", "value": "", "disabled": true }
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
               ]
             },
             "description": "**Purpose:** the public blog index. The gateway FORCES `status=published` — a client can never see drafts (N7).\n\n**Auth:** none.\n\n**Query** (`.strict()`): standard list + whitelisted `categoryId`. `search` matches the translatable title/excerpt in either locale.\n\n**Returns** `data`: `Paginated<BlogPostItem>` (category+author+tags embedded)."
@@ -1618,9 +1913,19 @@
               "host": ["{{baseUrl}}"],
               "path": ["content", "blog", "manage"],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "20" },
-                { "key": "status", "value": "draft", "disabled": true }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "draft",
+                  "disabled": true
+                }
               ]
             },
             "description": "**Purpose:** the admin post list — sees drafts. Honors the supplied `status` (or omit to see all).\n\n**Auth:** bearer + `content.read`.\n\n**Returns** `data`: `Paginated<BlogPostItem>`."
@@ -1630,7 +1935,9 @@
         {
           "name": "Get blog post (public)",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -1658,11 +1965,20 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"slug\": \"building-phase-by-phase\",\n  \"categoryId\": \"{{contentBlogCategoryId}}\",\n  \"authorTeamMemberId\": null,\n  \"status\": \"draft\",\n  \"readMinutes\": 6,\n  \"sortOrder\": 0,\n  \"tagIds\": [\"{{contentBlogTagId}}\"],\n  \"title\": { \"ar\": \"لماذا نبني مرحلةً تلو الأخرى\", \"en\": \"Why we build phase by phase\" },\n  \"excerpt\": { \"ar\": \"التسليم المرحلي\", \"en\": \"Phased delivery\" },\n  \"body\": { \"ar\": \"النص الكامل\", \"en\": \"The full body\" }\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/blog",
@@ -1677,11 +1993,20 @@
           "name": "Update / publish blog post",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"status\": \"published\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/content/blog/{{contentBlogPostId}}",

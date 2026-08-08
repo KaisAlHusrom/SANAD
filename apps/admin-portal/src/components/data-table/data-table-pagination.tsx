@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/cn';
+import { SelectField } from '../ui/select';
 import type { UseListUrlStateResult } from './types';
 import { buildPaginationRange } from './pagination-range';
 
@@ -44,18 +45,17 @@ export function DataTablePagination({
         <span>{t('pagination.showing', { from, to, total })}</span>
         <label className="flex items-center gap-1.5">
           <span>{t('pagination.rowsPerPage')}</span>
-          <select
+          <SelectField
             aria-label={t('pagination.rowsPerPage')}
-            value={pageSize}
-            onChange={(event) => list.setPageSize(Number(event.target.value))}
-            className="h-8 rounded-input border border-border-2 bg-surface px-2 text-sm text-text focus-visible:border-accent-line focus-visible:outline-none"
-          >
-            {pageSizeOptions.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            size="xs"
+            className="w-auto"
+            value={String(pageSize)}
+            onValueChange={(next) => list.setPageSize(Number(next))}
+            options={pageSizeOptions.map((size) => ({
+              value: String(size),
+              label: String(size),
+            }))}
+          />
         </label>
       </div>
 

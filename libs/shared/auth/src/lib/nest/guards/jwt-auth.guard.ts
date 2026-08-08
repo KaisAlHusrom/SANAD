@@ -1,11 +1,12 @@
 import {
   CanActivate,
   ExecutionContext,
+  HttpStatus,
   Inject,
   Injectable,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { identityContextSchema } from '@sanad/contracts';
+import { httpError } from '@sanad/i18n';
 import type { AccessTokenPayload } from '../../jwt-payload.js';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 import { TokenVerifier } from '../verifiers/token-verifier.js';
@@ -28,7 +29,7 @@ export class JwtAuthGuard implements CanActivate {
     const header = request.headers['authorization'];
     const value = Array.isArray(header) ? header[0] : header;
     if (!value || !value.startsWith(BEARER_PREFIX)) {
-      throw new UnauthorizedException('Missing bearer token');
+      throw httpError(HttpStatus.UNAUTHORIZED, 'auth.missingToken');
     }
 
     const token = value.slice(BEARER_PREFIX.length).trim();
@@ -36,7 +37,7 @@ export class JwtAuthGuard implements CanActivate {
     try {
       payload = this.verifier.verifyAccessToken(token);
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw httpError(HttpStatus.UNAUTHORIZED, 'auth.invalidToken');
     }
 
     request.identity = identityContextSchema.parse({

@@ -51,6 +51,14 @@ export class BlogPostRepository extends LocalizedRepository<
     return this.where('slug', 'eq', slug).first();
   }
 
+  /** Live posts for a set of ids (the `picked` section hydration; caller maps by id). */
+  findByIds(ids: readonly string[]): Promise<BlogPostRow[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.whereIn('id', [...ids]).all();
+  }
+
   /** A paginated, searchable, category/status-filterable list of live posts (base rows). */
   list(query: BlogPostListQuery): Promise<Paginated<BlogPostRow>> {
     return this.listFiltered(

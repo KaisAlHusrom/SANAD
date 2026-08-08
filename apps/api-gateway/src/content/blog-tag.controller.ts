@@ -14,7 +14,6 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import {
   CurrentUser,
-  identityToHeaders,
   JwtAuthGuard,
   PermissionsGuard,
   RequirePermissions,
@@ -24,20 +23,26 @@ import {
   CONTENT_BLOG_TAG_CREATE,
   CONTENT_BLOG_TAG_DELETE,
   CONTENT_BLOG_TAG_LIST,
+  CONTENT_BLOG_TAG_REORDER,
   CONTENT_BLOG_TAG_UPDATE,
   CONTENT_PERMISSIONS,
   blogTagCreateSchema,
   blogTagListQuerySchema,
   blogTagUpdateSchema,
+  reorderRequestSchema,
   type BlogTagCreateRequest,
   type BlogTagItem,
   type BlogTagListQuery,
   type BlogTagUpdateRequest,
   type ContentId,
   type Paginated,
+  type ReorderRequest,
+  type Locale,
 } from '@sanad/contracts';
 import { sendRequest } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
+import { RequestLocale } from '../core/decorators/index.js';
+import { forwardHeaders } from '../core/helpers/index.js';
 import { CONTENT_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
 
@@ -51,10 +56,11 @@ export class BlogTagController {
 
   @Get()
   async list(
+    @RequestLocale() locale: Locale,
     @Query(new ZodValidationPipe(blogTagListQuerySchema))
     query: BlogTagListQuery,
   ): Promise<Paginated<BlogTagItem>> {
-    return this.forwardPublic(CONTENT_BLOG_TAG_LIST, query);
+    return this.forwardPublic(CONTENT_BLOG_TAG_LIST, query, locale);
   }
 
   @Post()
@@ -62,10 +68,22 @@ export class BlogTagController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async create(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(blogTagCreateSchema))
     body: BlogTagCreateRequest,
   ): Promise<BlogTagItem> {
-    return this.forward(CONTENT_BLOG_TAG_CREATE, body, identity);
+    return this.forward(CONTENT_BLOG_TAG_CREATE, body, identity, locale);
+  }
+
+  @Patch('reorder')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CONTENT_PERMISSIONS.manage)
+  async reorder(
+    @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
+    @Body(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    return this.forward(CONTENT_BLOG_TAG_REORDER, body, identity, locale);
   }
 
   @Patch(':id')
@@ -73,11 +91,17 @@ export class BlogTagController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async update(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(blogTagUpdateSchema.omit({ id: true })))
     body: Omit<BlogTagUpdateRequest, 'id'>,
   ): Promise<BlogTagItem> {
-    return this.forward(CONTENT_BLOG_TAG_UPDATE, { id, ...body }, identity);
+    return this.forward(
+      CONTENT_BLOG_TAG_UPDATE,
+      { id, ...body },
+      identity,
+      locale,
+    );
   }
 
   @Delete(':id')
@@ -85,19 +109,21 @@ export class BlogTagController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async delete(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ContentId> {
-    return this.forward(CONTENT_BLOG_TAG_DELETE, { id }, identity);
+    return this.forward(CONTENT_BLOG_TAG_DELETE, { id }, identity, locale);
   }
 
   private async forward<TResult>(
     pattern: string,
     payload: object,
     identity: IdentityContext,
+    locale: Locale,
   ): Promise<TResult> {
     try {
       return await sendRequest<TResult>(this.client, pattern, payload, {
-        headers: identityToHeaders(identity),
+        headers: forwardHeaders(identity, locale),
       });
     } catch (error) {
       throw toHttpException(error);
@@ -107,9 +133,12 @@ export class BlogTagController {
   private async forwardPublic<TResult>(
     pattern: string,
     payload: object,
+    locale: Locale,
   ): Promise<TResult> {
     try {
-      return await sendRequest<TResult>(this.client, pattern, payload);
+      return await sendRequest<TResult>(this.client, pattern, payload, {
+        headers: forwardHeaders(null, locale),
+      });
     } catch (error) {
       throw toHttpException(error);
     }

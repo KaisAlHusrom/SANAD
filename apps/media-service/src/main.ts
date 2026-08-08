@@ -24,6 +24,7 @@ async function bootstrap(): Promise<void> {
     createRmqServerOptions({
       url: env.RABBITMQ_URL,
       queue: commandsQueue('media'),
+      noAck: true, // RPC: auto-ack — Nest won't ack a @MessagePattern, else the consumer stalls.
     }),
   );
 

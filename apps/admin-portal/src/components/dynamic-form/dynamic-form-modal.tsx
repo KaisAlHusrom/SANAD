@@ -1,5 +1,6 @@
 import type { FieldValues } from 'react-hook-form';
-import { Dialog, DialogContent, DialogTitle } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { DialogTitleProvider } from '../ui/dialog-stack';
 import { DynamicForm } from './dynamic-form';
 import type { DynamicFormProps } from './dynamic-form.types';
 
@@ -32,18 +33,25 @@ export function DynamicFormModal<TValues extends FieldValues>({
         }
       }}
     >
-      <DialogContent>
-        <DialogTitle className="text-lg font-semibold text-text">
-          {title}
-        </DialogTitle>
-        <DynamicForm
-          {...formProps}
-          onSuccess={() => {
-            onSuccess?.();
-            onClose();
-          }}
-          onCancel={onClose}
-        />
+      <DialogContent size="lg" className="gap-0 overflow-hidden p-0">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-text">
+            {title}
+          </DialogTitle>
+        </DialogHeader>
+        {/* Publish this modal's title so a picker opened from one of its fields can show
+            "«title» ▸ Media library" and a back arrow, instead of appearing as an unexplained
+            second box of the same width (owner report, 2026-07-20). */}
+        <DialogTitleProvider title={title}>
+          <DynamicForm
+            {...formProps}
+            onSuccess={() => {
+              onSuccess?.();
+              onClose();
+            }}
+            onCancel={onClose}
+          />
+        </DialogTitleProvider>
       </DialogContent>
     </Dialog>
   );

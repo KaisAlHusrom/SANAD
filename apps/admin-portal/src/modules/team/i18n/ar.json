@@ -1,0 +1,50 @@
+{
+  "title": "الفريق",
+  "subtitle": "أعضاء الفريق المعروضون في صفحة من نحن.",
+  "columns": {
+    "name": "الاسم",
+    "role": "المنصب",
+    "slug": "المعرّف",
+    "featured": "مميّز",
+    "updatedAt": "آخر تحديث"
+  },
+  "filters": {
+    "featured": "مميّز"
+  },
+  "fields": {
+    "slug": "المعرّف",
+    "email": "البريد الإلكتروني",
+    "linkedinUrl": "رابط لينكدإن",
+    "githubUrl": "رابط غيت‑هَب",
+    "sortOrder": "ترتيب العرض",
+    "featured": "مميّز",
+    "avatar": "الصورة الرمزية",
+    "name": "الاسم",
+    "role": "المنصب",
+    "bio": "نبذة"
+  },
+  "actions": {
+    "create": "عضو جديد",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "form": {
+    "createTitle": "عضو فريق جديد",
+    "editTitle": "تعديل عضو الفريق",
+    "created": "تم إنشاء عضو الفريق.",
+    "updated": "تم تحديث عضو الفريق."
+  },
+  "delete": {
+    "title": "حذف عضو الفريق",
+    "message": "سيُحذف عضو الفريق هذا نهائيًا من الموقع.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف عضو الفريق.",
+    "bulkTitle": "حذف أعضاء الفريق",
+    "bulkMessage": "حذف {{count}} أعضاء محددين؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} أعضاء."
+  },
+  "errors": {
+    "deleteFailed": "تعذّر حذف عضو الفريق.",
+    "updateFailed": "تعذّر تحديث عضو الفريق."
+  }
+}

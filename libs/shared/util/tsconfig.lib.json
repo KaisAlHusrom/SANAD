@@ -13,6 +13,9 @@
   "references": [
     {
       "path": "../../contracts/tsconfig.lib.json"
+    },
+    {
+      "path": "../i18n/tsconfig.lib.json"
     }
   ],
   "exclude": [

@@ -7,6 +7,8 @@
 
 // Pages — the flexible Page → Section → Block tree.
 export const CONTENT_PAGE_TREE_GET = 'content.page.tree';
+/** Admin fetch of the full tree by page id — drafts + unpublished sections visible (the builder). */
+export const CONTENT_PAGE_TREE_ADMIN_GET = 'content.page.tree-admin';
 export const CONTENT_PAGE_LIST = 'content.page.list';
 export const CONTENT_PAGE_UPSERT = 'content.page.upsert';
 export const CONTENT_PAGE_DELETE = 'content.page.delete';
@@ -68,6 +70,8 @@ export const CONTENT_BLOG_TAG_DELETE = 'content.blog-tag.delete';
 // author + tags on read, takes `categoryId`/`authorTeamMemberId`/`tagIds` on write.
 export const CONTENT_BLOG_POST_LIST = 'content.blog-post.list';
 export const CONTENT_BLOG_POST_GET = 'content.blog-post.get';
+/** Admin fetch by id — drafts visible (the edit page; the public get is by slug, published-only). */
+export const CONTENT_BLOG_POST_GET_BY_ID = 'content.blog-post.get-by-id';
 export const CONTENT_BLOG_POST_CREATE = 'content.blog-post.create';
 export const CONTENT_BLOG_POST_UPDATE = 'content.blog-post.update';
 export const CONTENT_BLOG_POST_DELETE = 'content.blog-post.delete';
@@ -88,6 +92,27 @@ export const CONTENT_MENU_DELETE = 'content.menu.delete';
 export const CONTENT_MENU_ITEM_CREATE = 'content.menu-item.create';
 export const CONTENT_MENU_ITEM_UPDATE = 'content.menu-item.update';
 export const CONTENT_MENU_ITEM_DELETE = 'content.menu-item.delete';
+
+/**
+ * Reorder (atomic batch): renumber `sortOrder` to match a given id order — the admin's
+ * drag-and-drop on any orderable list (U21). One pattern per orderable collection; the
+ * payload is the shared `reorderRequestSchema` ({ ids }). `<resource>.reorder` (MS2).
+ */
+export const CONTENT_SERVICE_REORDER = 'content.service.reorder';
+export const CONTENT_TESTIMONIAL_REORDER = 'content.testimonial.reorder';
+export const CONTENT_TEAM_MEMBER_REORDER = 'content.team-member.reorder';
+export const CONTENT_FAQ_REORDER = 'content.faq.reorder';
+export const CONTENT_PORTFOLIO_REORDER = 'content.portfolio.reorder';
+export const CONTENT_PORTFOLIO_CATEGORY_REORDER =
+  'content.portfolio-category.reorder';
+export const CONTENT_BLOG_CATEGORY_REORDER = 'content.blog-category.reorder';
+export const CONTENT_BLOG_TAG_REORDER = 'content.blog-tag.reorder';
+// Pages-builder reorder: sections within a page, blocks within a section, pages in the admin
+// list (W6); menu items within a menu/parent. The caller passes the sibling id set in order.
+export const CONTENT_PAGE_REORDER = 'content.page.reorder';
+export const CONTENT_SECTION_REORDER = 'content.section.reorder';
+export const CONTENT_BLOCK_REORDER = 'content.block.reorder';
+export const CONTENT_MENU_ITEM_REORDER = 'content.menu-item.reorder';
 
 // Leads — the website contact / request-a-project form.
 export const CONTENT_LEAD_SUBMIT = 'content.lead.submit';

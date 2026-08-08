@@ -1,1 +1,1 @@
-export * from './use-branding-form';
+export * from './use-settings-section-form';

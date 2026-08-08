@@ -35,6 +35,27 @@ export class FaqService {
     };
   }
 
+  /**
+   * FAQs for a set of ids, returned IN THE GIVEN ORDER (the `picked` section-config hydration —
+   * a curated `/faq` accordion). Reads resolve copy to both locales (F7). Unknown/soft-deleted
+   * ids are simply dropped.
+   */
+  async listByIds(ids: readonly string[]): Promise<FaqItem[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.faqs.findByIds(ids);
+    const fields = await this.faqs.localizedFieldsForMany(
+      rows.map((row) => row.id),
+    );
+    const byId = new Map(
+      rows.map((row) => [row.id, assembleFaq(row, fields.get(row.id))]),
+    );
+    return ids
+      .map((id) => byId.get(id))
+      .filter((item): item is FaqItem => item !== undefined);
+  }
+
   /** Create an FAQ + both-locale copy (admin). */
   async create(req: FaqCreateRequest): Promise<FaqItem> {
     const created = await this.faqs.create({
@@ -70,6 +91,11 @@ export class FaqService {
     }
 
     return this.byId(req.id);
+  }
+
+  /** Atomically renumber sortOrder to match the given id order (drag-and-drop reorder, U21). */
+  reorder(ids: string[]): Promise<void> {
+    return this.faqs.reorderByIds(ids);
   }
 
   /** Soft-delete an FAQ (admin). */

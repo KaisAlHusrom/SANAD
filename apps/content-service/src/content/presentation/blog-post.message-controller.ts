@@ -4,6 +4,7 @@ import {
   CONTENT_BLOG_POST_CREATE,
   CONTENT_BLOG_POST_DELETE,
   CONTENT_BLOG_POST_GET,
+  CONTENT_BLOG_POST_GET_BY_ID,
   CONTENT_BLOG_POST_LIST,
   CONTENT_BLOG_POST_UPDATE,
   blogPostCreateSchema,
@@ -44,6 +45,13 @@ export class BlogPostMessageController {
     @Payload(new ZodValidationPipe(contentSlugSchema)) payload: ContentSlug,
   ): Promise<BlogPostItem> {
     return this.posts.getBySlug(payload.slug);
+  }
+
+  @MessagePattern(CONTENT_BLOG_POST_GET_BY_ID)
+  getById(
+    @Payload(new ZodValidationPipe(contentIdSchema)) payload: ContentId,
+  ): Promise<BlogPostItem> {
+    return this.posts.getById(payload.id);
   }
 
   @MessagePattern(CONTENT_BLOG_POST_CREATE)

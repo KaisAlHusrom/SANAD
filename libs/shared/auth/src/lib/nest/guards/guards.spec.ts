@@ -1,10 +1,6 @@
 import 'reflect-metadata';
 import { describe, expect, it } from 'vitest';
-import {
-  ExecutionContext,
-  ForbiddenException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import type { Reflector } from '@nestjs/core';
 import type { AccessTokenPayload } from '../../jwt-payload.js';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
@@ -40,17 +36,48 @@ class FakeVerifier extends TokenVerifier {
   }
 }
 
+/**
+ * Assert the guard threw the U24 shape — the right status carrying a message KEY, not prose.
+ * These are the most-hit errors in the product (every protected route), so they were the most
+ * important English strings to kill.
+ */
+function expectRejection(
+  run: () => unknown,
+  status: HttpStatus,
+  messageKey: string,
+): void {
+  try {
+    run();
+    expect.unreachable();
+  } catch (error) {
+    expect(error).toBeInstanceOf(HttpException);
+    expect((error as HttpException).getStatus()).toBe(status);
+    expect((error as HttpException).getResponse()).toEqual({
+      statusCode: status,
+      messageKey,
+    });
+  }
+}
+
 describe('JwtAuthGuard', () => {
   it('rejects a request with no bearer token (401)', () => {
     const guard = new JwtAuthGuard(new FakeVerifier('ok'));
     const ctx = httpContext({ headers: {} });
-    expect(() => guard.canActivate(ctx)).toThrow(UnauthorizedException);
+    expectRejection(
+      () => guard.canActivate(ctx),
+      HttpStatus.UNAUTHORIZED,
+      'auth.missingToken',
+    );
   });
 
   it('rejects an invalid token (401)', () => {
     const guard = new JwtAuthGuard(new FakeVerifier('throw'));
     const ctx = httpContext({ headers: { authorization: 'Bearer bad' } });
-    expect(() => guard.canActivate(ctx)).toThrow(UnauthorizedException);
+    expectRejection(
+      () => guard.canActivate(ctx),
+      HttpStatus.UNAUTHORIZED,
+      'auth.invalidToken',
+    );
   });
 
   it('attaches the identity context on a valid token', () => {
@@ -97,7 +124,11 @@ describe('PermissionsGuard', () => {
       headers: {},
       identity: { userId: 'u', roles: ['client'], permissions: [] },
     });
-    expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
+    expectRejection(
+      () => guard.canActivate(ctx),
+      HttpStatus.FORBIDDEN,
+      'auth.forbidden',
+    );
   });
 
   it('rejects when there is no identity (401)', () => {
@@ -105,6 +136,10 @@ describe('PermissionsGuard', () => {
       reflectorReturning(['identity.users.read']),
     );
     const ctx = httpContext({ headers: {} });
-    expect(() => guard.canActivate(ctx)).toThrow(UnauthorizedException);
+    expectRejection(
+      () => guard.canActivate(ctx),
+      HttpStatus.UNAUTHORIZED,
+      'auth.noIdentity',
+    );
   });
 });

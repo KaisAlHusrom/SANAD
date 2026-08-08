@@ -1,0 +1,30 @@
+{
+  "title": "Leads inbox",
+  "subtitle": "Requests that arrived from the website.",
+  "noCompany": "—",
+  "changeStatus": "Change status",
+  "columns": {
+    "client": "Client",
+    "company": "Company",
+    "source": "Source",
+    "status": "Status",
+    "createdAt": "Received"
+  },
+  "filters": {
+    "status": "Status",
+    "source": "Source"
+  },
+  "statuses": {
+    "new": "New",
+    "contacted": "Contacted",
+    "archived": "Archived"
+  },
+  "sources": {
+    "contact": "Contact form",
+    "request-project": "Project request"
+  },
+  "statusUpdate": {
+    "toastSuccess": "Lead status updated.",
+    "toastError": "Couldn't update the lead status."
+  }
+}

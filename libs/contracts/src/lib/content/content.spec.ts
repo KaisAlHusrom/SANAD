@@ -7,6 +7,8 @@ import {
 import { serviceCategorySchema } from './service-category.zod.types.js';
 import { pageUpsertSchema } from './page-upsert.zod.types.js';
 import { blockUpsertSchema } from './block-upsert.zod.types.js';
+import { sectionConfigSchema } from './section-config.zod.types.js';
+import { sectionUpsertSchema } from './section-upsert.zod.types.js';
 import { serviceCreateSchema } from './service-upsert.zod.types.js';
 import { serviceListQuerySchema } from './service-list-query.zod.types.js';
 import { testimonialCreateSchema } from './testimonial-upsert.zod.types.js';
@@ -43,6 +45,10 @@ describe('content contracts', () => {
   it('enumerates page/section/block/service kinds', () => {
     expect(pageStatusSchema.options).toEqual(['draft', 'published']);
     expect(sectionTypeSchema.safeParse('hero').success).toBe(true);
+    // Phase 5 — faq/team join the marketing-page section types (added with the pg enum, U3).
+    expect(sectionTypeSchema.safeParse('faq').success).toBe(true);
+    expect(sectionTypeSchema.safeParse('team').success).toBe(true);
+    expect(sectionTypeSchema.safeParse('richtext').success).toBe(true);
     expect(sectionTypeSchema.safeParse('bogus').success).toBe(false);
     expect(blockTypeSchema.safeParse('stat').success).toBe(true);
     expect(serviceCategorySchema.options).toEqual(['core', 'support']);
@@ -88,6 +94,66 @@ describe('content contracts', () => {
     if (parsed.success) {
       expect(parsed.data.data).toEqual({ value: 120, suffix: '+' });
     }
+  });
+
+  it('validates a section collection config (defaults to all/[], strict, picked ids)', () => {
+    // defaults applied for an empty config
+    const empty = sectionConfigSchema.safeParse({});
+    expect(empty.success).toBe(true);
+    if (empty.success) {
+      expect(empty.data.mode).toBe('all');
+      expect(empty.data.ids).toEqual([]);
+      expect(empty.data.limit).toBeUndefined();
+    }
+    // picked with uuid ids + a limit parses
+    const picked = sectionConfigSchema.safeParse({
+      mode: 'picked',
+      limit: 4,
+      ids: [
+        '11111111-1111-1111-1111-111111111111',
+        '22222222-2222-2222-2222-222222222222',
+      ],
+    });
+    expect(picked.success).toBe(true);
+    if (picked.success) {
+      expect(picked.data.ids).toHaveLength(2);
+    }
+    // bad mode + non-uuid id + out-of-range limit + unknown key rejected (strict)
+    expect(sectionConfigSchema.safeParse({ mode: 'nope' }).success).toBe(false);
+    expect(sectionConfigSchema.safeParse({ ids: ['not-a-uuid'] }).success).toBe(
+      false,
+    );
+    expect(sectionConfigSchema.safeParse({ limit: 0 }).success).toBe(false);
+    expect(sectionConfigSchema.safeParse({ limit: 51 }).success).toBe(false);
+    expect(sectionConfigSchema.safeParse({ bogus: 1 }).success).toBe(false);
+  });
+
+  it('accepts a section upsert carrying an optional collection config', () => {
+    const parsed = sectionUpsertSchema.safeParse({
+      pageId: '11111111-1111-1111-1111-111111111111',
+      type: 'services',
+      config: { mode: 'all', limit: 8 },
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.config?.mode).toBe('all');
+      expect(parsed.data.published).toBe(true); // default
+    }
+    // config omitted is fine (not every section links a collection)
+    expect(
+      sectionUpsertSchema.safeParse({
+        pageId: '11111111-1111-1111-1111-111111111111',
+        type: 'hero',
+      }).success,
+    ).toBe(true);
+    // unknown key still rejected (strict, N7)
+    expect(
+      sectionUpsertSchema.safeParse({
+        pageId: '11111111-1111-1111-1111-111111111111',
+        type: 'services',
+        bogus: 1,
+      }).success,
+    ).toBe(false);
   });
 
   it('validates a service create and a category-filtered list query', () => {

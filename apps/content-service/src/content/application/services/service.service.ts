@@ -38,6 +38,26 @@ export class ServiceService {
     };
   }
 
+  /**
+   * Services for a set of ids, returned IN THE GIVEN ORDER (the `picked` section-config
+   * hydration). Unknown/soft-deleted ids are simply dropped. Both locales resolved (F7).
+   */
+  async listByIds(ids: readonly string[]): Promise<ServiceItem[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.services.findByIds(ids);
+    const fields = await this.services.localizedFieldsForMany(
+      rows.map((row) => row.id),
+    );
+    const byId = new Map(
+      rows.map((row) => [row.id, assembleService(row, fields.get(row.id))]),
+    );
+    return ids
+      .map((id) => byId.get(id))
+      .filter((item): item is ServiceItem => item !== undefined);
+  }
+
   /** A single service by slug (the website detail page). 404 when absent. */
   async getBySlug(slug: string): Promise<ServiceItem> {
     const row = await this.services.findBySlug(slug);
@@ -94,6 +114,11 @@ export class ServiceService {
     }
 
     return this.byId(req.id);
+  }
+
+  /** Atomically renumber sortOrder to match the given id order (drag-and-drop reorder, U21). */
+  reorder(ids: string[]): Promise<void> {
+    return this.services.reorderByIds(ids);
   }
 
   /** Soft-delete a service (admin). */

@@ -4,20 +4,11 @@ import type { TFunction } from 'i18next';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { ApiError } from '../../../data/types/api-error.types';
+import { isApiError } from '../../../data/api/api-error';
 import { useLoginMutation } from '../api/auth.api';
 
 interface FromState {
   from?: { pathname: string };
-}
-
-function isApiError(error: unknown): error is ApiError {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    'message' in error
-  );
 }
 
 function loginErrorKey(error: unknown, t: TFunction<'auth'>): string {

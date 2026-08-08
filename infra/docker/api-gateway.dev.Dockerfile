@@ -9,5 +9,7 @@ WORKDIR /workspace
 
 EXPOSE 3000
 
-# Install against the bind-mounted source, then start the watch serve target.
-CMD ["sh", "-c", "pnpm install --frozen-lockfile && pnpm exec nx serve api-gateway"]
+# Supervised dev entry (no `nx serve` in the container — see infra/scripts/dev-entry.sh):
+# install (skips when warm) -> SWC compile -> supervised `node dist/main.js` that always
+# restarts on crash AND on shared-lib dist changes. Shared libs come from libs-builder.
+CMD ["sh", "infra/scripts/dev-entry.sh", "api-gateway"]

@@ -4,13 +4,16 @@ import {
   CONTENT_TESTIMONIAL_CREATE,
   CONTENT_TESTIMONIAL_DELETE,
   CONTENT_TESTIMONIAL_LIST,
+  CONTENT_TESTIMONIAL_REORDER,
   CONTENT_TESTIMONIAL_UPDATE,
   contentIdSchema,
+  reorderRequestSchema,
   testimonialCreateSchema,
   testimonialListQuerySchema,
   testimonialUpdateSchema,
   type ContentId,
   type Paginated,
+  type ReorderRequest,
   type TestimonialCreateRequest,
   type TestimonialItem,
   type TestimonialListQuery,
@@ -49,6 +52,14 @@ export class TestimonialMessageController {
     body: TestimonialUpdateRequest,
   ): Promise<TestimonialItem> {
     return this.testimonials.update(body);
+  }
+
+  @MessagePattern(CONTENT_TESTIMONIAL_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.testimonials.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_TESTIMONIAL_DELETE)

@@ -30,6 +30,7 @@ async function bootstrap(): Promise<void> {
     createRmqServerOptions({
       url: env.RABBITMQ_URL,
       queue: commandsQueue('content'),
+      noAck: true, // RPC: auto-ack — Nest won't ack a @MessagePattern, else the consumer stalls.
     }),
   );
   // Domain events from media (idempotent consumer, MS6). The relay emits `media.deleted`

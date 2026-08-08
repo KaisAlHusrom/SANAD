@@ -21,3 +21,18 @@ export type LocalizedText = z.infer<typeof localizedTextSchema>;
 export function pickLocalized(text: LocalizedText, locale: Locale): string {
   return text[locale] || text[DEFAULT_LOCALE] || text.ar || text.en;
 }
+
+/**
+ * The SPARSE counterpart of `pickLocalized`, for callers holding a possibly-incomplete record — a
+ * stale cache, a degraded fetch, or a deep-partial settings leaf (F7). Returns `null` (never
+ * `undefined`, never the string `"undefined"`) when no locale carries text, so the caller decides
+ * the fallback instead of rendering a broken value or crashing on `.length`.
+ */
+export function pickLocalizedPartial(
+  text: Partial<LocalizedText> | null | undefined,
+  locale: Locale,
+): string | null {
+  if (!text) return null;
+  const value = text[locale] || text[DEFAULT_LOCALE] || text.ar || text.en;
+  return value !== undefined && value.length > 0 ? value : null;
+}

@@ -4,6 +4,9 @@
 dist
 tmp
 out-tsc
+.next
+next-env.d.ts
+*.tsbuildinfo
 
 # dependencies
 node_modules

@@ -15,6 +15,13 @@
       "when": 1782311101449,
       "tag": "0001_oval_living_lightning",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784468502416,
+      "tag": "0002_faulty_felicia_hardy",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,38 @@
+{
+  "title": "Content",
+  "subtitle": "Manage every content surface shown on the website.",
+  "areas": {
+    "pages": {
+      "title": "Pages",
+      "desc": "Build pages from sections and blocks."
+    },
+    "services": {
+      "title": "Services",
+      "desc": "Capabilities on the services page."
+    },
+    "portfolio": {
+      "title": "Portfolio",
+      "desc": "Case studies and their categories."
+    },
+    "blog": {
+      "title": "Blog",
+      "desc": "Articles, categories and tags."
+    },
+    "testimonials": {
+      "title": "Testimonials",
+      "desc": "Client quotes featured across the site."
+    },
+    "faqs": {
+      "title": "FAQ",
+      "desc": "Questions and answers."
+    },
+    "team": {
+      "title": "Team",
+      "desc": "People on the about page."
+    },
+    "menus": {
+      "title": "Menus",
+      "desc": "Header and footer navigation."
+    }
+  }
+}

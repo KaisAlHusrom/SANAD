@@ -1,0 +1,130 @@
+{
+  "title": "Blog",
+  "subtitle": "Articles and updates published on the website blog.",
+  "columns": {
+    "title": "Title",
+    "category": "Category",
+    "author": "Author",
+    "status": "Status",
+    "updatedAt": "Updated"
+  },
+  "filters": {
+    "status": "Status"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "fields": {
+    "slug": "Slug",
+    "status": "Status",
+    "category": "Category",
+    "categoryPlaceholder": "Pick a category",
+    "author": "Author",
+    "authorPlaceholder": "Pick a team member",
+    "tags": "Tags",
+    "tagsPlaceholder": "Add tags",
+    "readMinutes": "Read time (min)",
+    "sortOrder": "Sort order",
+    "cover": "Cover image",
+    "title": "Title",
+    "excerpt": "Excerpt",
+    "body": "Body"
+  },
+  "actions": {
+    "create": "New post",
+    "manageCategories": "Manage categories",
+    "manageTags": "Manage tags",
+    "createCategory": "New category",
+    "createTag": "New tag",
+    "backToPosts": "Back to posts",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "createTitle": "New post",
+    "editTitle": "Edit post",
+    "created": "Post created.",
+    "updated": "Post updated.",
+    "save": "Save post",
+    "cancel": "Cancel",
+    "notFound": "This post could not be found.",
+    "unsavedTitle": "Discard unsaved changes?",
+    "unsavedBody": "You have edits that haven't been saved. Leave the page and lose them?",
+    "discard": "Discard",
+    "keepEditing": "Keep editing",
+    "draftFound": "You have an unsaved draft for this post.",
+    "restoreDraft": "Restore draft",
+    "discardDraft": "Discard draft"
+  },
+  "delete": {
+    "title": "Delete post",
+    "message": "This post will be permanently removed from the website.",
+    "confirm": "Delete",
+    "toastSuccess": "Post deleted.",
+    "bulkTitle": "Delete posts",
+    "bulkMessage": "Delete {{count}} selected posts? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} posts deleted."
+  },
+  "categoryTitle": "Blog categories",
+  "categorySubtitle": "Group posts and filter the website blog.",
+  "categoryColumns": {
+    "name": "Name",
+    "slug": "Slug",
+    "sortOrder": "Order",
+    "updatedAt": "Updated"
+  },
+  "categoryFields": {
+    "slug": "Slug",
+    "sortOrder": "Sort order",
+    "name": "Name",
+    "description": "Description"
+  },
+  "categoryForm": {
+    "createTitle": "New category",
+    "editTitle": "Edit category",
+    "created": "Category created.",
+    "updated": "Category updated."
+  },
+  "categoryDelete": {
+    "title": "Delete category",
+    "message": "Posts in this category will keep their content but lose the category.",
+    "confirm": "Delete",
+    "toastSuccess": "Category deleted.",
+    "bulkTitle": "Delete categories",
+    "bulkMessage": "Delete {{count}} selected categories? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} categories deleted."
+  },
+  "tagTitle": "Blog tags",
+  "tagSubtitle": "Label posts so readers can browse related topics.",
+  "tagColumns": {
+    "name": "Name",
+    "slug": "Slug",
+    "sortOrder": "Order",
+    "updatedAt": "Updated"
+  },
+  "tagFields": {
+    "slug": "Slug",
+    "sortOrder": "Sort order",
+    "name": "Name"
+  },
+  "tagForm": {
+    "createTitle": "New tag",
+    "editTitle": "Edit tag",
+    "created": "Tag created.",
+    "updated": "Tag updated."
+  },
+  "tagDelete": {
+    "title": "Delete tag",
+    "message": "This tag will be removed from every post that uses it.",
+    "confirm": "Delete",
+    "toastSuccess": "Tag deleted.",
+    "bulkTitle": "Delete tags",
+    "bulkMessage": "Delete {{count}} selected tags? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} tags deleted."
+  },
+  "errors": {
+    "deleteFailed": "Couldn't delete the item.",
+    "updateFailed": "Couldn't save the change."
+  }
+}

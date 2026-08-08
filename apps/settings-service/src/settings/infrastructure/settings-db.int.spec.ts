@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -6,7 +7,11 @@ import { sql } from 'drizzle-orm';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
 import { RedisCache, type RedisClient } from '@sanad/cache';
-import { DateTimeService, TranslatableRepository } from '@sanad/database';
+import {
+  DateTimeService,
+  DrizzleTransactionRunner,
+  TranslatableRepository,
+} from '@sanad/database';
 import {
   schema,
   settingTranslationTable,
@@ -15,8 +20,11 @@ import {
   type SettingValueRow,
 } from '../../db/schema/index.js';
 import { SETTINGS_CATALOG } from '../../seed/seed-data.js';
+import { SETTINGS_DEFAULTS } from '../application/branding-catalog.js';
 import { BrandingService } from '../application/branding.service.js';
+import { SettingsCatalogService } from '../application/settings-catalog.service.js';
 import { SettingsResolver } from '../application/settings.resolver.js';
+import { SettingsWriter } from '../application/settings.writer.js';
 import { SettingRepository } from './setting.repository.js';
 import { SettingValueRepository } from './setting-value.repository.js';
 import { SettingTranslationRepository } from './setting-translation.repository.js';
@@ -25,6 +33,12 @@ import { SettingTranslationRepository } from './setting-translation.repository.j
 // by infra/postgres/init/01-create-databases.sql. Tests SKIP cleanly when it's down.
 const TEST_DB_URL = 'postgresql://sanad:sanad@localhost:5440/settings_test';
 
+// Resolve the migrations dir from THIS file, not the CWD — vitest's cwd differs by how it is
+// invoked, and a CWD-relative path made `migrate()` throw and the suite SILENTLY skip (false green).
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL('../../db/migrations', import.meta.url),
+);
+
 async function tryConnect(): Promise<pg.Pool | null> {
   const pool = new pg.Pool({
     connectionString: TEST_DB_URL,
@@ -32,7 +46,7 @@ async function tryConnect(): Promise<pg.Pool | null> {
   });
   try {
     await pool.query('select 1');
-    await migrate(drizzle(pool), { migrationsFolder: 'src/db/migrations' });
+    await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
   } catch {
     await pool.end().catch(() => undefined);
@@ -104,6 +118,8 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
   const values = new SettingValueRepository(db, clock);
   const translations = new SettingTranslationRepository(db, clock);
   const resolver = new SettingsResolver(settings, values, translations);
+  const txRunner = new DrizzleTransactionRunner(db);
+  const catalogService = new SettingsCatalogService(resolver);
 
   async function seedCatalog(): Promise<void> {
     for (const entry of SETTINGS_CATALOG) {
@@ -111,16 +127,21 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
     }
   }
 
-  function service(): BrandingService {
-    return new BrandingService(
-      resolver,
+  function writer(cache: RedisCache): SettingsWriter {
+    return new SettingsWriter(
       settings,
       values,
       translations,
-      fakeCache(),
+      cache,
       clock,
-      db,
+      txRunner,
     );
+  }
+
+  function service(): BrandingService {
+    // Branding read + the generic writer share one cache so version bumps are seen.
+    const cache = fakeCache();
+    return new BrandingService(resolver, cache, writer(cache));
   }
 
   beforeEach(async () => {
@@ -212,6 +233,77 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
     const record = await service().getBranding({ scope: 'global' });
     expect(record.brand.name.ar).toBe('سَنَد فقط');
     expect(record.brand.name.en).toBe('Sanad Tech'); // coded default fills empty locale
+  });
+
+  it('catalog returns descriptors grouped by section with resolved values (coded default when unset)', async () => {
+    await seedCatalog();
+    const catalog = await catalogService.getCatalog({ scope: 'global' });
+    const branding = catalog.groups.find((group) => group.group === 'branding');
+    expect(branding).toBeDefined();
+    const colors = branding?.sections.find((s) => s.section === 'colors');
+    const primary = colors?.fields.find(
+      (f) => f.key === 'branding.colors.primary',
+    );
+    expect(primary?.type).toBe('color');
+    expect(primary?.requirement).toBe('optional');
+    expect(primary?.value).toBe('#22d3ee'); // coded default, never blank (F7)
+  });
+
+  it('the generic writer sets a scalar value and the catalog reflects it', async () => {
+    await seedCatalog();
+    await writer(fakeCache()).setMany(
+      [{ key: 'branding.colors.primary', value: '#abcdef' }],
+      { scope: 'global' },
+    );
+    const catalog = await catalogService.getCatalog({ scope: 'global' });
+    const primary = catalog.groups[0]?.sections
+      .find((s) => s.section === 'colors')
+      ?.fields.find((f) => f.key === 'branding.colors.primary');
+    expect(primary?.value).toBe('#abcdef');
+  });
+
+  it('the generic writer round-trips a localized_text value across both locales', async () => {
+    await seedCatalog();
+    await writer(fakeCache()).setMany(
+      [{ key: 'branding.brand.name', value: { ar: 'اسم', en: 'Name' } }],
+      { scope: 'global' },
+    );
+    const catalog = await catalogService.getCatalog({ scope: 'global' });
+    const name = catalog.groups[0]?.sections
+      .find((s) => s.section === 'identity')
+      ?.fields.find((f) => f.key === 'branding.brand.name');
+    expect(name?.value).toEqual({ ar: 'اسم', en: 'Name' });
+  });
+
+  it('CLEARS a localized_text back to the coded default when set to null (U9)', async () => {
+    await seedCatalog();
+    const w = writer(fakeCache());
+    // Set an override, then clear it — the per-locale rows must go with it, otherwise the
+    // resolver re-assembles the stale text over the cleared value.
+    await w.setMany(
+      [{ key: 'branding.brand.name', value: { ar: 'مؤقّت', en: 'Temporary' } }],
+      { scope: 'global' },
+    );
+    await w.setMany([{ key: 'branding.brand.name', value: null }], {
+      scope: 'global',
+    });
+
+    const catalog = await catalogService.getCatalog({ scope: 'global' });
+    const name = catalog.groups[0]?.sections
+      .find((s) => s.section === 'identity')
+      ?.fields.find((f) => f.key === 'branding.brand.name');
+    expect(name?.value).toEqual(SETTINGS_DEFAULTS['branding.brand.name']);
+    expect(name?.value).not.toEqual({ ar: 'مؤقّت', en: 'Temporary' });
+  });
+
+  it('the generic writer rejects a value of the wrong descriptor type (N7)', async () => {
+    await seedCatalog();
+    await expect(
+      writer(fakeCache()).setMany(
+        [{ key: 'branding.colors.primary', value: 123 }],
+        { scope: 'global' },
+      ),
+    ).rejects.toThrow();
   });
 
   it('TranslatableRepository canon: createLocalized + findAllTranslations + mergeTranslations', async () => {

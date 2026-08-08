@@ -3,22 +3,52 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   resolveGroupRequestSchema,
   resolveRequestSchema,
+  resolveScopeSchema,
+  settingsUpdateRequestSchema,
+  SETTINGS_CATALOG_GET,
   SETTINGS_RESOLVE,
   SETTINGS_RESOLVE_GROUP,
+  SETTINGS_SET,
   type ResolveGroupRequest,
   type ResolveRequest,
+  type ResolveScope,
+  type SettingsCatalog,
+  type SettingsUpdateRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import type { ResolvedValue } from '../application/resolved-value.js';
+import { SettingsCatalogService } from '../application/settings-catalog.service.js';
 import { SettingsResolver } from '../application/settings.resolver.js';
+import { SettingsWriter } from '../application/settings.writer.js';
 
 /**
- * RMQ entrypoints for generic settings resolution (MS2). Thin — validate + delegate to
- * the resolver (override → global → coded default, U9).
+ * RMQ entrypoints for generic settings resolution + the descriptor-driven admin catalog
+ * (MS2). Thin — validate + delegate. `CATALOG_GET` returns the whole catalog (descriptors +
+ * resolved values); `SET` validates + persists a batch then returns the fresh catalog.
  */
 @Controller()
 export class SettingsMessageController {
-  constructor(private readonly resolver: SettingsResolver) {}
+  constructor(
+    private readonly resolver: SettingsResolver,
+    private readonly catalog: SettingsCatalogService,
+    private readonly writer: SettingsWriter,
+  ) {}
+
+  @MessagePattern(SETTINGS_CATALOG_GET)
+  getCatalog(
+    @Payload(new ZodValidationPipe(resolveScopeSchema)) ctx: ResolveScope,
+  ): Promise<SettingsCatalog> {
+    return this.catalog.getCatalog(ctx);
+  }
+
+  @MessagePattern(SETTINGS_SET)
+  async set(
+    @Payload(new ZodValidationPipe(settingsUpdateRequestSchema))
+    body: SettingsUpdateRequest,
+  ): Promise<SettingsCatalog> {
+    await this.writer.setMany(body.values, { scope: 'global' });
+    return this.catalog.getCatalog({ scope: 'global' });
+  }
 
   @MessagePattern(SETTINGS_RESOLVE)
   resolve(

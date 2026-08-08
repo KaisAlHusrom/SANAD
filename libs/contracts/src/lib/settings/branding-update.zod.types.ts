@@ -4,7 +4,7 @@ import { localizedTextSchema } from '../common/localized-text.js';
 /** A 3- or 6-digit hex color (`#abc` / `#aabbcc`). */
 const hexColor = z
   .string()
-  .regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a hex color');
+  .regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'validation.hexColor');
 
 /** A URL value that may be explicitly cleared to `null`. */
 const urlOrNull = z.string().url().nullable();
@@ -81,6 +81,11 @@ export const brandingUpdateRequestSchema = z
         phone: z.string().min(1).nullable(),
         address: localizedTextSchema.nullable(),
       })
+      .partial()
+      .strict(),
+    legal: z.object({ copyright: localizedTextSchema }).partial().strict(),
+    seo: z
+      .object({ siteUrl: urlOrNull, shareImageUrl: urlOrNull })
       .partial()
       .strict(),
   })

@@ -18,9 +18,9 @@ A bug, regression, failing test, or rule violation needs fixing. Work it methodi
 
 5. **Update the module doc (DOC1)** if behavior/contract changed.
 
-6. **Add a preventive rule (U13).** If this bug is a class that could recur, **add or sharpen a rule** in `.claude/rules.md` with a dated change-log entry so it never happens again. (This is the point of `/fix` — every fix hardens the law.)
+6. **Preventive rule — only if genuinely cross-cutting (U13).** Record the root cause + fix in `PROGRESS.md` (step 7). Touch `.claude/rules.md` **only** when the bug is a **reusable, platform-wide class** that will recur across features — then add or sharpen ONE tight rule (no change-log ceremony). A one-off fix does NOT earn a rule; keep the law lean. When unsure, ask.
 
-7. **Update `PROGRESS.md`** — the issue, the root cause, the fix, the new/changed rule.
+7. **Update `PROGRESS.md`** — the issue, the root cause, the fix (and the rule, only if one was genuinely warranted).
 
 8. **Verify.** Run the **`verifier`** agent — must report **PASS** (typecheck + lint + build + tests green; no rule-grep violations). Re-run until green.
 

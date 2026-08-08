@@ -1,0 +1,50 @@
+{
+  "title": "Team",
+  "subtitle": "The people shown on the website about/team page.",
+  "columns": {
+    "name": "Name",
+    "role": "Role",
+    "slug": "Slug",
+    "featured": "Featured",
+    "updatedAt": "Updated"
+  },
+  "filters": {
+    "featured": "Featured"
+  },
+  "fields": {
+    "slug": "Slug",
+    "email": "Email",
+    "linkedinUrl": "LinkedIn URL",
+    "githubUrl": "GitHub URL",
+    "sortOrder": "Sort order",
+    "featured": "Featured",
+    "avatar": "Avatar",
+    "name": "Name",
+    "role": "Role",
+    "bio": "Bio"
+  },
+  "actions": {
+    "create": "New member",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "createTitle": "New team member",
+    "editTitle": "Edit team member",
+    "created": "Team member created.",
+    "updated": "Team member updated."
+  },
+  "delete": {
+    "title": "Delete team member",
+    "message": "This team member will be permanently removed from the website.",
+    "confirm": "Delete",
+    "toastSuccess": "Team member deleted.",
+    "bulkTitle": "Delete team members",
+    "bulkMessage": "Delete {{count}} selected team members? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} team members deleted."
+  },
+  "errors": {
+    "deleteFailed": "Couldn't delete the team member.",
+    "updateFailed": "Couldn't update the team member."
+  }
+}

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { DateTimeService, DRIZZLE } from '@sanad/database';
 import type { Locale } from '@sanad/contracts';
 import type { DbExecutor } from '../../db/executor.js';
@@ -52,6 +52,21 @@ export class SettingTranslationRepository {
         ],
         set: { value, updatedAt: this.touchTimestamp() },
       });
+  }
+
+  /**
+   * Drop every locale's text for a setting value — used when a `localized_text` setting is
+   * CLEARED to null. Without this the rows would linger and the resolver would re-assemble
+   * the old text over a cleared value (U9: a cleared setting must fall back to the coded
+   * default). Runs on the caller's executor so it composes inside the write transaction.
+   */
+  async deleteForValue(
+    exec: DbExecutor,
+    settingValueId: string,
+  ): Promise<void> {
+    await exec
+      .delete(settingTranslationTable)
+      .where(eq(settingTranslationTable.settingValueId, settingValueId));
   }
 
   private touchTimestamp(): Date {

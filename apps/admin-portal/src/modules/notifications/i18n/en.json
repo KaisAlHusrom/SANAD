@@ -1,0 +1,11 @@
+{
+  "label": "Notifications",
+  "title": "Notifications",
+  "empty": "You're all caught up.",
+  "unread": "Unread",
+  "unreadCount": "{{count}} unread",
+  "item": {
+    "leadCreated": "New lead from {{name}}",
+    "leadAck": "Acknowledgement sent to {{name}}"
+  }
+}

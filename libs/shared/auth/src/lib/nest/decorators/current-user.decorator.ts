@@ -1,9 +1,10 @@
 import {
   createParamDecorator,
   ExecutionContext,
-  UnauthorizedException,
+  HttpStatus,
 } from '@nestjs/common';
 import type { IdentityContext } from '@sanad/contracts';
+import { httpError } from '@sanad/i18n';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 
 /**
@@ -14,7 +15,7 @@ export const CurrentUser = createParamDecorator(
   (_data: unknown, context: ExecutionContext): IdentityContext => {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     if (!request.identity) {
-      throw new UnauthorizedException('No authenticated identity');
+      throw httpError(HttpStatus.UNAUTHORIZED, 'auth.noIdentity');
     }
     return request.identity;
   },

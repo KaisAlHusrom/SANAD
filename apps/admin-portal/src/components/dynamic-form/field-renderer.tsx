@@ -11,8 +11,11 @@ import { ColorInput } from '../ui/color-input';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { Input } from '../ui/input';
+import { SelectField } from '../ui/select';
 import { Switch } from '../ui/switch';
+import { Textarea } from '../ui/textarea';
 import type { FieldConfig, FormMode } from './field.types';
+import { SlugField } from './slug-field';
 
 const PASSWORD_CHARS =
   'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
@@ -27,9 +30,6 @@ function generatePassword(length = 16): string {
   }
   return out;
 }
-
-const selectClass =
-  'h-10 w-full rounded-input border border-border-2 bg-surface px-3 text-sm text-text focus-visible:border-accent-line focus-visible:outline-none';
 
 interface FieldRendererProps<TValues extends FieldValues> {
   field: FieldConfig<TValues>;
@@ -80,16 +80,31 @@ export function FieldRenderer<TValues extends FieldValues>({
     );
   }
 
+  if (field.type === 'slug') {
+    return (
+      <div className="flex flex-col gap-1.5">
+        {labelNode}
+        <SlugField
+          field={field}
+          name={path}
+          form={form}
+          mode={mode}
+          disabled={disabled}
+        />
+        {errorNode}
+      </div>
+    );
+  }
+
   if (field.type === 'textarea') {
     return (
       <div className="flex flex-col gap-1.5">
         {labelNode}
-        <textarea
+        <Textarea
           id={name}
           rows={field.rows ?? 4}
           placeholder={field.placeholder}
           disabled={disabled}
-          className="w-full rounded-input border border-border-2 bg-surface px-3 py-2 text-sm text-text placeholder:text-faint focus-visible:border-accent-line focus-visible:outline-none"
           {...form.register(path)}
         />
         {errorNode}
@@ -101,21 +116,25 @@ export function FieldRenderer<TValues extends FieldValues>({
     return (
       <div className="flex flex-col gap-1.5">
         {labelNode}
-        <select
-          id={name}
-          disabled={disabled}
-          className={selectClass}
-          {...form.register(path)}
-        >
-          <option value="">
-            {field.placeholder ?? t('form.selectPlaceholder')}
-          </option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <Controller
+          control={form.control}
+          name={path}
+          render={({ field: controlled }) => (
+            <SelectField
+              id={name}
+              aria-label={field.label}
+              disabled={disabled}
+              placeholder={field.placeholder ?? t('form.selectPlaceholder')}
+              value={
+                typeof controlled.value === 'string'
+                  ? controlled.value
+                  : undefined
+              }
+              onValueChange={controlled.onChange}
+              options={options}
+            />
+          )}
+        />
         {errorNode}
       </div>
     );

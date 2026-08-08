@@ -5,6 +5,7 @@ import {
   eq,
   getTableColumns,
   getTableName,
+  inArray,
   isNotNull,
   isNull,
   sql,
@@ -210,6 +211,39 @@ export abstract class BaseRepository<
     const out = this.transformRead(this.requireFirst(rows));
     await this.afterUpdate(out);
     return out;
+  }
+
+  /**
+   * Atomically renumber `sort_order` to match the given id order (array index = new order).
+   * One `UPDATE … SET sort_order = CASE … END WHERE id IN (…)` — every row moves or none do,
+   * so a partial failure can't leave the list half-reordered. Requires the model to carry a
+   * `sortOrder` column; ids absent from the table are simply not matched.
+   */
+  async reorderByIds(ids: string[]): Promise<void> {
+    if (ids.length === 0) {
+      return;
+    }
+    const sortColumn = this.columns['sortOrder'];
+    if (!sortColumn) {
+      throw new Error(
+        `reorderByIds: '${this.tableName}' has no sortOrder column`,
+      );
+    }
+    const pk = this.pkColumn();
+    const cases = sql.join(
+      ids.map((id, index) => sql`when ${pk} = ${id} then ${index}`),
+      sql` `,
+    );
+    const where = this.softDeletes
+      ? and(inArray(pk, ids), isNull(this.deletedAtColumn()))
+      : inArray(pk, ids);
+    await this.db
+      .update(this.table)
+      .set({
+        sortOrder: sql`case ${cases} else ${sortColumn} end`,
+        updatedAt: this.dateTime.now().toJSDate(),
+      } as Partial<InferInsertModel<TTable>>)
+      .where(where);
   }
 
   /** Soft delete when `softDeletes` is enabled, otherwise a hard delete. */

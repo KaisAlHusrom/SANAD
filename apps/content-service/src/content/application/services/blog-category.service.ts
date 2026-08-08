@@ -80,6 +80,11 @@ export class BlogCategoryService {
     return this.byId(req.id);
   }
 
+  /** Atomically renumber sortOrder to match the given id order (drag-and-drop reorder, U21). */
+  reorder(ids: string[]): Promise<void> {
+    return this.categories.reorderByIds(ids);
+  }
+
   async delete(id: string): Promise<ContentId> {
     const existing = await this.categories.find(id);
     if (!existing) {

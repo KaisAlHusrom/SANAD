@@ -4,12 +4,16 @@ import {
   MEDIA_ASSET_DELETE,
   MEDIA_ASSET_GET,
   MEDIA_ASSET_LIST,
+  MEDIA_PUBLIC_RESOLVE,
   mediaIdSchema,
   mediaListQuerySchema,
+  mediaPublicResolveRequestSchema,
   type MediaAsset,
   type MediaId,
   type MediaListQuery,
+  type MediaPublicResolveRequest,
   type Paginated,
+  type PublicMediaRef,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import { MediaService } from '../application/media.service.js';
@@ -27,6 +31,14 @@ export class MediaAssetMessageController {
     @Payload(new ZodValidationPipe(mediaListQuerySchema)) query: MediaListQuery,
   ): Promise<Paginated<MediaAsset>> {
     return this.media.list(query);
+  }
+
+  @MessagePattern(MEDIA_PUBLIC_RESOLVE)
+  resolvePublic(
+    @Payload(new ZodValidationPipe(mediaPublicResolveRequestSchema))
+    payload: MediaPublicResolveRequest,
+  ): Promise<PublicMediaRef[]> {
+    return this.media.resolvePublic(payload.ids);
   }
 
   @MessagePattern(MEDIA_ASSET_GET)

@@ -1,0 +1,52 @@
+{
+  "title": "الخدمات",
+  "subtitle": "القدرات المعروضة في صفحة خدمات الموقع.",
+  "columns": {
+    "title": "العنوان",
+    "slug": "المعرّف",
+    "category": "الفئة",
+    "sortOrder": "الترتيب",
+    "updatedAt": "آخر تحديث"
+  },
+  "filters": {
+    "category": "الفئة"
+  },
+  "categories": {
+    "core": "أساسية",
+    "support": "مساندة"
+  },
+  "fields": {
+    "slug": "المعرّف",
+    "category": "الفئة",
+    "iconKey": "مفتاح الأيقونة",
+    "iconKeyPlaceholder": "مثال: rocket",
+    "sortOrder": "ترتيب العرض",
+    "cover": "صورة الغلاف",
+    "title": "العنوان",
+    "summary": "الملخّص",
+    "detailBody": "التفاصيل"
+  },
+  "actions": {
+    "create": "خدمة جديدة",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "form": {
+    "createTitle": "خدمة جديدة",
+    "editTitle": "تعديل الخدمة",
+    "created": "تم إنشاء الخدمة.",
+    "updated": "تم تحديث الخدمة."
+  },
+  "delete": {
+    "title": "حذف الخدمة",
+    "message": "ستُحذف هذه الخدمة نهائيًا من الموقع.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف الخدمة.",
+    "bulkTitle": "حذف الخدمات",
+    "bulkMessage": "حذف {{count}} خدمات محددة؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} خدمات."
+  },
+  "errors": {
+    "deleteFailed": "تعذّر حذف الخدمة."
+  }
+}

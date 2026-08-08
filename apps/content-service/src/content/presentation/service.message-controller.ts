@@ -5,15 +5,18 @@ import {
   CONTENT_SERVICE_DELETE,
   CONTENT_SERVICE_GET,
   CONTENT_SERVICE_LIST,
+  CONTENT_SERVICE_REORDER,
   CONTENT_SERVICE_UPDATE,
   contentIdSchema,
   contentSlugSchema,
+  reorderRequestSchema,
   serviceCreateSchema,
   serviceListQuerySchema,
   serviceUpdateSchema,
   type ContentId,
   type ContentSlug,
   type Paginated,
+  type ReorderRequest,
   type ServiceCreateRequest,
   type ServiceItem,
   type ServiceListQuery,
@@ -59,6 +62,14 @@ export class ServiceMessageController {
     body: ServiceUpdateRequest,
   ): Promise<ServiceItem> {
     return this.services.update(body);
+  }
+
+  @MessagePattern(CONTENT_SERVICE_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.services.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_SERVICE_DELETE)

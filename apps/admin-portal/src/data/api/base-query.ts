@@ -4,8 +4,9 @@ import {
   type BaseQueryFn,
   type FetchArgs,
 } from '@reduxjs/toolkit/query';
-import type { TokenPair } from '@sanad/contracts';
+import { LOCALE_HEADER, resolveLocale, type TokenPair } from '@sanad/contracts';
 import { env } from '../../config/env';
+import { i18n } from '../../i18n/i18n';
 import {
   loggedOut,
   selectAccessToken,
@@ -29,6 +30,10 @@ const rawBaseQuery = fetchBaseQuery({
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
+    // THE one place the portal tells the backend which language to answer in (U24c). The
+    // in-app language is authoritative over the device/browser (F11), so it is sent
+    // explicitly on every request — including `ar`, which the backend must never have to guess.
+    headers.set(LOCALE_HEADER, resolveLocale(i18n.language));
     return headers;
   },
 });

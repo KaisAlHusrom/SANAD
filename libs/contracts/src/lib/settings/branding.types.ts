@@ -22,6 +22,24 @@ export interface BrandingRecord {
   };
   social: BrandingSocial;
   contact: BrandingContact;
+  legal: BrandingLegal;
+  seo: BrandingSeo;
+}
+
+export interface BrandingLegal {
+  /**
+   * The copyright notice shown AFTER the brand name (the footers compose
+   * `© {brand.name} — {copyright}`). The brand stays single-sourced from `brand.name`, so
+   * renaming the company never leaves a stale name baked inside the copyright string.
+   */
+  copyright: LocalizedText;
+}
+
+export interface BrandingSeo {
+  /** The public site origin (e.g. `https://sanad.tech`) — canonical URLs, sitemap, absolute OG. */
+  siteUrl: string | null;
+  /** Default OpenGraph/Twitter share image for pages without their own. */
+  shareImageUrl: string | null;
 }
 
 /** A single page's accent triplet (the website's per-page art direction). */

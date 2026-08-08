@@ -48,6 +48,14 @@ export class ServiceRepository extends LocalizedRepository<
     return this.where('slug', 'eq', slug).first();
   }
 
+  /** Live services for a set of ids (the `picked` section hydration; caller maps by id). */
+  findByIds(ids: readonly string[]): Promise<ServiceRow[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.whereIn('id', [...ids]).all();
+  }
+
   /** A paginated, searchable, category-filterable list of live services (base rows). */
   list(query: ServiceListQuery): Promise<Paginated<ServiceRow>> {
     return this.listFiltered(

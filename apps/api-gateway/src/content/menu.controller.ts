@@ -13,7 +13,6 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import {
   CurrentUser,
-  identityToHeaders,
   JwtAuthGuard,
   PermissionsGuard,
   RequirePermissions,
@@ -25,12 +24,14 @@ import {
   CONTENT_MENU_GET,
   CONTENT_MENU_ITEM_CREATE,
   CONTENT_MENU_ITEM_DELETE,
+  CONTENT_MENU_ITEM_REORDER,
   CONTENT_MENU_ITEM_UPDATE,
   CONTENT_MENU_LIST,
   CONTENT_PERMISSIONS,
   menuCreateSchema,
   menuItemCreateSchema,
   menuItemUpdateSchema,
+  reorderRequestSchema,
   type ContentId,
   type MenuCreateRequest,
   type MenuItemCreateRequest,
@@ -38,9 +39,13 @@ import {
   type MenuItemUpdateRequest,
   type MenuSummary,
   type MenuTree,
+  type ReorderRequest,
+  type Locale,
 } from '@sanad/contracts';
 import { sendRequest } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
+import { RequestLocale } from '../core/decorators/index.js';
+import { forwardHeaders } from '../core/helpers/index.js';
 import { CONTENT_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
 
@@ -56,13 +61,19 @@ export class MenuController {
   @Get('menus')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @RequirePermissions(CONTENT_PERMISSIONS.read)
-  async list(@CurrentUser() identity: IdentityContext): Promise<MenuSummary[]> {
-    return this.forward(CONTENT_MENU_LIST, {}, identity);
+  async list(
+    @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
+  ): Promise<MenuSummary[]> {
+    return this.forward(CONTENT_MENU_LIST, {}, identity, locale);
   }
 
   @Get('menus/:key')
-  async get(@Param('key') key: string): Promise<MenuTree> {
-    return this.forwardPublic(CONTENT_MENU_GET, { key });
+  async get(
+    @RequestLocale() locale: Locale,
+    @Param('key') key: string,
+  ): Promise<MenuTree> {
+    return this.forwardPublic(CONTENT_MENU_GET, { key }, locale);
   }
 
   @Post('menus')
@@ -70,9 +81,10 @@ export class MenuController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async create(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(menuCreateSchema)) body: MenuCreateRequest,
   ): Promise<MenuSummary> {
-    return this.forward(CONTENT_MENU_CREATE, body, identity);
+    return this.forward(CONTENT_MENU_CREATE, body, identity, locale);
   }
 
   @Delete('menus/:id')
@@ -80,9 +92,10 @@ export class MenuController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async delete(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ContentId> {
-    return this.forward(CONTENT_MENU_DELETE, { id }, identity);
+    return this.forward(CONTENT_MENU_DELETE, { id }, identity, locale);
   }
 
   @Post('menu-items')
@@ -90,10 +103,22 @@ export class MenuController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async createItem(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(menuItemCreateSchema))
     body: MenuItemCreateRequest,
   ): Promise<MenuItemNode> {
-    return this.forward(CONTENT_MENU_ITEM_CREATE, body, identity);
+    return this.forward(CONTENT_MENU_ITEM_CREATE, body, identity, locale);
+  }
+
+  @Patch('menu-items/reorder')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CONTENT_PERMISSIONS.manage)
+  async reorderItems(
+    @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
+    @Body(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    return this.forward(CONTENT_MENU_ITEM_REORDER, body, identity, locale);
   }
 
   @Patch('menu-items/:id')
@@ -101,11 +126,17 @@ export class MenuController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async updateItem(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(menuItemUpdateSchema.omit({ id: true })))
     body: Omit<MenuItemUpdateRequest, 'id'>,
   ): Promise<MenuItemNode> {
-    return this.forward(CONTENT_MENU_ITEM_UPDATE, { id, ...body }, identity);
+    return this.forward(
+      CONTENT_MENU_ITEM_UPDATE,
+      { id, ...body },
+      identity,
+      locale,
+    );
   }
 
   @Delete('menu-items/:id')
@@ -113,19 +144,21 @@ export class MenuController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async deleteItem(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ContentId> {
-    return this.forward(CONTENT_MENU_ITEM_DELETE, { id }, identity);
+    return this.forward(CONTENT_MENU_ITEM_DELETE, { id }, identity, locale);
   }
 
   private async forward<TResult>(
     pattern: string,
     payload: object,
     identity: IdentityContext,
+    locale: Locale,
   ): Promise<TResult> {
     try {
       return await sendRequest<TResult>(this.client, pattern, payload, {
-        headers: identityToHeaders(identity),
+        headers: forwardHeaders(identity, locale),
       });
     } catch (error) {
       throw toHttpException(error);
@@ -135,9 +168,12 @@ export class MenuController {
   private async forwardPublic<TResult>(
     pattern: string,
     payload: object,
+    locale: Locale,
   ): Promise<TResult> {
     try {
-      return await sendRequest<TResult>(this.client, pattern, payload);
+      return await sendRequest<TResult>(this.client, pattern, payload, {
+        headers: forwardHeaders(null, locale),
+      });
     } catch (error) {
       throw toHttpException(error);
     }

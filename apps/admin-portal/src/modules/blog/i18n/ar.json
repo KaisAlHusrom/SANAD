@@ -1,0 +1,130 @@
+{
+  "title": "المدوّنة",
+  "subtitle": "المقالات والتحديثات المنشورة في مدوّنة الموقع.",
+  "columns": {
+    "title": "العنوان",
+    "category": "الفئة",
+    "author": "الكاتب",
+    "status": "الحالة",
+    "updatedAt": "آخر تحديث"
+  },
+  "filters": {
+    "status": "الحالة"
+  },
+  "status": {
+    "draft": "مسودة",
+    "published": "منشور"
+  },
+  "fields": {
+    "slug": "المعرّف",
+    "status": "الحالة",
+    "category": "الفئة",
+    "categoryPlaceholder": "اختر فئة",
+    "author": "الكاتب",
+    "authorPlaceholder": "اختر عضو فريق",
+    "tags": "الوسوم",
+    "tagsPlaceholder": "أضف وسومًا",
+    "readMinutes": "مدة القراءة (دقيقة)",
+    "sortOrder": "ترتيب العرض",
+    "cover": "صورة الغلاف",
+    "title": "العنوان",
+    "excerpt": "المقتطف",
+    "body": "المحتوى"
+  },
+  "actions": {
+    "create": "مقال جديد",
+    "manageCategories": "إدارة الفئات",
+    "manageTags": "إدارة الوسوم",
+    "createCategory": "فئة جديدة",
+    "createTag": "وسم جديد",
+    "backToPosts": "العودة إلى المقالات",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "form": {
+    "createTitle": "مقال جديد",
+    "editTitle": "تعديل المقال",
+    "created": "تم إنشاء المقال.",
+    "updated": "تم تحديث المقال.",
+    "save": "حفظ المقال",
+    "cancel": "إلغاء",
+    "notFound": "تعذّر العثور على هذا المقال.",
+    "unsavedTitle": "تجاهل التغييرات غير المحفوظة؟",
+    "unsavedBody": "لديك تعديلات لم تُحفظ. هل تغادر الصفحة وتفقدها؟",
+    "discard": "تجاهل",
+    "keepEditing": "متابعة التحرير",
+    "draftFound": "لديك مسودّة غير محفوظة لهذا المقال.",
+    "restoreDraft": "استعادة المسودّة",
+    "discardDraft": "تجاهل المسودّة"
+  },
+  "delete": {
+    "title": "حذف المقال",
+    "message": "سيُحذف هذا المقال نهائيًا من الموقع.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف المقال.",
+    "bulkTitle": "حذف المقالات",
+    "bulkMessage": "حذف {{count}} مقالات محددة؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} مقالات."
+  },
+  "categoryTitle": "فئات المدوّنة",
+  "categorySubtitle": "صنّف المقالات وفلتر مدوّنة الموقع.",
+  "categoryColumns": {
+    "name": "الاسم",
+    "slug": "المعرّف",
+    "sortOrder": "الترتيب",
+    "updatedAt": "آخر تحديث"
+  },
+  "categoryFields": {
+    "slug": "المعرّف",
+    "sortOrder": "ترتيب العرض",
+    "name": "الاسم",
+    "description": "الوصف"
+  },
+  "categoryForm": {
+    "createTitle": "فئة جديدة",
+    "editTitle": "تعديل الفئة",
+    "created": "تم إنشاء الفئة.",
+    "updated": "تم تحديث الفئة."
+  },
+  "categoryDelete": {
+    "title": "حذف الفئة",
+    "message": "ستحتفظ مقالات هذه الفئة بمحتواها لكنها ستفقد الفئة.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف الفئة.",
+    "bulkTitle": "حذف الفئات",
+    "bulkMessage": "حذف {{count}} فئات محددة؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} فئات."
+  },
+  "tagTitle": "وسوم المدوّنة",
+  "tagSubtitle": "وسِم المقالات ليتصفّح القرّاء المواضيع المرتبطة.",
+  "tagColumns": {
+    "name": "الاسم",
+    "slug": "المعرّف",
+    "sortOrder": "الترتيب",
+    "updatedAt": "آخر تحديث"
+  },
+  "tagFields": {
+    "slug": "المعرّف",
+    "sortOrder": "ترتيب العرض",
+    "name": "الاسم"
+  },
+  "tagForm": {
+    "createTitle": "وسم جديد",
+    "editTitle": "تعديل الوسم",
+    "created": "تم إنشاء الوسم.",
+    "updated": "تم تحديث الوسم."
+  },
+  "tagDelete": {
+    "title": "حذف الوسم",
+    "message": "سيُزال هذا الوسم من كل مقال يستخدمه.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف الوسم.",
+    "bulkTitle": "حذف الوسوم",
+    "bulkMessage": "حذف {{count}} وسوم محددة؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} وسوم."
+  },
+  "errors": {
+    "deleteFailed": "تعذّر حذف العنصر.",
+    "updateFailed": "تعذّر حفظ التغيير."
+  }
+}

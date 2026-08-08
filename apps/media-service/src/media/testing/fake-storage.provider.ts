@@ -1,4 +1,6 @@
-import { ServiceUnavailableException } from '@nestjs/common';
+import type { Locale, StorageCorsStatus } from '@sanad/contracts';
+import { storageUnavailable } from '../application/media-errors.js';
+import { buildCorsPolicy } from '../infrastructure/storage/cors-policy.js';
 import {
   StorageProvider,
   type HeadResult,
@@ -10,6 +12,10 @@ import {
 export interface FakeStorageOptions {
   configured?: boolean;
   publicBase?: string;
+  /** Origins the in-memory bucket CORS check judges against. */
+  corsOrigins?: string[];
+  /** Start with the CORS policy already written (default: not written → `missing`). */
+  corsApplied?: boolean;
 }
 
 /**
@@ -21,6 +27,8 @@ export class FakeStorageProvider extends StorageProvider {
   readonly objects = new Map<string, HeadResult>();
   private readonly configured: boolean;
   private readonly publicBase: string;
+  private readonly corsOrigins: string[];
+  private corsApplied: boolean;
 
   constructor(options: FakeStorageOptions = {}) {
     super();
@@ -29,6 +37,8 @@ export class FakeStorageProvider extends StorageProvider {
       /\/+$/,
       '',
     );
+    this.corsOrigins = options.corsOrigins ?? ['http://localhost:8190'];
+    this.corsApplied = options.corsApplied ?? false;
   }
 
   isConfigured(): boolean {
@@ -37,7 +47,7 @@ export class FakeStorageProvider extends StorageProvider {
 
   assertConfigured(): void {
     if (!this.configured) {
-      throw new ServiceUnavailableException('Media storage is not configured.');
+      throw storageUnavailable();
     }
   }
 
@@ -62,5 +72,36 @@ export class FakeStorageProvider extends StorageProvider {
 
   head(key: string): Promise<HeadResult | null> {
     return Promise.resolve(this.objects.get(key) ?? null);
+  }
+
+  /**
+   * In-memory bucket CORS: starts `missing`, becomes `ok` once `applyCors` writes the policy.
+   * Keeps the base signature (locale first) so a test can assert the forwarded locale (U24d),
+   * even though the fake's states need no prose.
+   */
+  override corsStatus(_locale: Locale): Promise<StorageCorsStatus> {
+    return Promise.resolve(this.buildCorsStatus());
+  }
+
+  override applyCors(_locale: Locale): Promise<StorageCorsStatus> {
+    this.corsApplied = true;
+    return Promise.resolve(this.buildCorsStatus());
+  }
+
+  private buildCorsStatus(): StorageCorsStatus {
+    const requiredOrigins = [...this.corsOrigins];
+    return {
+      state: this.configured
+        ? this.corsApplied
+          ? 'ok'
+          : 'missing'
+        : 'unconfigured',
+      requiredOrigins,
+      allowedOrigins: this.corsApplied ? requiredOrigins : [],
+      canApply: this.configured,
+      message: null,
+      detail: null,
+      policy: buildCorsPolicy(requiredOrigins),
+    };
   }
 }

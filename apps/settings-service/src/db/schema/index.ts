@@ -6,6 +6,8 @@ export * from './setting.table.js';
 export * from './setting-value.table.js';
 export * from './setting-translation.table.js';
 export * from './integration-secret.table.js';
+export * from './integration-config.table.js';
+export * from './integration-active-provider.table.js';
 export * from './schema.js';
 // Re-export the shared Outbox table so drizzle-kit includes it in this service's
 // migrations (each service owns its own outbox, MS3/MS5).

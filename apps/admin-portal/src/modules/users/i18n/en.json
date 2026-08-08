@@ -1,0 +1,52 @@
+{
+  "title": "Users & roles",
+  "subtitle": "Manage team members and their access.",
+  "noRoles": "No roles",
+  "toggleActive": "Toggle active",
+  "columns": {
+    "member": "Member",
+    "roles": "Roles",
+    "status": "Status"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "roles": {
+    "title": "Roles for {{name}}",
+    "hint": "Toggle a role to grant or revoke it.",
+    "admin": "Admin",
+    "developer": "Developer",
+    "designer": "Designer",
+    "qa": "QA",
+    "blog_writer": "Content writer",
+    "business_manager": "Business manager",
+    "client": "Client"
+  },
+  "fields": {
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "isActive": "Active",
+    "roles": "Roles"
+  },
+  "actions": {
+    "invite": "Invite member",
+    "edit": "Edit",
+    "manageRoles": "Manage roles"
+  },
+  "form": {
+    "createTitle": "Invite member",
+    "editTitle": "Edit member",
+    "created": "Member invited.",
+    "updated": "Member updated."
+  },
+  "toast": {
+    "activated": "Member activated.",
+    "deactivated": "Member deactivated.",
+    "updateError": "Couldn't update the member.",
+    "roleAssigned": "Role assigned.",
+    "roleRevoked": "Role revoked.",
+    "roleError": "Couldn't update the role."
+  }
+}

@@ -1,0 +1,86 @@
+/**
+ * One-universe navigation (P8.D) — the styles of the universe layer itself.
+ *
+ * `.system-stage` is the per-page star-system marker (`SystemStage`): `display: contents`
+ * keeps it out of layout entirely (sticky chapters + `overflow-x: clip` roots behave as if
+ * unwrapped); its `data-system` attribute feeds the `AccentStyle` `:has()` accent rules and
+ * tells the universe scene which system this route idles in.
+ */
+.system-stage {
+  display: contents;
+}
+
+/* ---------- the page stage: content exit/enter around a flight ----------
+ * `--travel-out` / `--travel-in` are the director's eased 0→1 progress (set imperatively,
+ * no transitions needed); every variant is transform/opacity only (WEB3). Vertical moves are
+ * direction-agnostic, so no --dir flip is needed here (WEB6). At idle the stage carries no
+ * inline props at all — fixed/sticky descendants behave exactly as before the wrap. */
+.page-stage[data-travel-phase='departure'] {
+  opacity: calc(1 - var(--travel-out, 0));
+}
+.page-stage[data-travel-phase='departure'][data-travel-exit='streak-up'] {
+  transform: translateY(calc(var(--travel-out, 0) * -64px));
+}
+.page-stage[data-travel-phase='departure'][data-travel-exit='recede'] {
+  transform: translateY(calc(var(--travel-out, 0) * 40px))
+    scale(calc(1 - var(--travel-out, 0) * 0.04));
+}
+/* the cruise hard-hides the stage — the streamed-in new page/loading.tsx must never flash */
+.page-stage[data-travel-phase='cruise'] {
+  opacity: 0;
+  visibility: hidden;
+}
+.page-stage[data-travel-phase='arrival'] {
+  opacity: var(--travel-in, 1);
+}
+.page-stage[data-travel-phase='arrival'][data-travel-enter='rise'] {
+  transform: translateY(calc((1 - var(--travel-in, 1)) * 48px));
+}
+.page-stage[data-travel-phase='arrival'][data-travel-enter='bloom'] {
+  transform: scale(calc(1 + (1 - var(--travel-in, 1)) * 0.035));
+}
+/* calm mode: opacity only — every travel transform is stilled (WEB4) */
+@media (prefers-reduced-motion: reduce) {
+  .page-stage[data-travel-phase] {
+    transform: none !important;
+  }
+}
+
+/* ---------- the travel veil: the flight's light in the DOM ----------
+ * Rises with departure, holds through the cruise, releases on arrival (driven via --veil-o).
+ * Crossfades origin light (top) → destination light (bottom); sits UNDER the fixed nav
+ * (z 60 < site-nav 65) so the chrome stays the cockpit. On no-canvas devices (mobile /
+ * reduced motion) the deep-space core also masks the swap; with the canvas alive the warp
+ * is the show, so the veil slims to accent vignettes only. */
+.travel-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--veil-o, 0);
+  background:
+    radial-gradient(
+      120% 90% at 50% 118%,
+      color-mix(in oklab, var(--veil-to, var(--web-accent)) 30%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      120% 90% at 50% -18%,
+      color-mix(in oklab, var(--veil-from, var(--web-accent)) 20%, transparent),
+      transparent 56%
+    ),
+    color-mix(in oklab, var(--web-bg) 82%, transparent);
+}
+.sanad-web:has(.cosmos-canvas) .travel-veil {
+  background:
+    radial-gradient(
+      120% 70% at 50% 118%,
+      color-mix(in oklab, var(--veil-to, var(--web-accent)) 22%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      120% 70% at 50% -18%,
+      color-mix(in oklab, var(--veil-from, var(--web-accent)) 14%, transparent),
+      transparent 50%
+    );
+}

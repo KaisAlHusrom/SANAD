@@ -1,6 +1,6 @@
 # admin-portal
 
-> The Sanad Tech **admin portal** — a React + Vite SPA (the first frontend in the monorepo). This doc covers **P7.A (Foundation)**: the reused spine all later admin modules build on. The website-management modules (settings/branding, integration-secrets, content, media, leads, notifications bell, users/roles, dashboard/stats) land in P7.B/C/D.
+> The Sanad Tech **admin portal** — a React + Vite SPA (the first frontend in the monorepo). This doc covers **P7.A (Foundation)**: the reused spine all later admin modules build on. The website-management modules (settings/branding, integrations, content, media, leads, notifications bell, users/roles, dashboard/stats) land in P7.B/C/D.
 
 ## Purpose
 
@@ -47,6 +47,7 @@ src/
 ## The data-layer spine (F1/W3)
 
 - **`baseQueryWithAuth`** (`data/api/base-query.ts`) — the F1 heart. Attaches the bearer token; **unwraps the `{success,message,data,path,timestamp}` envelope → `data` in ONE place**; on **401** runs a **single-flight refresh** (`POST /auth/refresh {refresh}`, concurrent 401s share one round-trip) + one retry, logging out on refresh failure (no loop). Public auth endpoints (`/auth/login`, `/auth/refresh`, `/auth/logout`) are excluded from the refresh path; `/auth/me` is not (an expired token there should refresh). Errors normalize to `ApiError {status,message}`.
+- **the locale header (U24c)** — `prepareHeaders` is also THE one place the portal tells the backend which language to answer in: `x-sanad-locale` (`LOCALE_HEADER` from `@sanad/contracts`) = `resolveLocale(i18n.language)`, sent on **every** request including `ar` (the in-app language beats the device, F11, and the backend must never have to guess). The gateway renders every `message`/error from that locale, so `ApiError.message` is already translated — the portal never maps a backend string to a local one. See [`libs/shared/i18n/i18n.md`](../../libs/shared/i18n/i18n.md).
 - **`apiRegistry`** — feature api modules `registerApi(theApi)` at import; `createAppStore()` reads `getRegisteredApis()` and wires reducers + middleware once. Adding a module never edits the store (a line in `data/store/register-apis.ts`).
 - **auth slice** — `access`/`refresh`/`identity`, seeded **synchronously** from localStorage at module load (F12); persisted via a store subscriber (reducers stay pure). Permissions come from `GET /auth/me` → `IdentityContext` (no client-side JWT decode — N12 trap avoided).
 - **client event bus** — typed `eventBus.publish/subscribe/subscribeTo` over a `DomainEvent` union; mutations publish in `onQueryStarted` after success (W4), cross-module reads subscribe + invalidate (F5).
@@ -55,7 +56,7 @@ src/
 
 The reusable CRUD/UI kit (`.claude/plans/07-shared-ui-systems.md`) that the P7.C content pages build on. Wave 1 = three overlay systems, each mounted **once** in `app/app.tsx` (W1) and driven by a hook so call sites never mount one:
 
-- **Global modal registry** (`data/modal/*` + `components/modal/GlobalModalManager`). A Redux `modal` slice holds `{type, data}` (serializable only); a `modalRegistry` singleton maps a `type` → component; each module's `modals.config.ts` calls `registerModal(...)` at import, aggregated by `app/modals.config.ts` (mirrors `register-apis.ts`). Open with `useModalActions().open(type, data)`. The integration-secrets **set/rotate** and media **new-folder** form dialogs are registry modals.
+- **Global modal registry** (`data/modal/*` + `components/modal/GlobalModalManager`). A Redux `modal` slice holds `{type, data}` (serializable only); a `modalRegistry` singleton maps a `type` → component; each module's `modals.config.ts` calls `registerModal(...)` at import, aggregated by `app/modals.config.ts` (mirrors `register-apis.ts`). Open with `useModalActions().open(type, data)`. The integrations **provider-configuration** and media **new-folder** form dialogs are registry modals.
 - **Toast** (`data/toast/*` + `components/feedback/toast/Toaster`). A module-level singleton store (mirrors `EventBus`) read via `useSyncExternalStore` — **not** Redux (toasts carry non-serializable action callbacks). Variants `success|error|warning|info|loading`; `toast.promise`; store-owned auto-dismiss (deterministic under fake timers); dedupe + visible-limit queue; `@radix-ui/react-toast` for a11y + swipe (RTL-aware `swipeDirection`); raise via the stable `toast` export (usable outside React) or `useToast()`.
 - **Confirmation** (`data/confirm/*` + `components/feedback/confirmation/ConfirmationRoot`). Imperative `useConfirm().confirm(opts): Promise<boolean>` — also a singleton (the `resolve`/`onConfirm` are non-serializable). Tones `danger|warning|info`; mutation-aware (`onConfirm` runs with a loading state, stays open + shows an inline error on reject). Built on the existing `Dialog`. The media **delete** flow uses it.
 

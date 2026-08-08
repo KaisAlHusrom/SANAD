@@ -34,4 +34,96 @@
     outline: 2px solid var(--accent-line);
     outline-offset: 2px;
   }
+
+  /*
+   * Token-styled scrollbars (replaces the native chrome — ugly inside dark modals).
+   * Themed from the portal CSS vars so it flips with dark/light automatically. Applied
+   * app-wide so every scroll region (modals, dropdowns, sidebar, page) inherits it.
+   * Direction-agnostic — scrollbars are an axis concern, not a left/right one (U7).
+   */
+  [data-app] {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-2) transparent;
+  }
+
+  [data-app] *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  [data-app] *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  [data-app] *::-webkit-scrollbar-thumb {
+    background-color: var(--border-2);
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+  }
+
+  [data-app] *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--dim);
+  }
+
+  [data-app] *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  /*
+   * Opt-in stable-gutter scroll region (no layout shift when the thumb appears/disappears) —
+   * applied to internal modal scroll bodies. Colors come from the app-wide rules above.
+   */
+  .scroll-area {
+    scrollbar-gutter: stable;
+  }
+
+  /*
+   * Slide-in for the `Sheet` primitive (the Content Studio structural rail). Enter-only (Radix
+   * unmounts on close), so the panel never sits off-screen contributing horizontal overflow. The
+   * direction is logical: a panel docked to the inline-end edge slides in FROM that edge —
+   * translateX(+100%) under LTR, translateX(-100%) under RTL (keyed off the document `[dir]`, U7).
+   * Honors reduced-motion (WEB4-style) by skipping the animation.
+   */
+  .sheet-panel[data-side='inline-end'] {
+    animation: sheet-in-end 0.28s ease;
+  }
+
+  .sheet-panel[data-side='inline-start'] {
+    animation: sheet-in-start 0.28s ease;
+  }
+
+  [dir='rtl'] .sheet-panel[data-side='inline-end'] {
+    animation-name: sheet-in-start;
+  }
+
+  [dir='rtl'] .sheet-panel[data-side='inline-start'] {
+    animation-name: sheet-in-end;
+  }
+
+  @keyframes sheet-in-end {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes sheet-in-start {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet-panel {
+      animation: none;
+    }
+  }
 }

@@ -42,6 +42,14 @@ export class TestimonialRepository extends LocalizedRepository<
     super(db, dateTime, testimonialModelConfig, testimonialTranslationTable);
   }
 
+  /** Live testimonials for a set of ids (the `picked` section hydration; caller maps by id). */
+  findByIds(ids: readonly string[]): Promise<TestimonialRow[]> {
+    if (ids.length === 0) {
+      return Promise.resolve([]);
+    }
+    return this.whereIn('id', [...ids]).all();
+  }
+
   /** A paginated, searchable, featured-filterable list of live testimonials (base rows). */
   list(query: TestimonialListQuery): Promise<Paginated<TestimonialRow>> {
     return this.listFiltered(

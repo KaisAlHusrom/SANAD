@@ -8,20 +8,12 @@ import {
   type UseFormReturn,
 } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { env } from '../../config/env';
 import { toast } from '../../data/toast';
-import type { ApiError } from '../../data/types/api-error.types';
+import { isApiError } from '../../data/api/api-error';
 import { buildDefaultValues, emptyForType } from './build-default-values';
 import type { DynamicFormProps } from './dynamic-form.types';
 import type { FieldConfig } from './field.types';
-
-function isApiError(error: unknown): error is ApiError {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'status' in error &&
-    'message' in error
-  );
-}
 
 export interface UseDynamicFormResult<TValues extends FieldValues> {
   form: UseFormReturn<TValues>;
@@ -84,24 +76,40 @@ export function useDynamicForm<TValues extends FieldValues>(
     [fields, mode, watched],
   );
 
-  const onSubmit = form.handleSubmit(async (formValues) => {
-    try {
-      await submit(formValues);
-      toast.success(successMessage);
-      form.reset(mode === 'create' ? values : formValues);
-      onSuccess?.();
-    } catch (error) {
-      if (isApiError(error) && error.fields) {
-        for (const [field, message] of Object.entries(error.fields)) {
-          form.setError(field as Path<TValues>, { type: 'server', message });
+  const onSubmit = form.handleSubmit(
+    async (formValues) => {
+      try {
+        await submit(formValues);
+        toast.success(successMessage);
+        form.reset(mode === 'create' ? values : formValues);
+        onSuccess?.();
+      } catch (error) {
+        if (isApiError(error) && error.fields) {
+          for (const [field, message] of Object.entries(error.fields)) {
+            form.setError(field as Path<TValues>, { type: 'server', message });
+          }
+          return;
         }
-        return;
+        const message = isApiError(error) ? error.message : t('states.error');
+        form.setError('root', { message });
+        toast.error(message);
       }
-      const message = isApiError(error) ? error.message : t('states.error');
+    },
+    // A blocked submit must never be a silent no-op: if validation fails on a field the form
+    // doesn't render (a schema/rendered-fields mismatch), the user sees an error, not nothing
+    // (the block-save bug, 2026-07-10 — rule U22). Dev-log the offending paths for diagnosis.
+    (errors) => {
+      const message = t('states.error');
       form.setError('root', { message });
       toast.error(message);
-    }
-  });
+      if (env.APP_ENV === 'development') {
+        console.warn(
+          '[DynamicForm] submit blocked by invalid fields:',
+          Object.keys(errors),
+        );
+      }
+    },
+  );
 
   return {
     form,

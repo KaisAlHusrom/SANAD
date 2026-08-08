@@ -14,6 +14,7 @@ import { FaqService } from './content/application/services/faq.service.js';
 import { MenuService } from './content/application/services/menu.service.js';
 import { PortfolioCategoryService } from './content/application/services/portfolio-category.service.js';
 import { PortfolioProjectService } from './content/application/services/portfolio-project.service.js';
+import { CollectionHydrationService } from './content/application/services/collection-hydration.service.js';
 import { PageService } from './content/application/services/page.service.js';
 import { ServiceService } from './content/application/services/service.service.js';
 import { TeamMemberService } from './content/application/services/team-member.service.js';
@@ -114,6 +115,7 @@ const env = loadContentEnv();
     ProcessedMessageRepository,
     PageService,
     ServiceService,
+    CollectionHydrationService,
     TestimonialService,
     TeamMemberService,
     PortfolioCategoryService,

@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import type { IdentityContext } from '@sanad/auth';
 import type {
   Notification,
   NotificationListQuery,
   Paginated,
 } from '@sanad/contracts';
+import { rpcError } from '@sanad/i18n';
 import type { NotificationRow } from '../../../db/schema/index.js';
 import { NotificationRepository } from '../../infrastructure/persistence/repositories/index.js';
 
@@ -37,7 +38,7 @@ export class NotificationQueryService {
       id,
     );
     if (!row) {
-      throw new NotFoundException('Notification not found');
+      throw rpcError(HttpStatus.NOT_FOUND, 'notifications.notFound');
     }
     return toNotification(row);
   }

@@ -41,8 +41,17 @@
   "errors": {
     "loadFailed": "Couldn't load media.",
     "uploadFailed": "The upload failed.",
-    "storageUnconfigured": "Media storage isn't configured yet.",
+    "storageUnconfigured": "Storage isn't configured yet — set it up in Integrations.",
     "deleteFailed": "Couldn't delete the file.",
-    "unknown": "Something went wrong."
+    "unknown": "Something went wrong.",
+    "cors": "Your storage bucket is blocking uploads from this site. Open Settings → Integrations → Storage and configure CORS.",
+    "offline": "You appear to be offline — the file never reached storage.",
+    "tooLarge": "That file is larger than the upload limit.",
+    "forbidden": "You don't have permission to upload media. Ask an administrator.",
+    "uploadRejected": "Storage rejected the upload. Check the bucket's keys and permissions in Integrations."
+  },
+  "upload": {
+    "toastSuccess": "“{{name}}” uploaded.",
+    "retry": "Retry"
   }
 }

@@ -4,6 +4,8 @@ import { settingTable } from './setting.table.js';
 import { settingValueTable } from './setting-value.table.js';
 import { settingTranslationTable } from './setting-translation.table.js';
 import { integrationSecretTable } from './integration-secret.table.js';
+import { integrationConfigTable } from './integration-config.table.js';
+import { integrationActiveProviderTable } from './integration-active-provider.table.js';
 
 /** The settings service's full Drizzle schema (its own DB, MS5) — incl. the Outbox. */
 export const schema = {
@@ -11,6 +13,8 @@ export const schema = {
   settingValueTable,
   settingTranslationTable,
   integrationSecretTable,
+  integrationConfigTable,
+  integrationActiveProviderTable,
   outboxTable,
 };
 

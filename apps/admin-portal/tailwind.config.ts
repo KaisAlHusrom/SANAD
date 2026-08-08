@@ -43,12 +43,21 @@ export default {
       },
       borderRadius: {
         // design-spec §4 portal radius scale
+        xs: '6px',
         nav: '9px',
         input: '10px',
         card: '11px',
         md: '14px',
         hero: '16px',
         pill: '999px',
+      },
+      letterSpacing: {
+        // design-spec §4 mono kicker/eyebrow tracking
+        kicker: '0.2em',
+      },
+      maxWidth: {
+        // the pages-builder live-preview mobile device frame
+        mobile: '360px',
       },
       fontFamily: {
         sans: ['"IBM Plex Sans Arabic"', 'system-ui', 'sans-serif'],
@@ -57,9 +66,13 @@ export default {
       gridTemplateColumns: {
         // design-spec §4 portal shell: 266px sidebar + fluid content
         shell: '266px 1fr',
+        // the pages-builder editor + live-preview split (narrower editor, wider preview)
+        builder: 'minmax(0, 2fr) minmax(0, 3fr)',
       },
       boxShadow: {
         portal: 'var(--shadow)',
+        // the live-preview "live" dot glow (Sanad Admin.dc.html §322)
+        glow: '0 0 8px var(--good)',
       },
     },
   },

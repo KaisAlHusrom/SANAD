@@ -1,0 +1,191 @@
+{
+  "title": "الصفحات",
+  "subtitle": "ابنِ صفحات الموقع من الأقسام والكتل.",
+  "fields": {
+    "slug": "المُعرّف",
+    "status": "الحالة",
+    "title": "العنوان",
+    "metaTitle": "عنوان السيو",
+    "metaDescription": "وصف السيو"
+  },
+  "status": {
+    "draft": "مسودة",
+    "published": "منشورة"
+  },
+  "form": {
+    "createTitle": "صفحة جديدة",
+    "editTitle": "تعديل الصفحة",
+    "created": "تم إنشاء الصفحة",
+    "updated": "تم تحديث الصفحة"
+  },
+  "columns": {
+    "title": "العنوان",
+    "slug": "المُعرّف",
+    "status": "الحالة",
+    "updatedAt": "آخر تحديث"
+  },
+  "actions": {
+    "create": "صفحة جديدة",
+    "openBuilder": "فتح المُنشئ",
+    "editMeta": "تعديل التفاصيل",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "delete": {
+    "title": "حذف الصفحة؟",
+    "message": "سيؤدي هذا إلى حذف الصفحة وكل أقسامها وكتلها. لا يمكن التراجع عن ذلك.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف الصفحة",
+    "bulkTitle": "حذف الصفحات؟",
+    "bulkMessage": "سيؤدي هذا إلى حذف {{count}} صفحات وكل محتوياتها. لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} صفحات"
+  },
+  "errors": {
+    "deleteFailed": "تعذّر الحذف. حاول مرة أخرى.",
+    "saveFailed": "تعذّر الحفظ. حاول مرة أخرى.",
+    "reorderFailed": "تعذّرت إعادة الترتيب. حاول مرة أخرى."
+  },
+  "builder": {
+    "backToPages": "العودة إلى الصفحات",
+    "editMeta": "تفاصيل الصفحة",
+    "loadError": "تعذّر تحميل هذه الصفحة.",
+    "emptyTitle": "لا أقسام بعد",
+    "emptyBody": "أضِف أول قسم لتبدأ ببناء هذه الصفحة.",
+    "selectTitle": "اختر قسماً",
+    "selectBody": "اختر قسماً من الأعلى لتحرير محتواه، أو أضِف قسماً جديداً."
+  },
+  "section": {
+    "strip": "الأقسام ({{count}})",
+    "clickToEdit": "انقر قسماً لتحريره",
+    "add": "قسم",
+    "dragHandle": "إعادة ترتيب القسم",
+    "hide": "إخفاء القسم",
+    "show": "إظهار القسم",
+    "type": "النوع",
+    "published": "ظاهر",
+    "eyebrow": "تمهيد",
+    "title": "العنوان",
+    "subtitle": "العنوان الفرعي",
+    "kind": "قسم · {{type}}",
+    "save": "حفظ التغييرات",
+    "reset": "إعادة تعيين",
+    "saved": "تم حفظ القسم",
+    "added": "تمت إضافة القسم",
+    "deleted": "تم حذف القسم",
+    "reordered": "تمت إعادة ترتيب الأقسام",
+    "deleteTitle": "حذف القسم؟",
+    "deleteMessage": "سيؤدي هذا إلى حذف القسم وكتله. لا يمكن التراجع عن ذلك.",
+    "unsavedTitle": "تجاهل التغييرات؟",
+    "unsavedBody": "لديك تغييرات غير محفوظة على هذا القسم.",
+    "discard": "تجاهل",
+    "keepEditing": "متابعة التحرير"
+  },
+  "sectionTypes": {
+    "hero": "الواجهة",
+    "trust": "الثقة",
+    "services": "الخدمات",
+    "process": "منهجية العمل",
+    "work": "الأعمال",
+    "stats": "الأرقام",
+    "testimonials": "الشهادات",
+    "blog": "المدونة",
+    "cta": "دعوة لإجراء",
+    "richtext": "نص منسّق"
+  },
+  "config": {
+    "title": "المجموعة المرتبطة",
+    "description": "يعرض هذا القسم سجلّات من مجموعة {{collection}}.",
+    "mode": "العرض",
+    "modes": {
+      "all": "الكل (الأحدث أولًا)",
+      "featured": "المميّزة فقط",
+      "picked": "اختيار يدوي"
+    },
+    "limit": "الحدّ الأقصى",
+    "limitPlaceholder": "مثال: ٤",
+    "limitHint": "أقصى عدد من السجلّات للعرض (١–٥٠).",
+    "picked": "السجلّات المختارة",
+    "pickedPlaceholder": "ابحث للإضافة…",
+    "manage": "إدارة {{collection}} ←",
+    "save": "حفظ المجموعة",
+    "saved": "تم تحديث المجموعة",
+    "saveFailed": "تعذّر حفظ المجموعة. حاول مرة أخرى.",
+    "collections": {
+      "services": "الخدمات",
+      "portfolio": "أعمالنا",
+      "testimonials": "آراء العملاء",
+      "blog": "المدوّنة",
+      "faq": "الأسئلة الشائعة",
+      "team": "الفريق"
+    }
+  },
+  "block": {
+    "list": "الكتل ({{count}})",
+    "add": "كتلة",
+    "dragHandle": "إعادة ترتيب الكتلة",
+    "untitled": "كتلة بلا عنوان",
+    "empty": "لا كتل بعد. أضِف واحدة لتعبئة هذا القسم.",
+    "title": "العنوان",
+    "value": "القيمة",
+    "suffix": "اللاحقة",
+    "suffixPlaceholder": "مثل + أو ٪",
+    "icon": "مفتاح الأيقونة",
+    "iconPlaceholder": "مثل rocket",
+    "href": "الرابط",
+    "hrefPlaceholder": "‎/contact أو https://…",
+    "variant": "النمط",
+    "image": "الصورة",
+    "body": "المحتوى",
+    "createTitle": "كتلة جديدة",
+    "editTitle": "تعديل الكتلة",
+    "created": "تم إنشاء الكتلة",
+    "updated": "تم تحديث الكتلة",
+    "deleted": "تم حذف الكتلة",
+    "reordered": "تمت إعادة ترتيب الكتل",
+    "deleteTitle": "حذف الكتلة؟",
+    "deleteMessage": "سيؤدي هذا إلى حذف الكتلة. لا يمكن التراجع عن ذلك."
+  },
+  "blockTypes": {
+    "text": "نص",
+    "richtext": "نص منسّق",
+    "stat": "رقم",
+    "step": "خطوة",
+    "feature": "ميزة",
+    "image": "صورة",
+    "cta": "دعوة لإجراء"
+  },
+  "blockVariants": {
+    "primary": "أساسي",
+    "secondary": "ثانوي"
+  },
+  "preview": {
+    "title": "معاينة حيّة",
+    "edit": "تعديل",
+    "editing": "قيد التعديل",
+    "pickImage": "تغيير الصورة",
+    "editRecord": "تعديل السجلّ",
+    "locale": {
+      "ar": "العربية",
+      "en": "الإنجليزية"
+    },
+    "desktop": "سطح المكتب",
+    "mobile": "جوال"
+  },
+  "studio": {
+    "structure": "الهيكل",
+    "structureHint": "أضف الأقسام وأعد ترتيبها وأخفِها",
+    "editHint": "انقر أي نصّ أو صورة في الصفحة لتعديله مباشرة.",
+    "focusSection": "التركيز على هذا القسم",
+    "emptyTitle": "هذه الصفحة فارغة",
+    "emptyBody": "افتح الهيكل لإضافة أول قسم."
+  },
+  "rail": {
+    "title": "بنية الصفحة",
+    "sections": "الأقسام ({{count}})",
+    "back": "كل الأقسام",
+    "close": "إغلاق",
+    "empty": "لا أقسام بعد — أضف أول قسم بالأسفل.",
+    "settings": "المحتوى والبيانات",
+    "blocksTitle": "الكتل"
+  }
+}

@@ -1,0 +1,538 @@
+/*
+ * Website chrome (nav · footer · scroll-progress · hero · lead form) — the layout pieces the
+ * shared `@sanad/web-ui` renderer doesn't own. Scoped under `.sanad-web` so it sources the same
+ * `--web-*` theme vars (U6 — no bare literals at call sites); logical properties only (U7) so it
+ * flips for RTL (ar default) and LTR. Matches the design-spec global chrome: fixed top nav (logo
+ * inline-start, links, accent pill CTA), 2px accent scroll-progress bar, footer (brand + columns +
+ * copyright).
+ *
+ * NOTE (8.A): the website-level feedback vars below live here for now to avoid rebuilding
+ * @sanad/config while the dev stack is up (OPS5 — settings-service consumes it). Promote them to
+ * @sanad/config + web-ui.css with the stack down in a later pass (see PROGRESS).
+ */
+
+.sanad-web {
+  --web-danger: #f87171;
+  --web-success: #34d399;
+}
+
+.site-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ---- top nav (fixed) ---- */
+
+/*
+ * The reference nav is fully transparent — no fill, no blur, no border — floating over the cosmos so
+ * the starfield reads edge-to-edge (U21e). It stays transparent on scroll (the source has no
+ * scrolled state); the dark space behind keeps the links legible.
+ */
+.site-nav {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 22px;
+  padding-inline: clamp(16px, 4vw, 48px);
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+  text-decoration: none;
+}
+
+/* the second word of the brand rides muted (reference "سَنَد التقنية" — التقنية lighter) */
+.site-brand-sub {
+  color: var(--web-muted);
+  font-weight: 500;
+  margin-inline-start: 0.35ch;
+}
+
+.site-brand-mark {
+  /* the brand wordmark (settings logoUrl override -> bundled /brand/logo.png) — full-height
+     nav asset like the admin shell; width follows the mark's own ratio */
+  block-size: 40px;
+  inline-size: auto;
+  object-fit: contain;
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 28px);
+}
+
+.site-nav-link {
+  color: var(--web-dim);
+  text-decoration: none;
+  font-size: 15px;
+  transition: color 0.2s ease;
+}
+
+.site-nav-link:hover {
+  color: var(--web-text);
+}
+
+.site-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.site-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 10px;
+  padding-inline: 18px;
+  border-radius: var(--web-radius-pill);
+  background: var(--web-accent);
+  color: var(--web-accent-ink);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--web-accent) 35%, transparent);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.site-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 46px color-mix(in srgb, var(--web-accent) 60%, transparent);
+}
+
+.site-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 10px;
+  padding-inline: 18px;
+  border-radius: var(--web-radius-pill);
+  border: 1px solid var(--web-hairline-strong);
+  color: var(--web-text);
+  font-weight: 500;
+  font-size: 15px;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+
+.site-ghost:hover {
+  border-color: color-mix(in srgb, var(--web-accent) 50%, transparent);
+}
+
+.site-locale-switch {
+  color: var(--web-faint);
+  text-decoration: none;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  transition: color 0.2s ease;
+}
+
+.site-locale-switch:hover {
+  color: var(--web-text);
+}
+
+/* ---- sound toggle (WEB8) — sits beside the locale switch, mirrors its quiet mono style ---- */
+.sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-block: 7px;
+  padding-inline: 12px;
+  border-radius: var(--web-radius-pill);
+  border: 1px solid var(--web-hairline);
+  background: transparent;
+  color: var(--web-faint);
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sound-toggle:hover:not(:disabled) {
+  color: var(--web-text);
+  border-color: color-mix(in srgb, var(--web-accent) 45%, transparent);
+}
+
+.sound-toggle--active {
+  color: var(--web-text);
+  border-color: color-mix(in srgb, var(--web-accent) 55%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--web-accent) 22%, transparent);
+}
+
+.sound-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sound-toggle-glyph {
+  flex: none;
+}
+
+/* ---- scroll progress ---- */
+
+.scroll-progress {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  block-size: 2px;
+  z-index: 70;
+  background: linear-gradient(90deg, var(--web-secondary), var(--web-accent));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--web-accent) 60%, transparent);
+  transition: inline-size 0.05s linear;
+}
+/* the faint full-width track the fill runs along */
+.scroll-progress::before {
+  content: '';
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 2px;
+  z-index: -1;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ---- main + content ---- */
+
+.site-main {
+  flex: 1;
+  padding-block-start: 72px;
+}
+
+/* the landing is a full-viewport composition that budgets its own nav clearance (hero 13.5vh top
+   padding) — the generic 72px offset pushed the whole 100vh hero below the fold (2026-07-07) */
+.site-main:has(.lp-content) {
+  padding-block-start: 0;
+}
+
+.site-content {
+  inline-size: 100%;
+  max-inline-size: 1320px;
+  margin-inline: auto;
+  padding-block: clamp(24px, 5vw, 64px);
+  padding-inline: clamp(16px, 4vw, 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- hero (locale home, 8.A minimal) ---- */
+
+.site-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  padding-block: clamp(48px, 12vh, 140px);
+}
+
+.site-hero-kicker {
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--web-accent);
+}
+
+.site-hero-title {
+  margin: 0;
+  font-size: clamp(40px, 6vw, 88px);
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--web-text);
+  max-inline-size: 18ch;
+}
+
+.site-hero-lead {
+  margin: 0;
+  font-size: clamp(17px, 1.6vw, 21px);
+  line-height: 1.8;
+  color: var(--web-dim);
+  max-inline-size: 60ch;
+}
+
+.site-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-block-start: 8px;
+}
+
+/* ---- footer ---- */
+
+.site-footer {
+  border-block-start: 1px solid var(--web-hairline);
+  padding-block: clamp(28px, 5vw, 56px);
+  padding-inline: clamp(16px, 4vw, 48px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: space-between;
+}
+
+/*
+ * On the landing route the full-viewport impact finale (`.lp-finale`) IS the footer — it reveals
+ * after the comet→Earth strike — so the plain chrome footer is suppressed there (it stays on every
+ * sub-page). Scoped by `:has()` to the one page that renders the finale.
+ */
+.sanad-web:has(.lp-finale) .site-footer {
+  display: none;
+}
+
+.site-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-inline-size: 320px;
+}
+
+.site-footer-tagline {
+  color: var(--web-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.site-footer-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(28px, 6vw, 72px);
+}
+
+.site-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.site-footer-col-title {
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--web-faint);
+}
+
+.site-footer-link {
+  color: var(--web-dim);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.site-footer-link:hover {
+  color: var(--web-text);
+}
+
+.site-footer-address {
+  color: var(--web-dim);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Email + phone read left-to-right even in the RTL layout (they are latin/numeric). */
+.site-footer-ltr {
+  direction: ltr;
+  text-align: start;
+  unicode-bidi: isolate;
+}
+
+.site-footer-social {
+  inline-size: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.site-footer-social-link {
+  border: 1px solid var(--web-hairline);
+  border-radius: 999px;
+  padding-block: 5px;
+  padding-inline: 12px;
+  color: var(--web-dim);
+  text-decoration: none;
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.site-footer-social-link:hover {
+  color: var(--web-text);
+  border-color: var(--web-accent);
+}
+
+.site-footer-copy {
+  inline-size: 100%;
+  padding-block-start: 18px;
+  border-block-start: 1px solid var(--web-hairline);
+  color: var(--web-faint);
+  font-size: 12px;
+}
+
+/* ---- lead form ---- */
+
+.lead-form {
+  /* WEB13: the contact `LeadForm` renders directly under the CMS hero band over the persistent
+     WebGL cosmos (the "Beacon" system's star + rings paint opaquely). Unlike the request form —
+     which inherits the lift from its `.mk-page` wrapper — this form is a bare `.site-content` child,
+     so it MUST claim its own stacking context above the canvas or its upper fields sit behind the
+     Beacon rings (invisible in a screenshot though present + interactive in the DOM). */
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-inline-size: 560px;
+}
+
+.lead-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lead-label {
+  font-size: 13px;
+  color: var(--web-dim);
+}
+
+.lead-optional {
+  color: var(--web-faint);
+  font-size: 11px;
+  margin-inline-start: 6px;
+}
+
+.lead-input,
+.lead-textarea {
+  inline-size: 100%;
+  padding-block: 12px;
+  padding-inline: 14px;
+  border-radius: var(--web-radius-md);
+  background: var(--web-s1);
+  border: 1px solid var(--web-hairline);
+  color: var(--web-text);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 0.2s ease;
+}
+
+.lead-input:focus,
+.lead-textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--web-accent) 60%, transparent);
+}
+
+.lead-textarea {
+  min-block-size: 120px;
+  resize: vertical;
+}
+
+.lead-error {
+  color: var(--web-danger);
+  font-size: 12px;
+}
+
+.lead-alert {
+  padding-block: 12px;
+  padding-inline: 14px;
+  border-radius: var(--web-radius-md);
+  font-size: 14px;
+  border: 1px solid var(--web-hairline);
+}
+
+.lead-alert--success {
+  color: var(--web-success);
+  border-color: color-mix(in srgb, var(--web-success) 45%, transparent);
+  background: color-mix(in srgb, var(--web-success) 10%, transparent);
+}
+
+.lead-alert--error {
+  color: var(--web-danger);
+  border-color: color-mix(in srgb, var(--web-danger) 45%, transparent);
+  background: color-mix(in srgb, var(--web-danger) 10%, transparent);
+}
+
+/* ---- generic page (CMS) ---- */
+
+.site-page {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 3vw, 32px);
+}
+
+.site-page-title {
+  margin: 0;
+  font-size: clamp(28px, 3.6vw, 48px);
+  font-weight: 600;
+  color: var(--web-text);
+}
+
+/* ---- state blocks (skeleton / error / empty, F2/F3) ---- */
+
+.site-state {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-block: clamp(40px, 10vh, 120px);
+  color: var(--web-muted);
+}
+
+.site-skeleton {
+  block-size: 18px;
+  border-radius: var(--web-radius-md);
+  background: linear-gradient(
+    90deg,
+    var(--web-s1),
+    var(--web-s2),
+    var(--web-s1)
+  );
+  background-size: 200% 100%;
+  animation: site-shimmer 1.4s ease-in-out infinite;
+}
+
+.site-skeleton--title {
+  block-size: 42px;
+  max-inline-size: 320px;
+}
+
+.site-skeleton--wide {
+  max-inline-size: 640px;
+}
+
+@keyframes site-shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-skeleton {
+    animation: none;
+  }
+  .scroll-progress {
+    transition: none;
+  }
+}

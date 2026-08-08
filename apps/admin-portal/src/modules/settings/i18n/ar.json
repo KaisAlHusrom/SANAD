@@ -1,47 +1,65 @@
 {
-  "title": "الهوية البصرية",
-  "subtitle": "تحكّم في شعار الموقع وألوانه وخطوطه وروابطه — يُعرض كلّ ذلك على الموقع مباشرةً.",
-  "sections": {
-    "identity": "الهوية",
-    "colors": "الألوان",
-    "typography": "الخطوط",
-    "social": "روابط التواصل",
-    "contact": "بيانات التواصل"
+  "title": "الإعدادات",
+  "subtitle": "هويتك البصرية وبيانات شركتك — تُطبَّق على اللوحات والموقع.",
+  "actions": {
+    "save": "حفظ التغييرات",
+    "reset": "إعادة تعيين",
+    "saved": "تم حفظ الإعدادات."
   },
-  "fields": {
-    "logoUrl": "الشعار",
-    "faviconUrl": "أيقونة الموقع",
-    "brandName": "اسم العلامة",
-    "tagline": "الشعار النصّي",
-    "shortDesc": "وصف موجز",
-    "urlPlaceholder": "https://…",
-    "fontSans": "الخط الأساسي",
-    "fontMono": "الخط أحادي المسافة",
-    "twitter": "إكس (تويتر)",
-    "linkedin": "لينكدإن",
-    "instagram": "إنستغرام",
-    "github": "غيت هَب",
-    "youtube": "يوتيوب",
-    "email": "البريد الإلكتروني",
-    "phone": "الهاتف",
-    "address": "العنوان"
+  "group": {
+    "branding": "الهوية البصرية"
   },
-  "colors": {
-    "primary": "اللون الأساسي",
-    "secondary": "اللون الثانوي",
-    "advanced": "نظام الألوان المتقدّم",
-    "groups": {
-      "pageAccents": "ألوان الصفحات",
-      "surface": "أسطح الواجهة",
-      "text": "ألوان النصّ"
+  "section": {
+    "branding": {
+      "identity": "الهوية",
+      "colors": "الألوان",
+      "contact": "بيانات التواصل",
+      "social": "روابط التواصل",
+      "legal": "قانوني",
+      "seo": "تحسين محركات البحث"
     }
   },
+  "colorGroups": {
+    "base": "ألوان العلامة"
+  },
+  "field": {
+    "branding": {
+      "brand": {
+        "name": "اسم العلامة",
+        "tagline": "الشعار النصّي"
+      },
+      "logoUrl": "الشعار",
+      "faviconUrl": "أيقونة الموقع",
+      "colors": {
+        "primary": "اللون الأساسي",
+        "secondary": "اللون الثانوي"
+      },
+      "contact": {
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "address": "العنوان"
+      },
+      "social": {
+        "twitter": "إكس (تويتر)",
+        "linkedin": "لينكدإن",
+        "instagram": "إنستغرام",
+        "github": "غيت‑هَب",
+        "youtube": "يوتيوب"
+      },
+      "legal": {
+        "copyright": "إشعار حقوق النشر"
+      },
+      "seo": {
+        "siteUrl": "عنوان الموقع",
+        "shareImageUrl": "صورة المشاركة"
+      }
+    }
+  },
+  "placeholder": {
+    "url": "https://…"
+  },
   "errors": {
-    "loadFailed": "تعذّر تحميل الهوية البصرية.",
-    "hex": "لون غير صالح (مثال: ‎#22d3ee).",
-    "url": "رابط غير صالح.",
-    "email": "بريد إلكتروني غير صالح.",
-    "required": "هذا الحقل مطلوب.",
+    "loadFailed": "تعذّر تحميل الإعدادات.",
     "unknown": "حدث خطأ غير متوقّع."
   }
 }

@@ -1,7 +1,8 @@
-import { Bell, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
+import { NotificationsBell } from '../../modules/notifications';
 import { useDirection } from '../../providers/direction';
 import { useTheme } from '../../providers/theme';
 import { ADMIN_NAV } from '../constants/nav';
@@ -45,14 +46,7 @@ export function Topbar() {
         )}
       </Button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label={t('notifications.label')}
-        disabled
-      >
-        <Bell className="size-4" />
-      </Button>
+      <NotificationsBell />
     </header>
   );
 }

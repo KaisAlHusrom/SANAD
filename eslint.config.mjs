@@ -5,7 +5,17 @@ export default [
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
   {
-    ignores: ['**/dist', '**/out-tsc', '**/vitest.config.*.timestamp*'],
+    // Generated + vendored code is never linted. These must live HERE, not only in the
+    // per-project config: lint-staged runs `eslint` from the repo root, and flat config
+    // loads exactly one file, so apps/*/eslint.config.mjs never applies at pre-commit.
+    ignores: [
+      '**/dist',
+      '**/out-tsc',
+      '**/.next',
+      '**/next-env.d.ts',
+      '**/vendor/**',
+      '**/vitest.config.*.timestamp*',
+    ],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
@@ -59,6 +69,11 @@ export default [
               onlyDependOnLibsWithTags: ['type:util', 'type:types'],
             },
             {
+              // presentational UI (e.g. @sanad/web-ui) — browser-safe, never reaches data-access
+              sourceTag: 'type:ui',
+              onlyDependOnLibsWithTags: ['type:ui', 'type:util', 'type:types'],
+            },
+            {
               sourceTag: 'type:data-access',
               onlyDependOnLibsWithTags: [
                 'type:data-access',
@@ -71,6 +86,7 @@ export default [
               onlyDependOnLibsWithTags: [
                 'type:feature',
                 'type:data-access',
+                'type:ui',
                 'type:util',
                 'type:types',
               ],
@@ -81,6 +97,7 @@ export default [
                 'type:app',
                 'type:feature',
                 'type:data-access',
+                'type:ui',
                 'type:util',
                 'type:types',
               ],

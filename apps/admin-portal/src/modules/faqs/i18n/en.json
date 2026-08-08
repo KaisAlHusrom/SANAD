@@ -1,0 +1,49 @@
+{
+  "title": "FAQ",
+  "subtitle": "Questions and answers shown on the website FAQ page.",
+  "columns": {
+    "question": "Question",
+    "category": "Category",
+    "sortOrder": "Order",
+    "updatedAt": "Updated"
+  },
+  "filters": {
+    "category": "Category"
+  },
+  "categories": {
+    "none": "Ungrouped",
+    "general": "General",
+    "pricing": "Pricing",
+    "process": "Process",
+    "support": "Support"
+  },
+  "fields": {
+    "category": "Category",
+    "sortOrder": "Sort order",
+    "question": "Question",
+    "answer": "Answer"
+  },
+  "actions": {
+    "create": "New question",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "createTitle": "New question",
+    "editTitle": "Edit question",
+    "created": "Question created.",
+    "updated": "Question updated."
+  },
+  "delete": {
+    "title": "Delete question",
+    "message": "This question will be permanently removed from the website.",
+    "confirm": "Delete",
+    "toastSuccess": "Question deleted.",
+    "bulkTitle": "Delete questions",
+    "bulkMessage": "Delete {{count}} selected questions? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} questions deleted."
+  },
+  "errors": {
+    "deleteFailed": "Couldn't delete the question."
+  }
+}

@@ -3,17 +3,22 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   blockUpsertSchema,
   CONTENT_BLOCK_DELETE,
+  CONTENT_BLOCK_REORDER,
   CONTENT_BLOCK_UPSERT,
   CONTENT_PAGE_DELETE,
   CONTENT_PAGE_LIST,
+  CONTENT_PAGE_REORDER,
+  CONTENT_PAGE_TREE_ADMIN_GET,
   CONTENT_PAGE_TREE_GET,
   CONTENT_PAGE_UPSERT,
   CONTENT_SECTION_DELETE,
+  CONTENT_SECTION_REORDER,
   CONTENT_SECTION_UPSERT,
   contentIdSchema,
   contentSlugSchema,
   listQuerySchema,
   pageUpsertSchema,
+  reorderRequestSchema,
   sectionUpsertSchema,
   type BlockNode,
   type BlockUpsertRequest,
@@ -24,6 +29,7 @@ import {
   type PageTree,
   type PageUpsertRequest,
   type Paginated,
+  type ReorderRequest,
   type SectionNode,
   type SectionUpsertRequest,
 } from '@sanad/contracts';
@@ -51,11 +57,46 @@ export class PageMessageController {
     return tree;
   }
 
+  @MessagePattern(CONTENT_PAGE_TREE_ADMIN_GET)
+  async adminTree(
+    @Payload(new ZodValidationPipe(contentIdSchema)) payload: ContentId,
+  ): Promise<PageTree> {
+    const tree = await this.pages.getAdminTree(payload.id);
+    if (!tree) {
+      throw contentNotFound('Page', payload.id);
+    }
+    return tree;
+  }
+
   @MessagePattern(CONTENT_PAGE_LIST)
   list(
     @Payload(new ZodValidationPipe(listQuerySchema)) query: ListQuery,
   ): Promise<Paginated<PageSummary>> {
     return this.pages.list(query);
+  }
+
+  @MessagePattern(CONTENT_PAGE_REORDER)
+  async reorderPages(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.pages.reorderPages(body.ids);
+    return body;
+  }
+
+  @MessagePattern(CONTENT_SECTION_REORDER)
+  async reorderSections(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.pages.reorderSections(body.ids);
+    return body;
+  }
+
+  @MessagePattern(CONTENT_BLOCK_REORDER)
+  async reorderBlocks(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.pages.reorderBlocks(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_PAGE_UPSERT)

@@ -11,6 +11,7 @@ import {
   type MediaId,
   type MediaListQuery,
   type Paginated,
+  type PublicMediaRef,
   type UploadConfirmRequest,
   type UploadSignRequest,
   type UploadSignResult,
@@ -34,7 +35,8 @@ const EMPTY_ALT: LocalizedText = { ar: '', en: '' };
  * policy, persists a `pending` asset (+ optional alt) and mints a presigned PUT URL;
  * `confirmUpload` marks it `ready`. `delete` soft-deletes + enqueues `media.deleted` in
  * ONE transaction (MS3), then best-effort removes the R2 object. Storage credentials are
- * resolved behind the provider's seam (env now, vault later) — never read here.
+ * resolved behind the provider's seam (vault → env); each storage-touching method calls
+ * `storage.refresh()` first so admin-set R2 keys apply without a restart — never read here.
  */
 @Injectable()
 export class MediaService {
@@ -51,6 +53,7 @@ export class MediaService {
 
   /** Validate, create a pending asset, and mint a presigned PUT URL. */
   async signUpload(req: UploadSignRequest): Promise<UploadSignResult> {
+    await this.storage.refresh();
     if (!this.storage.isConfigured()) {
       throw storageUnavailable();
     }
@@ -104,6 +107,7 @@ export class MediaService {
 
   /** Mark a pending asset `ready`, capturing dimensions/size and finalizing alt. */
   async confirmUpload(req: UploadConfirmRequest): Promise<MediaAsset> {
+    await this.storage.refresh();
     if (!this.storage.isConfigured()) {
       throw storageUnavailable();
     }
@@ -132,6 +136,7 @@ export class MediaService {
 
   /** A paginated, searchable, filterable page of assets (alt resolved per row). */
   async list(query: MediaListQuery): Promise<Paginated<MediaAsset>> {
+    await this.storage.refresh();
     const page = await this.assets.list(query);
     const altMap = await this.translations.altForAssets(
       page.items.map((asset) => asset.id),
@@ -144,8 +149,33 @@ export class MediaService {
     return { items, meta: page.meta };
   }
 
+  /**
+   * Batch-resolve a set of ids → public-safe refs (WEB1) for the website. Only live,
+   * `ready` assets resolve; unknown/pending/deleted ids are silently absent. One `IN`
+   * query + one bulk alt fetch (no N+1). The website matches results back by `id` (order
+   * is not guaranteed). Empty input short-circuits.
+   */
+  async resolvePublic(ids: readonly string[]): Promise<PublicMediaRef[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    await this.storage.refresh();
+    const rows = await this.assets.findManyReadyByIds(ids);
+    const altMap = await this.translations.altForAssets(
+      rows.map((row) => row.id),
+    );
+    return rows.map((row) => ({
+      id: row.id,
+      url: this.storage.publicUrl(row.key),
+      alt: altMap.get(row.id) ?? EMPTY_ALT,
+      width: row.width,
+      height: row.height,
+    }));
+  }
+
   /** A single asset by id. */
   async get(id: string): Promise<MediaAsset> {
+    await this.storage.refresh();
     const row = await this.assets.find(id);
     if (!row) {
       throw mediaNotFound(id);
@@ -156,6 +186,7 @@ export class MediaService {
 
   /** Soft-delete an asset + emit `media.deleted` (MS3), then best-effort drop the object. */
   async delete(id: string): Promise<MediaId> {
+    await this.storage.refresh();
     const row = await this.assets.find(id);
     if (!row) {
       throw mediaNotFound(id);

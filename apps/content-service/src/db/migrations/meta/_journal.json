@@ -36,6 +36,20 @@
       "when": 1782301744249,
       "tag": "0004_common_kingpin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783757315772,
+      "tag": "0005_old_mockingbird",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783862225332,
+      "tag": "0006_demonic_cyclops",
+      "breakpoints": true
     }
   ]
 }

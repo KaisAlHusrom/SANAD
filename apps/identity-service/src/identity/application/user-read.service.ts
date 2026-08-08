@@ -1,15 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import type { AuthUser, ListQuery, Paginated } from '@sanad/contracts';
+import type {
+  AuthUser,
+  ListQuery,
+  Paginated,
+  RoleSummary,
+} from '@sanad/contracts';
 import { RbacRepository } from '../infrastructure/rbac.repository.js';
 import { UserRepository } from '../infrastructure/user.repository.js';
 
-/** Read-side queries for users (the gateway's RBAC-guarded `identity.users.list`). */
+/** Read-side queries for users + roles (the gateway's RBAC-guarded reads). */
 @Injectable()
 export class UserReadService {
   constructor(
     private readonly users: UserRepository,
     private readonly rbac: RbacRepository,
   ) {}
+
+  /** The role catalog for the admin users surface (`identity.roles.read`). */
+  listRoles(): Promise<RoleSummary[]> {
+    return this.rbac.listRoles();
+  }
 
   async list(query: ListQuery): Promise<Paginated<AuthUser>> {
     const page = await this.users.list(query);

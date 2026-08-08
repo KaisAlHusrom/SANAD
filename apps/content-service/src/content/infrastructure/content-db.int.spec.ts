@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -16,6 +17,7 @@ import {
 import { BlogCategoryService } from '../application/services/blog-category.service.js';
 import { BlogPostService } from '../application/services/blog-post.service.js';
 import { BlogTagService } from '../application/services/blog-tag.service.js';
+import { CollectionHydrationService } from '../application/services/collection-hydration.service.js';
 import { FaqService } from '../application/services/faq.service.js';
 import { LeadService } from '../application/services/lead.service.js';
 import { MediaReconcileService } from '../application/services/media-reconcile.service.js';
@@ -48,6 +50,12 @@ import { TestimonialRepository } from './persistence/repositories/testimonial.re
 // infra/postgres/init/01-create-databases.sql. Tests SKIP cleanly when it's down.
 const TEST_DB_URL = 'postgresql://sanad:sanad@localhost:5440/content_test';
 
+// Resolve the migrations dir from THIS file, not the CWD — vitest's cwd differs by how it is
+// invoked, and a CWD-relative path made `migrate()` throw and the suite SILENTLY skip (false green).
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL('../../db/migrations', import.meta.url),
+);
+
 async function tryConnect(): Promise<pg.Pool | null> {
   const pool = new pg.Pool({
     connectionString: TEST_DB_URL,
@@ -55,7 +63,7 @@ async function tryConnect(): Promise<pg.Pool | null> {
   });
   try {
     await pool.query('select 1');
-    await migrate(drizzle(pool), { migrationsFolder: 'src/db/migrations' });
+    await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
   } catch {
     await pool.end().catch(() => undefined);
@@ -97,12 +105,7 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
   const leads = new LeadRepository(db, clock);
   const processed = new ProcessedMessageRepository();
 
-  const pageService = new PageService(pages, sections, blocks);
   const serviceService = new ServiceService(services);
-  const testimonialService = new TestimonialService(testimonials);
-  const teamMemberService = new TeamMemberService(members);
-  const faqService = new FaqService(faqs);
-  const menuService = new MenuService(menus, menuItems);
   const portfolioCategoryService = new PortfolioCategoryService(
     portfolioCategories,
   );
@@ -111,6 +114,10 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
     portfolioCategories,
     clock,
   );
+  const testimonialService = new TestimonialService(testimonials);
+  const teamMemberService = new TeamMemberService(members);
+  const faqService = new FaqService(faqs);
+  const menuService = new MenuService(menus, menuItems);
   const blogCategoryService = new BlogCategoryService(blogCategories);
   const blogTagService = new BlogTagService(blogTags);
   const blogPostService = new BlogPostService(
@@ -121,6 +128,15 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
     blogPostTags,
     clock,
   );
+  const hydration = new CollectionHydrationService(
+    serviceService,
+    portfolioProjectService,
+    testimonialService,
+    blogPostService,
+    faqService,
+    teamMemberService,
+  );
+  const pageService = new PageService(pages, sections, blocks, hydration);
   const leadService = new LeadService(leads, clock, db);
   const reconcile = new MediaReconcileService(processed, db);
 
@@ -569,6 +585,24 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
     expect(list.some((m) => m.id === menu.id)).toBe(true);
   });
 
+  it('reorders menu items within a menu atomically (P7 menus, U21)', async () => {
+    const menu = await menuService.create({ key: 'footer', sortOrder: 1 });
+    const make = (order: number): Promise<{ id: string }> =>
+      menuService.createItem({
+        menuId: menu.id,
+        url: `/item-${order}`,
+        sortOrder: order,
+        label: { ar: `عنصر ${order}`, en: `Item ${order}` },
+      });
+    const a = await make(0);
+    const b = await make(1);
+    const c = await make(2);
+
+    await menuService.reorderItems([c.id, a.id, b.id]);
+    const tree = await menuService.getByKey('footer');
+    expect(tree.items.map((item) => item.id)).toEqual([c.id, a.id, b.id]);
+  });
+
   it('assembles a Page→Section→Block tree with copy in both locales (the Done-when)', async () => {
     const page = await pageService.upsertPage({
       slug: 'landing',
@@ -608,6 +642,568 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
     });
   });
 
+  it('hydrates a services section in-service from its config (all → sortOrder+limit; picked → ids in order); non-collection sections stay null (Phase 3)', async () => {
+    // three services in a known sortOrder
+    const alpha = await serviceService.create({
+      slug: 'alpha',
+      category: 'core',
+      sortOrder: 0,
+      title: { ar: 'ألفا', en: 'Alpha' },
+    });
+    const beta = await serviceService.create({
+      slug: 'beta',
+      category: 'core',
+      sortOrder: 1,
+      title: { ar: 'بيتا', en: 'Beta' },
+    });
+    const gamma = await serviceService.create({
+      slug: 'gamma',
+      category: 'support',
+      sortOrder: 2,
+      title: { ar: 'غاما', en: 'Gamma' },
+    });
+
+    const page = await pageService.upsertPage({
+      slug: 'landing',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'الرئيسية', en: 'Landing' },
+    });
+    // a services section with mode:all + limit 2 → first two by sortOrder
+    const servicesSection = await pageService.upsertSection({
+      pageId: page.id,
+      type: 'services',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'خدماتنا', en: 'Services' },
+      config: { mode: 'all', limit: 2, ids: [] },
+    });
+    // a non-collection section stays null
+    await pageService.upsertSection({
+      pageId: page.id,
+      type: 'hero',
+      sortOrder: 1,
+      published: true,
+      title: { ar: 'بطل', en: 'Hero' },
+    });
+
+    // upsert already returns the section hydrated (write-back path)
+    expect(servicesSection.config).toEqual({ mode: 'all', limit: 2, ids: [] });
+    expect(servicesSection.collection?.collection).toBe('services');
+
+    const tree = await pageService.getTree('landing');
+    const svc = tree?.sections.find((s) => s.type === 'services');
+    const hero = tree?.sections.find((s) => s.type === 'hero');
+    expect(svc?.collection?.collection).toBe('services');
+    // mode:all limit 2 → alpha, beta in sortOrder (not gamma)
+    if (svc?.collection?.collection === 'services') {
+      expect(svc.collection.items.map((i) => i.slug)).toEqual([
+        'alpha',
+        'beta',
+      ]);
+    }
+    // non-collection section → null (no hydrator)
+    expect(hero?.collection).toBeNull();
+    expect(hero?.config).toBeNull();
+
+    // switch to picked → exactly the ids, IN THE GIVEN ORDER (gamma before alpha)
+    await pageService.upsertSection({
+      id: svc?.id,
+      pageId: page.id,
+      type: 'services',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'picked', ids: [gamma.id, alpha.id] },
+    });
+    const picked = await pageService.getTree('landing');
+    const pickedSvc = picked?.sections.find((s) => s.type === 'services');
+    if (pickedSvc?.collection?.collection === 'services') {
+      expect(pickedSvc.collection.items.map((i) => i.id)).toEqual([
+        gamma.id,
+        alpha.id,
+      ]);
+    }
+
+    // an inline copy edit (no config in the body) must NOT wipe the stored config
+    await pageService.upsertSection({
+      id: svc?.id,
+      pageId: page.id,
+      type: 'services',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'خدماتنا المحدّثة', en: 'Our services' },
+    });
+    const afterCopyEdit = await pageService.getTree('landing');
+    const stillPicked = afterCopyEdit?.sections.find(
+      (s) => s.type === 'services',
+    );
+    expect(stillPicked?.config?.mode).toBe('picked');
+    expect(beta).toBeDefined(); // (beta exists but is neither picked)
+  });
+
+  it('hydrates a faq section from the faq collection (all → sortOrder+limit; picked → ids in order) — Phase 5', async () => {
+    const one = await faqService.create({
+      category: 'general',
+      sortOrder: 0,
+      question: { ar: 'سؤال ١', en: 'Q1' },
+      answer: { ar: 'جواب ١', en: 'A1' },
+    });
+    const two = await faqService.create({
+      category: 'pricing',
+      sortOrder: 1,
+      question: { ar: 'سؤال ٢', en: 'Q2' },
+      answer: { ar: 'جواب ٢', en: 'A2' },
+    });
+    const three = await faqService.create({
+      category: 'support',
+      sortOrder: 2,
+      question: { ar: 'سؤال ٣', en: 'Q3' },
+      answer: { ar: 'جواب ٣', en: 'A3' },
+    });
+
+    const page = await pageService.upsertPage({
+      slug: 'faq',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'الأسئلة', en: 'FAQ' },
+    });
+    const faqSection = await pageService.upsertSection({
+      pageId: page.id,
+      type: 'faq',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'أسئلة', en: 'Questions' },
+      config: { mode: 'all', limit: 2, ids: [] },
+    });
+    // write-back path hydrates immediately
+    expect(faqSection.collection?.collection).toBe('faq');
+
+    const tree = await pageService.getTree('faq');
+    const faq = tree?.sections.find((s) => s.type === 'faq');
+    // mode:all limit 2 → first two by sortOrder
+    if (faq?.collection?.collection === 'faq') {
+      expect(faq.collection.items.map((i) => i.id)).toEqual([one.id, two.id]);
+    }
+
+    // picked → exactly the ids, in the given order (three before one)
+    await pageService.upsertSection({
+      id: faq?.id,
+      pageId: page.id,
+      type: 'faq',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'picked', ids: [three.id, one.id] },
+    });
+    const picked = await pageService.getTree('faq');
+    const pickedFaq = picked?.sections.find((s) => s.type === 'faq');
+    if (pickedFaq?.collection?.collection === 'faq') {
+      expect(pickedFaq.collection.items.map((i) => i.id)).toEqual([
+        three.id,
+        one.id,
+      ]);
+    }
+    expect(two).toBeDefined();
+  });
+
+  it('hydrates a team section from the team collection (featured → only flagged; picked → ids in order) — Phase 5', async () => {
+    const lead = await teamMemberService.create({
+      slug: 'lead',
+      featured: true,
+      sortOrder: 0,
+      name: { ar: 'القائد', en: 'Lead' },
+      role: { ar: 'مدير', en: 'Director' },
+    });
+    const eng = await teamMemberService.create({
+      slug: 'eng',
+      featured: false,
+      sortOrder: 1,
+      name: { ar: 'مهندس', en: 'Engineer' },
+      role: { ar: 'مطوّر', en: 'Developer' },
+    });
+
+    const page = await pageService.upsertPage({
+      slug: 'about',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'من نحن', en: 'About' },
+    });
+    // featured → only the flagged member
+    const teamSection = await pageService.upsertSection({
+      pageId: page.id,
+      type: 'team',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'فريقنا', en: 'Team' },
+      config: { mode: 'featured', ids: [] },
+    });
+    expect(teamSection.collection?.collection).toBe('team');
+
+    const tree = await pageService.getTree('about');
+    const team = tree?.sections.find((s) => s.type === 'team');
+    if (team?.collection?.collection === 'team') {
+      expect(team.collection.items.map((i) => i.slug)).toEqual(['lead']);
+    }
+
+    // picked → exactly the ids, in the given order (eng before lead)
+    await pageService.upsertSection({
+      id: team?.id,
+      pageId: page.id,
+      type: 'team',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'picked', ids: [eng.id, lead.id] },
+    });
+    const picked = await pageService.getTree('about');
+    const pickedTeam = picked?.sections.find((s) => s.type === 'team');
+    if (pickedTeam?.collection?.collection === 'team') {
+      expect(pickedTeam.collection.items.map((i) => i.id)).toEqual([
+        eng.id,
+        lead.id,
+      ]);
+    }
+  });
+
+  it('hydrates a trust section from the portfolio collection (all → published sortOrder+limit; drafts hidden on the public tree) — the trust swap', async () => {
+    const category = await portfolioCategoryService.create({
+      slug: 'fintech',
+      sortOrder: 0,
+      name: { ar: 'تقنية مالية', en: 'Fintech' },
+    });
+    // two published projects + one draft — the draft must NOT reach the public constellation
+    const one = await portfolioProjectService.create({
+      slug: 'proj-one',
+      categoryId: category.id,
+      status: 'published',
+      featured: false,
+      sortOrder: 0,
+      title: { ar: 'مشروع واحد', en: 'Project One' },
+    });
+    await portfolioProjectService.create({
+      slug: 'proj-two',
+      categoryId: category.id,
+      status: 'published',
+      featured: false,
+      sortOrder: 1,
+      title: { ar: 'مشروع اثنان', en: 'Project Two' },
+    });
+    await portfolioProjectService.create({
+      slug: 'proj-draft',
+      categoryId: category.id,
+      status: 'draft',
+      featured: false,
+      sortOrder: 2,
+      title: { ar: 'مسودة', en: 'Draft' },
+    });
+
+    const page = await pageService.upsertPage({
+      slug: 'landing',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'الرئيسية', en: 'Landing' },
+    });
+    const trustSection = await pageService.upsertSection({
+      pageId: page.id,
+      type: 'trust',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'من نخدم', en: 'Who we serve' },
+      config: { mode: 'all', ids: [] },
+    });
+    // write-back path (admin, publishedOnly:false) sees the draft too
+    expect(trustSection.collection?.collection).toBe('portfolio');
+
+    const tree = await pageService.getTree('landing');
+    const trust = tree?.sections.find((s) => s.type === 'trust');
+    expect(trust?.collection?.collection).toBe('portfolio');
+    // public tree → only the two PUBLISHED projects, in sortOrder (draft hidden — WEB2)
+    if (trust?.collection?.collection === 'portfolio') {
+      expect(trust.collection.items.map((i) => i.slug)).toEqual([
+        'proj-one',
+        'proj-two',
+      ]);
+      expect(trust.collection.items[0]?.category?.slug).toBe('fintech');
+    }
+    expect(one).toBeDefined();
+  });
+
+  it('hydrates a work section from the portfolio collection (featured → only featured; picked → ids in order; all → sortOrder+limit) — the works swap', async () => {
+    const category = await portfolioCategoryService.create({
+      slug: 'commerce',
+      sortOrder: 0,
+      name: { ar: 'تجارة', en: 'Commerce' },
+    });
+    // one featured + one non-featured (both published) + one featured DRAFT (never public)
+    const flagship = await portfolioProjectService.create({
+      slug: 'flagship',
+      categoryId: category.id,
+      status: 'published',
+      featured: true,
+      sortOrder: 0,
+      title: { ar: 'الرائد', en: 'Flagship' },
+    });
+    const secondary = await portfolioProjectService.create({
+      slug: 'secondary',
+      categoryId: category.id,
+      status: 'published',
+      featured: false,
+      sortOrder: 1,
+      title: { ar: 'ثانوي', en: 'Secondary' },
+    });
+    await portfolioProjectService.create({
+      slug: 'featured-draft',
+      categoryId: category.id,
+      status: 'draft',
+      featured: true,
+      sortOrder: 2,
+      title: { ar: 'مسودة مميزة', en: 'Featured draft' },
+    });
+
+    const page = await pageService.upsertPage({
+      slug: 'landing',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'الرئيسية', en: 'Landing' },
+    });
+    // mode:'featured' → only the published featured project (draft featured hidden — WEB2)
+    const workSection = await pageService.upsertSection({
+      pageId: page.id,
+      type: 'work',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'أعمالنا', en: 'Selected work' },
+      config: { mode: 'featured', ids: [] },
+    });
+    expect(workSection.collection?.collection).toBe('portfolio');
+
+    const tree = await pageService.getTree('landing');
+    const work = tree?.sections.find((s) => s.type === 'work');
+    expect(work?.collection?.collection).toBe('portfolio');
+    if (work?.collection?.collection === 'portfolio') {
+      // featured reel → only the published flagship (not the non-featured, not the draft)
+      expect(work.collection.items.map((i) => i.slug)).toEqual(['flagship']);
+    }
+
+    // switch to picked → exactly the ids IN ORDER (secondary before flagship)
+    await pageService.upsertSection({
+      id: work?.id,
+      pageId: page.id,
+      type: 'work',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'picked', ids: [secondary.id, flagship.id] },
+    });
+    const picked = (await pageService.getTree('landing'))?.sections.find(
+      (s) => s.type === 'work',
+    );
+    if (picked?.collection?.collection === 'portfolio') {
+      expect(picked.collection.items.map((i) => i.slug)).toEqual([
+        'secondary',
+        'flagship',
+      ]);
+    }
+
+    // switch to all → both published projects in sortOrder (draft still hidden)
+    await pageService.upsertSection({
+      id: work?.id,
+      pageId: page.id,
+      type: 'work',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'all', ids: [] },
+    });
+    const all = (await pageService.getTree('landing'))?.sections.find(
+      (s) => s.type === 'work',
+    );
+    if (all?.collection?.collection === 'portfolio') {
+      expect(all.collection.items.map((i) => i.slug)).toEqual([
+        'flagship',
+        'secondary',
+      ]);
+    }
+  });
+
+  it('hydrates a testimonials section from the testimonials collection (all → sortOrder+limit; featured → only featured; picked → ids in order) — the testimonials swap', async () => {
+    // one featured + one non-featured — the featured reel must show only the flagged one
+    const flagship = await testimonialService.create({
+      authorName: 'Layla Mansour',
+      companyName: 'Tadawul Pay',
+      rating: 5,
+      featured: true,
+      sortOrder: 0,
+      quote: { ar: 'فريقٌ يُسنِدك', en: 'A team that backs you' },
+    });
+    const secondary = await testimonialService.create({
+      authorName: 'Omar Nasser',
+      companyName: 'Wasla',
+      rating: 4,
+      featured: false,
+      sortOrder: 1,
+      quote: { ar: 'شراكةٌ حقيقية', en: 'A true partnership' },
+    });
+
+    const page = await pageService.upsertPage({
+      slug: 'landing',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'الرئيسية', en: 'Landing' },
+    });
+    // mode:'featured' → only the flagged testimonial
+    const section = await pageService.upsertSection({
+      pageId: page.id,
+      type: 'testimonials',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'آراء العملاء', en: 'Clients' },
+      config: { mode: 'featured', ids: [] },
+    });
+    expect(section.collection?.collection).toBe('testimonials');
+
+    const featured = (await pageService.getTree('landing'))?.sections.find(
+      (s) => s.type === 'testimonials',
+    );
+    if (featured?.collection?.collection === 'testimonials') {
+      expect(featured.collection.items.map((i) => i.authorName)).toEqual([
+        'Layla Mansour',
+      ]);
+    }
+
+    // switch to picked → exactly the ids IN ORDER (secondary before flagship)
+    await pageService.upsertSection({
+      id: featured?.id,
+      pageId: page.id,
+      type: 'testimonials',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'picked', ids: [secondary.id, flagship.id] },
+    });
+    const picked = (await pageService.getTree('landing'))?.sections.find(
+      (s) => s.type === 'testimonials',
+    );
+    if (picked?.collection?.collection === 'testimonials') {
+      expect(picked.collection.items.map((i) => i.authorName)).toEqual([
+        'Omar Nasser',
+        'Layla Mansour',
+      ]);
+    }
+
+    // switch to all → both testimonials in sortOrder
+    await pageService.upsertSection({
+      id: featured?.id,
+      pageId: page.id,
+      type: 'testimonials',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'all', ids: [] },
+    });
+    const all = (await pageService.getTree('landing'))?.sections.find(
+      (s) => s.type === 'testimonials',
+    );
+    if (all?.collection?.collection === 'testimonials') {
+      expect(all.collection.items.map((i) => i.authorName)).toEqual([
+        'Layla Mansour',
+        'Omar Nasser',
+      ]);
+    }
+  });
+
+  it('hydrates a blog section from the blog collection (all → published sortOrder+limit, drafts hidden; picked → ids in order; embedded category/author/tags survive) — the blog swap', async () => {
+    const category = await blogCategoryService.create({
+      slug: 'engineering',
+      sortOrder: 0,
+      name: { ar: 'هندسة', en: 'Engineering' },
+    });
+    const author = await teamMemberService.create({
+      slug: 'samer-al-hasan',
+      featured: true,
+      sortOrder: 0,
+      name: { ar: 'سامر الحسن', en: 'Samer Al-Hasan' },
+      role: { ar: 'القائد التقني', en: 'CTO' },
+    });
+    const tag = await blogTagService.create({
+      slug: 'microservices',
+      sortOrder: 0,
+      name: { ar: 'الخدمات المصغّرة', en: 'Microservices' },
+    });
+    // two published + one draft — the draft must NOT reach the public teaser
+    const first = await blogPostService.create({
+      slug: 'post-one',
+      categoryId: category.id,
+      authorTeamMemberId: author.id,
+      coverMediaId: null,
+      status: 'published',
+      readMinutes: 5,
+      sortOrder: 0,
+      tagIds: [tag.id],
+      title: { ar: 'مقالة واحد', en: 'Post One' },
+    });
+    const second = await blogPostService.create({
+      slug: 'post-two',
+      status: 'published',
+      readMinutes: 4,
+      sortOrder: 1,
+      tagIds: [],
+      title: { ar: 'مقالة اثنان', en: 'Post Two' },
+    });
+    await blogPostService.create({
+      slug: 'post-draft',
+      status: 'draft',
+      sortOrder: 2,
+      tagIds: [],
+      title: { ar: 'مسودة', en: 'Draft' },
+    });
+
+    const page = await pageService.upsertPage({
+      slug: 'landing',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'الرئيسية', en: 'Landing' },
+    });
+    const section = await pageService.upsertSection({
+      pageId: page.id,
+      type: 'blog',
+      sortOrder: 0,
+      published: true,
+      title: { ar: 'المدونة', en: 'Blog' },
+      config: { mode: 'all', ids: [] },
+    });
+    expect(section.collection?.collection).toBe('blog');
+
+    const tree = await pageService.getTree('landing');
+    const blog = tree?.sections.find((s) => s.type === 'blog');
+    // public tree → only the two PUBLISHED posts, in sortOrder (draft hidden — WEB2)
+    if (blog?.collection?.collection === 'blog') {
+      expect(blog.collection.items.map((i) => i.slug)).toEqual([
+        'post-one',
+        'post-two',
+      ]);
+      // embedded refs survive hydration
+      expect(blog.collection.items[0]?.category?.slug).toBe('engineering');
+      expect(blog.collection.items[0]?.author?.slug).toBe('samer-al-hasan');
+      expect(blog.collection.items[0]?.tags.map((t) => t.slug)).toEqual([
+        'microservices',
+      ]);
+    }
+
+    // switch to picked → exactly the ids IN ORDER (second before first)
+    await pageService.upsertSection({
+      id: blog?.id,
+      pageId: page.id,
+      type: 'blog',
+      sortOrder: 0,
+      published: true,
+      config: { mode: 'picked', ids: [second.id, first.id] },
+    });
+    const picked = (await pageService.getTree('landing'))?.sections.find(
+      (s) => s.type === 'blog',
+    );
+    if (picked?.collection?.collection === 'blog') {
+      expect(picked.collection.items.map((i) => i.slug)).toEqual([
+        'post-two',
+        'post-one',
+      ]);
+    }
+  });
+
   it('does not expose a draft page on the public tree read (WEB2)', async () => {
     await pageService.upsertPage({
       slug: 'secret',
@@ -616,6 +1212,61 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
       title: { ar: 'مسودة', en: 'Draft' },
     });
     expect(await pageService.getTree('secret')).toBeNull();
+  });
+
+  it('exposes a draft page + unpublished sections on the admin tree (P7 builder)', async () => {
+    const page = await pageService.upsertPage({
+      slug: 'about',
+      status: 'draft',
+      sortOrder: 0,
+      title: { ar: 'من نحن', en: 'About' },
+    });
+    await pageService.upsertSection({
+      pageId: page.id,
+      type: 'hero',
+      sortOrder: 0,
+      published: false,
+      title: { ar: 'بطل مخفي', en: 'Hidden hero' },
+    });
+
+    // Public read hides the draft entirely; the admin read sees it with its unpublished section.
+    expect(await pageService.getTree('about')).toBeNull();
+    const tree = await pageService.getAdminTree(page.id);
+    expect(tree).not.toBeNull();
+    expect(tree?.status).toBe('draft');
+    expect(tree?.sections).toHaveLength(1);
+    expect(tree?.sections[0]?.published).toBe(false);
+
+    // An unknown id yields null (not a throw) so the gateway maps it to 404.
+    expect(await pageService.getAdminTree(randomUUID())).toBeNull();
+  });
+
+  it('reorders sections within a page atomically (P7 builder, U21)', async () => {
+    const page = await pageService.upsertPage({
+      slug: 'services',
+      status: 'published',
+      sortOrder: 0,
+      title: { ar: 'خدماتنا', en: 'Services' },
+    });
+    const make = (order: number): Promise<{ id: string }> =>
+      pageService.upsertSection({
+        pageId: page.id,
+        type: 'richtext',
+        sortOrder: order,
+        published: true,
+        title: { ar: `قسم ${order}`, en: `Section ${order}` },
+      });
+    const a = await make(0);
+    const b = await make(1);
+    const c = await make(2);
+
+    await pageService.reorderSections([c.id, a.id, b.id]);
+    const tree = await pageService.getAdminTree(page.id);
+    expect(tree?.sections.map((section) => section.id)).toEqual([
+      c.id,
+      a.id,
+      b.id,
+    ]);
   });
 
   it('persists a lead and emits a consumable lead.created via the Outbox (MS3, the Done-when)', async () => {
@@ -689,5 +1340,47 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
       sql`select count(*)::int as n from "processed_message" where message_id = ${mediaId}`,
     );
     expect((ledger.rows[0] as { n: number }).n).toBe(1);
+  });
+
+  it('reorder renumbers sortOrder atomically to the given id order (U21)', async () => {
+    const a = await blogTagService.create({
+      slug: 'tag-a',
+      sortOrder: 0,
+      name: { ar: 'أ', en: 'A' },
+    });
+    const b = await blogTagService.create({
+      slug: 'tag-b',
+      sortOrder: 1,
+      name: { ar: 'ب', en: 'B' },
+    });
+    const c = await blogTagService.create({
+      slug: 'tag-c',
+      sortOrder: 2,
+      name: { ar: 'ج', en: 'C' },
+    });
+
+    // Drag into the order [c, a, b] → sortOrder 0/1/2 by index.
+    await blogTagService.reorder([c.id, a.id, b.id]);
+    const byId = new Map(
+      (await blogTags.findByIds([a.id, b.id, c.id])).map((row) => [
+        row.id,
+        row.sortOrder,
+      ]),
+    );
+    expect(byId.get(c.id)).toBe(0);
+    expect(byId.get(a.id)).toBe(1);
+    expect(byId.get(b.id)).toBe(2);
+
+    // An id not in the table is simply ignored — the present rows still renumber.
+    await blogTagService.reorder([b.id, randomUUID(), a.id, c.id]);
+    const after = new Map(
+      (await blogTags.findByIds([a.id, b.id, c.id])).map((row) => [
+        row.id,
+        row.sortOrder,
+      ]),
+    );
+    expect(after.get(b.id)).toBe(0);
+    expect(after.get(a.id)).toBe(2);
+    expect(after.get(c.id)).toBe(3);
   });
 });

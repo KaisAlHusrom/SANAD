@@ -4,24 +4,22 @@ import {
   IDENTITY_PERMISSIONS,
   MEDIA_PERMISSIONS,
   NOTIFICATION_PERMISSIONS,
-  SECRET_PERMISSIONS,
-  SECRET_REGISTRY_LIST,
+  INTEGRATION_CAPABILITIES,
+  INTEGRATION_PERMISSIONS,
+  integrationManagePermission,
   SETTINGS_PERMISSIONS,
 } from '@sanad/contracts';
 
 /**
- * The per-integration secret-manage permissions (N13 — each third party owns its
- * permission), deduped from the registry so a new integration auto-extends the catalog.
+ * The per-capability integration-manage permissions (N13 — each capability owns its
+ * permission), derived from the catalog so a new capability auto-extends the RBAC catalog.
  */
-const SECRET_MANAGE_CATALOG: ReadonlyArray<[key: string, description: string]> =
-  [
-    ...new Map(
-      SECRET_REGISTRY_LIST.map((entry) => [
-        entry.managePermission,
-        `Manage ${entry.feature} integration secrets`,
-      ]),
-    ),
-  ];
+const INTEGRATION_MANAGE_CATALOG: ReadonlyArray<
+  [key: string, description: string]
+> = INTEGRATION_CAPABILITIES.map((capability) => [
+  integrationManagePermission(capability),
+  `Configure the ${capability} integration`,
+]);
 
 /** The permission catalog seeded into the identity DB (key → description). */
 export const PERMISSION_CATALOG: ReadonlyArray<
@@ -40,8 +38,8 @@ export const PERMISSION_CATALOG: ReadonlyArray<
   [NOTIFICATION_PERMISSIONS.manage, 'Manage notifications'],
   [SETTINGS_PERMISSIONS.read, 'View settings'],
   [SETTINGS_PERMISSIONS.manage, 'Manage settings & branding'],
-  [SECRET_PERMISSIONS.read, 'View integration secret statuses'],
-  ...SECRET_MANAGE_CATALOG,
+  [INTEGRATION_PERMISSIONS.read, 'View integrations'],
+  ...INTEGRATION_MANAGE_CATALOG,
 ];
 
 /** A seeded role: its display name + the permission keys it grants. */

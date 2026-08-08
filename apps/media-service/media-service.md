@@ -40,18 +40,59 @@ microservice consuming `media.commands`. Own database (MS5) via Drizzle; migrati
 3. **delete** (`media.asset.delete`) — soft-delete + enqueue `media.deleted` in ONE
    transaction (MS3), then best-effort remove the R2 object.
 
-## Storage boundary + credentials seam (decision 2026-06-23)
+## Storage boundary + credentials seam (reworked 2026-07-19 — capability→providers)
 
-`StorageProvider` (abstract) is the only place the AWS SDK is used; `R2StorageProvider`
-implements it against R2's S3 API (region `auto`). Credentials are resolved through the
-**`getStorageCredentials()` seam**, which today reads the typed env accessor. R2 vars are
-**optional** — when unset the provider is unconfigured, the service still boots, and
-uploads return a clean **503**; `publicUrl` stays tolerant so listing always works.
+`StorageProvider` (abstract) is the only place the AWS SDK is used; `R2StorageProvider` implements
+it against R2's S3 API (region `auto`).
 
-**These R2 keys are SECRETS and never live in the settings table** (it resolves onto the
-public website). The seam is the single place the future swap lands: the R2 secret will be
-resolved from the encrypted **integration-secrets vault** in the settings-service
-(`settings.resolve-secret`, MS2) — see `.claude/docs/PROGRESS.md` and rule SEC1.
+Credentials come from the **active storage provider** via
+`resolveActiveStorageConfig(settingsClient, env, provider?)`: it asks settings-service
+(`settings.integration.resolve` for capability `storage`, MS2) which provider is active and for its
+stored values, then merges **each field** vault → media env → missing, using the catalog
+descriptor's `envVar` (U9/F7). So an env-configured deploy keeps working while anything set in the
+admin overrides it. When a required field is missing everywhere the provider is unconfigured: the
+service still boots and mutating ops surface a clean **503**; `publicUrl` stays tolerant so listing
+works regardless.
+
+**No restart.** The resolved client is cached for `STORAGE_CREDENTIALS_TTL_MS` (~60s), keyed by a
+fingerprint that **includes the provider id** — so both a credential change AND a provider switch
+rebuild the S3 client, while the read path (public-URL assembly on every listing) stays off RMQ.
+Every storage-touching `MediaService` method calls `storage.refresh()` first.
+
+**Testing (MS1).** `testConnection(provider, locale)` resolves that SPECIFIC provider (not the
+active one, so a provider can be proven before activation), builds a throwaway client and issues a
+real `HeadBucket`, returning `{ ok, message, detail? }`. The `message` sits **inside the payload**,
+where the gateway's envelope renderer can't reach it, so the service translates it itself from the
+forwarded caller locale (U24d) — `StorageTestMessageController` reads it with
+`resolveRequestLocale(readMessageHeaders(ctx))`. `detail` carries the vendor's own untranslated
+text (`SignatureDoesNotMatch`, …) so the owner can see which key is wrong (U24e). The gateway routes
+`POST /api/integrations/storage/:provider/test` here — media-service owns the S3 adapter, so
+settings-service never learns S3. Exposed as the `media.storage.test` message pattern.
+
+**CORS check (same rule).** `corsStatus(locale, provider)` / `applyCors(locale, provider)` take the
+locale FIRST and localize their `message` too — `media.cors.cannotCheck` / `.applyFailed` /
+`.unconfigured` / `.unsupported` — with AWS's own words in `StorageCorsStatus.detail` (U24d/e).
+`storage-cors.message-controller.ts` reads the forwarded locale exactly like its `testConnection`
+sibling. This surface was missed in the first U24 pass and caught by the verifier: it renders one
+button away from "Test connection" on the same admin page, so an English `AccessDenied` there was
+the very bug the owner reported.
+
+## Errors — keys, never prose (U24)
+
+[`media-errors.ts`](src/media/application/media-errors.ts) returns `rpcError(status, key, params)`
+from [`@sanad/i18n`](../../libs/shared/i18n/i18n.md); the text lives only in the ar/en catalogs and
+is rendered once at the gateway edge.
+
+| Factory                             | Status | Key                                     |
+| ----------------------------------- | ------ | --------------------------------------- |
+| `mediaNotFound(id)`                 | 404    | `media.notFound`                        |
+| `uploadTypeNotAllowed(contentType)` | 400    | `media.upload.typeNotAllowed`           |
+| `uploadTooLarge(maxBytes)`          | 400    | `media.upload.tooLarge` (param `maxMb`) |
+| `storageUnavailable()`              | 503    | `media.storageUnavailable`              |
+
+The old `uploadNotAllowed(message)` took a caller-composed English sentence and is gone: the
+upload policy now picks the key and passes the offending value as a `param`, so the whole
+sentence lives in the catalog.
 
 ## Contracts (`@sanad/contracts/media`)
 
@@ -61,17 +102,29 @@ resolved from the encrypted **integration-secrets vault** in the settings-servic
 `mediaIdSchema`, `MediaDeletedEvent`, `MEDIA_PERMISSIONS`, and the message-pattern
 constants. List reuses the shared `listQuerySchema` (U17).
 
+**Public resolver (8.C):** `mediaPublicResolveRequestSchema` (`{ ids: uuid[] }`, `.strict()`,
+`max(100)`) + `PublicMediaRef` (`{ id, url, alt, width, height }`) — the public-safe slim of
+`MediaAsset` (no key/status/folder) the website renders images from without a token.
+
 ## Message patterns (MS2 — request/reply)
 
-| Pattern                | Payload                                  | Reply                   |
-| ---------------------- | ---------------------------------------- | ----------------------- |
-| `media.upload.sign`    | `UploadSignRequest` (+ identity headers) | `UploadSignResult`      |
-| `media.upload.confirm` | `UploadConfirmRequest` (+ identity)      | `MediaAsset`            |
-| `media.asset.list`     | `MediaListQuery` (+ identity)            | `Paginated<MediaAsset>` |
-| `media.asset.get`      | `{ id }` (+ identity)                    | `MediaAsset`            |
-| `media.asset.delete`   | `{ id }` (+ identity)                    | `{ id }`                |
-| `media.folder.create`  | `FolderCreateRequest` (+ identity)       | `MediaFolder`           |
-| `media.folder.list`    | `FolderListQuery` (+ identity)           | `MediaFolder[]`         |
+| Pattern                      | Payload                                  | Reply                   |
+| ---------------------------- | ---------------------------------------- | ----------------------- |
+| `media.upload.sign`          | `UploadSignRequest` (+ identity headers) | `UploadSignResult`      |
+| `media.upload.confirm`       | `UploadConfirmRequest` (+ identity)      | `MediaAsset`            |
+| `media.asset.list`           | `MediaListQuery` (+ identity)            | `Paginated<MediaAsset>` |
+| `media.asset.get`            | `{ id }` (+ identity)                    | `MediaAsset`            |
+| `media.asset.resolve-public` | `{ ids: uuid[] }` (NO identity)          | `PublicMediaRef[]`      |
+| `media.asset.delete`         | `{ id }` (+ identity)                    | `{ id }`                |
+| `media.folder.create`        | `FolderCreateRequest` (+ identity)       | `MediaFolder`           |
+| `media.folder.list`          | `FolderListQuery` (+ identity)           | `MediaFolder[]`         |
+| `media.folder.tree`          | `{}` (+ identity)                        | `MediaFolderTree`       |
+| `media.folder.update`        | `FolderUpdatePayload` (+ identity)       | `MediaFolder`           |
+| `media.folder.delete`        | `FolderDeletePayload` (+ identity)       | `{ id }`                |
+| `media.asset.move`           | `MediaMoveRequest` (+ identity)          | `MediaMoveResult`       |
+| `media.storage.test`         | `{ capability, provider }` (+ identity)  | `IntegrationTestResult` |
+| `media.storage.cors-status`  | `{ capability, provider }` (+ identity)  | `StorageCorsStatus`     |
+| `media.storage.cors-apply`   | `{ capability, provider }` (+ identity)  | `StorageCorsStatus`     |
 
 ## Events emitted (MS3 — Outbox)
 
@@ -84,7 +137,69 @@ constants. List reuses the shared `listQuerySchema` (U17).
 `POST /api/media/uploads` (`media.manage`), `POST /api/media/uploads/:id/confirm`
 (`media.manage`), `GET /api/media` (`media.read`), `GET /api/media/:id` (`media.read`),
 `DELETE /api/media/:id` (`media.manage`), `POST /api/media/folders` (`media.manage`),
-`GET /api/media/folders` (`media.read`).
+`GET /api/media/folders` (`media.read`), `GET /api/media/folders/tree` (`media.read`),
+`PATCH /api/media/folders/:id` (`media.manage`), `DELETE /api/media/folders/:id?strategy=`
+(`media.manage`), `PATCH /api/media/move` (`media.manage`).
+
+`GET|POST /api/integrations/storage/:provider/cors` (per-capability integration permission) —
+the browser-CORS self-check + one-click apply; see below.
+
+**Public (UNGUARDED, 8.C):** `GET /api/media/public?ids=a,b,c` → `PublicMediaRef[]` — the
+website resolves content media ids → CDN urls without a token (only `ready` assets resolve;
+`ids` is a bounded, deduped CSV). Declared before `GET /media/:id` so the literal path wins.
+
+## Folders are a TREE (2026-07-20)
+
+`parent_id` existed from P4 but nothing used it. The explorer needs real nesting, so the service
+now owns the tree operations, each defending an invariant that is invisible until it hurts:
+
+- **Unique name per parent** — a partial unique index on `(parent_id, lower(name)) WHERE
+deleted_at IS NULL`, plus a friendly 409 (`media.folder.duplicateName`) ahead of it. Migration
+  `0001_folder_tree_uniqueness` first MERGES the duplicates that already existed (the live dev DB
+  had **14 folders named "Brand"** and 2 named "مشاريع", created by a picker that swallowed its
+  create errors): the oldest survives and adopts the others' assets + subfolders, the rest are
+  **soft-deleted**, so a migration never destroys data.
+- **No cycles** — `wouldCreateCycle` refuses moving a folder into itself or a descendant. Such a
+  move keeps the row but detaches the subtree from every root, which reads as data loss.
+- **No surprise deletion** — `DELETE …?strategy=block` (the default) refuses a non-empty folder
+  and reports what is inside; `strategy=reparent` lifts its contents up one level first. Assets
+  are never destroyed as a side effect of removing the folder that held them.
+- **Bulk move** — `PATCH /api/media/move { ids[], folderId|null }` is one request per drag,
+  however many files were selected, and returns `missingIds` rather than silently moving fewer
+  than asked.
+
+`GET /api/media` gained `status` and the `folderId=root` sentinel (assets in NO folder — SQL
+`= NULL` can't express it, so it maps to a whitelisted `isNull` filter, N7).
+
+## Storage health: credentials vs. BROWSER CORS (2026-07-20)
+
+They fail independently, so they are separate checks:
+
+- **`media.storage.test`** proves the credentials with a real `HeadBucket`, and now also reports
+  a `publicUrl` pointing at the **signed S3 API endpoint** — that uploads fine and then 403s
+  every rendered `<img>`.
+- **`media.storage.cors-status` / `-apply`** answer "can the browser upload at all?". The admin
+  is a SPA: it PUTs bytes from the browser straight to the bucket, so the bucket must allow the
+  admin's origin or every upload dies in preflight with `403 CORS not configured` — the owner's
+  reported bug. The status is one of `ok | missing | origin-not-allowed | cannot-check |
+unconfigured` (U23: one per thing the admin must see and act on), and `apply` writes the policy
+  via `PutBucketCors` and RE-READS it, so a returned `ok` is observed, not assumed. An
+  object-scoped R2 token cannot touch bucket config → `cannot-check` + `canApply:false`, and the
+  UI shows the copy-paste policy instead of a button that would fail. Required origins come from
+  `ADMIN_PUBLIC_ORIGINS` (U19). Ops fallback: `infra/scripts/r2-cors.sh` + `infra/r2/cors.json`.
+
+**Presign gotcha (fixed):** `@aws-sdk/client-s3` ≥3.1075 defaults
+`requestChecksumCalculation:'WHEN_SUPPORTED'`, which leaves an **empty-body**
+`x-amz-checksum-crc32` in the presigned URL; R2 rejects the real bytes against it. Every
+`S3Client` here is built by `buildS3Client` with `WHEN_REQUIRED`.
+
+## Pending-upload sweeper
+
+An asset row is written at SIGN time and only becomes `ready` at CONFIRM, so an upload that dies
+in between leaves an invisible `pending` row (the owner's two blocked uploads left exactly two).
+Past the presigned URL's lifetime such a row can never be confirmed, so
+`PendingUploadSweeperService` deletes it (nothing landed in storage to reconcile) — at boot and
+every `PENDING_SWEEP_INTERVAL_MS`, with a grace period well beyond the URL TTL.
 
 ## Settings used
 

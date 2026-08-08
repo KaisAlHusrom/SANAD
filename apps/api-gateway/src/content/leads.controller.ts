@@ -13,7 +13,6 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import {
   CurrentUser,
-  identityToHeaders,
   JwtAuthGuard,
   PermissionsGuard,
   RequirePermissions,
@@ -33,9 +32,12 @@ import {
   type LeadListQuery,
   type LeadUpdateRequest,
   type Paginated,
+  type Locale,
 } from '@sanad/contracts';
 import { sendRequest } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
+import { RequestLocale } from '../core/decorators/index.js';
+import { forwardHeaders } from '../core/helpers/index.js';
 import { CONTENT_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
 
@@ -50,11 +52,14 @@ export class LeadsController {
 
   @Post()
   async submit(
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(leadCreateRequestSchema))
     body: LeadCreateRequest,
   ): Promise<LeadId> {
     try {
-      return await sendRequest<LeadId>(this.client, CONTENT_LEAD_SUBMIT, body);
+      return await sendRequest<LeadId>(this.client, CONTENT_LEAD_SUBMIT, body, {
+        headers: forwardHeaders(null, locale),
+      });
     } catch (error) {
       throw toHttpException(error);
     }
@@ -65,9 +70,10 @@ export class LeadsController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async list(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Query(new ZodValidationPipe(leadListQuerySchema)) query: LeadListQuery,
   ): Promise<Paginated<Lead>> {
-    return this.forward(CONTENT_LEAD_LIST, query, identity);
+    return this.forward(CONTENT_LEAD_LIST, query, identity, locale);
   }
 
   @Patch(':id')
@@ -75,21 +81,23 @@ export class LeadsController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async update(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(leadUpdateSchema.omit({ id: true })))
     body: Omit<LeadUpdateRequest, 'id'>,
   ): Promise<Lead> {
-    return this.forward(CONTENT_LEAD_UPDATE, { id, ...body }, identity);
+    return this.forward(CONTENT_LEAD_UPDATE, { id, ...body }, identity, locale);
   }
 
   private async forward<TResult>(
     pattern: string,
     payload: object,
     identity: IdentityContext,
+    locale: Locale,
   ): Promise<TResult> {
     try {
       return await sendRequest<TResult>(this.client, pattern, payload, {
-        headers: identityToHeaders(identity),
+        headers: forwardHeaders(identity, locale),
       });
     } catch (error) {
       throw toHttpException(error);

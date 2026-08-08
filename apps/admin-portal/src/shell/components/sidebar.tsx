@@ -1,14 +1,16 @@
-import { hasPermission } from '@sanad/contracts';
+import { hasPermission, pickLocalized } from '@sanad/contracts';
 import { LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Avatar } from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
 import { SidebarNavButton } from '../../components/nav/sidebar-nav-button';
+import { useGetBrandingQuery } from '../../data/branding/branding.api';
 import { selectIdentity, selectPermissions } from '../../data/auth/auth.slice';
 import { useAppSelector } from '../../data/store/hooks';
+import { useDirection } from '../../providers/direction';
 import { useTheme } from '../../providers/theme';
 import { useLogout } from '../../modules/auth/hooks/use-logout';
-import { ADMIN_NAV } from '../constants/nav';
+import { ADMIN_NAV, bundledLogoSrc } from '../constants';
 
 /** Sidebar: brand → permission-gated nav → user card + logout (design-spec §4). */
 export function Sidebar() {
@@ -16,7 +18,16 @@ export function Sidebar() {
   const permissions = useAppSelector(selectPermissions);
   const identity = useAppSelector(selectIdentity);
   const { theme } = useTheme();
+  const { locale } = useDirection();
+  const { data: branding } = useGetBrandingQuery();
   const { onLogout } = useLogout();
+
+  // The brand logo + name come from the owner's visual-identity settings; fall back to the
+  // bundled asset + i18n name when unset (F7).
+  const brandName = branding?.brand?.name
+    ? pickLocalized(branding.brand.name, locale)
+    : t('app.name');
+  const logoSrc = branding?.logoUrl ?? bundledLogoSrc(theme);
 
   const items = ADMIN_NAV.filter(
     (item) => !item.permission || hasPermission(permissions, item.permission),
@@ -25,11 +36,7 @@ export function Sidebar() {
   return (
     <aside className="sticky top-0 flex h-dvh flex-col gap-6 border-e border-border bg-sidebar p-4">
       <div className="flex items-center px-2">
-        <img
-          src={`/admin/brand/logo-${theme}.png`}
-          alt={t('app.name')}
-          className="h-8 w-auto"
-        />
+        <img src={logoSrc} alt={brandName} className="h-8 w-auto" />
       </div>
 
       <nav className="flex flex-1 flex-col gap-1">

@@ -11,7 +11,6 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import {
   CurrentUser,
-  identityToHeaders,
   JwtAuthGuard,
   PermissionsGuard,
   RequirePermissions,
@@ -25,9 +24,12 @@ import {
   type Notification,
   type NotificationListQuery,
   type Paginated,
+  type Locale,
 } from '@sanad/contracts';
 import { sendRequest } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
+import { RequestLocale } from '../core/decorators/index.js';
+import { forwardHeaders } from '../core/helpers/index.js';
 import { NOTIFICATIONS_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
 
@@ -47,10 +49,11 @@ export class NotificationController {
   @RequirePermissions(NOTIFICATION_PERMISSIONS.read)
   async list(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Query(new ZodValidationPipe(notificationListQuerySchema))
     query: NotificationListQuery,
   ): Promise<Paginated<Notification>> {
-    return this.forward(NOTIFICATION_LIST, query, identity);
+    return this.forward(NOTIFICATION_LIST, query, identity, locale);
   }
 
   @Patch(':id/read')
@@ -58,19 +61,21 @@ export class NotificationController {
   @RequirePermissions(NOTIFICATION_PERMISSIONS.read)
   async markRead(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<Notification> {
-    return this.forward(NOTIFICATION_MARK_READ, { id }, identity);
+    return this.forward(NOTIFICATION_MARK_READ, { id }, identity, locale);
   }
 
   private async forward<TResult>(
     pattern: string,
     payload: object,
     identity: IdentityContext,
+    locale: Locale,
   ): Promise<TResult> {
     try {
       return await sendRequest<TResult>(this.client, pattern, payload, {
-        headers: identityToHeaders(identity),
+        headers: forwardHeaders(identity, locale),
       });
     } catch (error) {
       throw toHttpException(error);

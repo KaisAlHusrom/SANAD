@@ -9,6 +9,7 @@ import { BlogTagService } from '../content/application/services/blog-tag.service
 import { FaqService } from '../content/application/services/faq.service.js';
 import { MenuService } from '../content/application/services/menu.service.js';
 import { PortfolioCategoryService } from '../content/application/services/portfolio-category.service.js';
+import { PortfolioProjectService } from '../content/application/services/portfolio-project.service.js';
 import { PageService } from '../content/application/services/page.service.js';
 import { ServiceService } from '../content/application/services/service.service.js';
 import { TeamMemberService } from '../content/application/services/team-member.service.js';
@@ -19,6 +20,7 @@ import { BlogTagRepository } from '../content/infrastructure/persistence/reposit
 import { FaqRepository } from '../content/infrastructure/persistence/repositories/faq.repository.js';
 import { MenuRepository } from '../content/infrastructure/persistence/repositories/menu.repository.js';
 import { PortfolioCategoryRepository } from '../content/infrastructure/persistence/repositories/portfolio-category.repository.js';
+import { PortfolioProjectRepository } from '../content/infrastructure/persistence/repositories/portfolio-project.repository.js';
 import { PageRepository } from '../content/infrastructure/persistence/repositories/page.repository.js';
 import { ServiceRepository } from '../content/infrastructure/persistence/repositories/service.repository.js';
 import { TeamMemberRepository } from '../content/infrastructure/persistence/repositories/team-member.repository.js';
@@ -31,6 +33,7 @@ import {
   SEED_MENUS,
   SEED_PAGES,
   SEED_PORTFOLIO_CATEGORIES,
+  SEED_PORTFOLIO_PROJECTS,
   SEED_SERVICES,
   SEED_TEAM_MEMBERS,
   SEED_TESTIMONIALS,
@@ -55,6 +58,7 @@ export class SeedService implements OnApplicationBootstrap {
     private readonly faqs: FaqRepository,
     private readonly menus: MenuRepository,
     private readonly portfolioCategories: PortfolioCategoryRepository,
+    private readonly portfolioProjects: PortfolioProjectRepository,
     private readonly blogCategories: BlogCategoryRepository,
     private readonly blogTags: BlogTagRepository,
     private readonly blogPosts: BlogPostRepository,
@@ -65,6 +69,7 @@ export class SeedService implements OnApplicationBootstrap {
     private readonly faqService: FaqService,
     private readonly menuService: MenuService,
     private readonly portfolioCategoryService: PortfolioCategoryService,
+    private readonly portfolioProjectService: PortfolioProjectService,
     private readonly blogCategoryService: BlogCategoryService,
     private readonly blogTagService: BlogTagService,
     private readonly blogPostService: BlogPostService,
@@ -185,6 +190,33 @@ export class SeedService implements OnApplicationBootstrap {
       seededPortfolioCategories += 1;
     }
 
+    // Projects seed after their categories (resolve categorySlug → id), keyed on slug. Seeded
+    // PUBLISHED so the public works section + the WEB10 orbit have real cards (U9 / WEB1).
+    let seededPortfolioProjects = 0;
+    for (const [index, project] of SEED_PORTFOLIO_PROJECTS.entries()) {
+      if (await this.portfolioProjects.findBySlug(project.slug)) {
+        continue;
+      }
+      const category = project.categorySlug
+        ? await this.portfolioCategories.findBySlug(project.categorySlug)
+        : null;
+      await this.portfolioProjectService.create({
+        slug: project.slug,
+        categoryId: category?.id ?? null,
+        coverMediaId: null,
+        clientName: project.clientName,
+        status: 'published',
+        featured: project.featured,
+        sortOrder: index,
+        title: project.title,
+        summary: project.summary,
+        challenge: project.challenge,
+        solution: project.solution,
+        result: project.result,
+      });
+      seededPortfolioProjects += 1;
+    }
+
     let seededMenus = 0;
     for (const [menuIndex, menu] of SEED_MENUS.entries()) {
       if (await this.menus.findByKey(menu.key)) {
@@ -195,12 +227,22 @@ export class SeedService implements OnApplicationBootstrap {
         sortOrder: menuIndex,
       });
       for (const [itemIndex, item] of menu.items.entries()) {
-        await this.menuService.createItem({
+        const parent = await this.menuService.createItem({
           menuId: created.id,
           url: item.url,
           sortOrder: itemIndex,
           label: item.label,
         });
+        // One level of nesting (footer columns = a titled parent + its child links, W6).
+        for (const [childIndex, child] of (item.children ?? []).entries()) {
+          await this.menuService.createItem({
+            menuId: created.id,
+            parentId: parent.id,
+            url: child.url,
+            sortOrder: childIndex,
+            label: child.label,
+          });
+        }
       }
       seededMenus += 1;
     }
@@ -272,6 +314,7 @@ export class SeedService implements OnApplicationBootstrap {
         `${seededTestimonials} testimonial(s) + ${seededMembers} team member(s) + ` +
         `${seededFaqs} faq(s) + ${seededMenus} menu(s) + ` +
         `${seededPortfolioCategories} portfolio categor(ies) + ` +
+        `${seededPortfolioProjects} portfolio project(s) + ` +
         `${seededBlogCategories} blog categor(ies) + ${seededBlogTags} blog tag(s) + ` +
         `${seededBlogPosts} blog post(s) created (existing left untouched)`,
     );

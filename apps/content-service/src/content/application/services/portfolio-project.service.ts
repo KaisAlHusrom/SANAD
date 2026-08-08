@@ -62,6 +62,37 @@ export class PortfolioProjectService {
   }
 
   /**
+   * Projects for a set of ids, returned IN THE GIVEN ORDER (the `picked` section-config
+   * hydration — the trust chapter's constellation). Reads embed the category (embed-on-read)
+   * and resolve copy to both locales (F7). Unknown/soft-deleted ids are simply dropped.
+   */
+  async listByIds(ids: readonly string[]): Promise<PortfolioProjectItem[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.projects.findByIds(ids);
+    const fields = await this.projects.localizedFieldsForMany(
+      rows.map((row) => row.id),
+    );
+    const categories = await this.resolveCategories(
+      rows.map((row) => row.categoryId),
+    );
+    const byId = new Map(
+      rows.map((row) => [
+        row.id,
+        assemblePortfolioProject(
+          row,
+          fields.get(row.id),
+          row.categoryId ? (categories.get(row.categoryId) ?? null) : null,
+        ),
+      ]),
+    );
+    return ids
+      .map((id) => byId.get(id))
+      .filter((item): item is PortfolioProjectItem => item !== undefined);
+  }
+
+  /**
    * A single PUBLISHED project by slug (the website case-study detail). 404 when absent OR a
    * draft — drafts never leak on the public detail (WEB2). The admin reads draft data from the
    * `manage` list (which returns full items).
@@ -139,6 +170,11 @@ export class PortfolioProjectService {
     }
 
     return this.byId(req.id);
+  }
+
+  /** Atomically renumber sortOrder to match the given id order (drag-and-drop reorder, U21). */
+  reorder(ids: string[]): Promise<void> {
+    return this.projects.reorderByIds(ids);
   }
 
   /** Soft-delete a project (admin). */

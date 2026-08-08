@@ -4,17 +4,20 @@ import {
   CONTENT_BLOG_CATEGORY_CREATE,
   CONTENT_BLOG_CATEGORY_DELETE,
   CONTENT_BLOG_CATEGORY_LIST,
+  CONTENT_BLOG_CATEGORY_REORDER,
   CONTENT_BLOG_CATEGORY_UPDATE,
   blogCategoryCreateSchema,
   blogCategoryListQuerySchema,
   blogCategoryUpdateSchema,
   contentIdSchema,
+  reorderRequestSchema,
   type BlogCategoryCreateRequest,
   type BlogCategoryItem,
   type BlogCategoryListQuery,
   type BlogCategoryUpdateRequest,
   type ContentId,
   type Paginated,
+  type ReorderRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import { BlogCategoryService } from '../application/services/blog-category.service.js';
@@ -49,6 +52,14 @@ export class BlogCategoryMessageController {
     body: BlogCategoryUpdateRequest,
   ): Promise<BlogCategoryItem> {
     return this.categories.update(body);
+  }
+
+  @MessagePattern(CONTENT_BLOG_CATEGORY_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.categories.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_BLOG_CATEGORY_DELETE)

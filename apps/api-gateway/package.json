@@ -20,6 +20,7 @@
     "@sanad/auth": "workspace:^",
     "@sanad/contracts": "workspace:*",
     "@sanad/database": "workspace:^",
+    "@sanad/i18n": "workspace:*",
     "@sanad/messaging": "workspace:^",
     "@sanad/util": "workspace:*",
     "amqp-connection-manager": "^4.1.14",

@@ -5,4 +5,5 @@ export * from './data-table-filter-control';
 export * from './bulk-actions-bar';
 export * from './pagination-range';
 export * from './use-bulk-selection';
+export * from './use-reorder';
 export * from './types';

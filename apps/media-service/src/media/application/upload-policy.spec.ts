@@ -18,8 +18,10 @@ describe('assertUploadAllowed', () => {
       expect.fail('should have thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(RpcException);
-      expect((error as RpcException).getError()).toMatchObject({
+      expect((error as RpcException).getError()).toEqual({
         statusCode: 400,
+        messageKey: 'media.upload.typeNotAllowed',
+        params: { contentType: 'application/zip' },
       });
     }
   });
@@ -30,8 +32,27 @@ describe('assertUploadAllowed', () => {
       expect.fail('should have thrown');
     } catch (error) {
       expect(error).toBeInstanceOf(RpcException);
-      expect((error as RpcException).getError()).toMatchObject({
+      // The ceiling is stated in whole MB — the owner reads MB, not bytes (U24/U23).
+      expect((error as RpcException).getError()).toEqual({
         statusCode: 400,
+        messageKey: 'media.upload.tooLarge',
+        params: { maxMb: 0 },
+      });
+    }
+  });
+
+  it('states a realistic ceiling in whole megabytes', () => {
+    try {
+      assertUploadAllowed(
+        'image/png',
+        30 * 1024 * 1024,
+        25 * 1024 * 1024,
+        ALLOWED,
+      );
+      expect.fail('should have thrown');
+    } catch (error) {
+      expect((error as RpcException).getError()).toMatchObject({
+        params: { maxMb: 25 },
       });
     }
   });

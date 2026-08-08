@@ -27,6 +27,8 @@ function selection(
     toggle: vi.fn(),
     toggleAll: vi.fn(),
     clear: vi.fn(),
+    selectOnly: vi.fn(),
+    selectRange: vi.fn(),
     ...over,
   };
 }

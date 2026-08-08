@@ -1,5 +1,6 @@
 import type {
   BlockNode,
+  HydratedCollection,
   LocalizedText,
   PageSummary,
   PageTree,
@@ -36,11 +37,12 @@ export function assembleBlock(
   };
 }
 
-/** Assemble a section node with its ordered blocks. */
+/** Assemble a section node with its ordered blocks + (optionally) its hydrated collection. */
 export function assembleSection(
   row: SectionRow,
   fields: Fields | undefined,
   blocks: BlockNode[],
+  collection: HydratedCollection | null = null,
 ): SectionNode {
   return {
     id: row.id,
@@ -51,6 +53,8 @@ export function assembleSection(
     title: field(fields, 'title'),
     subtitle: field(fields, 'subtitle'),
     blocks,
+    config: row.config ?? null,
+    collection,
   };
 }
 

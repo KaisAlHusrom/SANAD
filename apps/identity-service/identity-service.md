@@ -39,6 +39,23 @@ Drizzle; migrations in `src/db/migrations` (generate → migrate, never push).
    hashed; every refresh revokes the old row and issues a new one. An idempotent seed
    creates the role/permission catalog + one env admin so login works immediately.
 
+## Errors — keys, never prose (U24)
+
+Both factories return `rpcError(status, key, params?)` from
+[`@sanad/i18n`](../../libs/shared/i18n/i18n.md); the sentence lives only in the ar/en catalogs
+and is rendered once at the gateway edge (`toHttpException` → `AllExceptionsFilter`).
+
+| File                                                        | Factory                 | Status | Key                        |
+| ----------------------------------------------------------- | ----------------------- | ------ | -------------------------- |
+| [`auth-errors.ts`](src/identity/application/auth-errors.ts) | `invalidCredentials()`  | 401    | `auth.invalidCredentials`  |
+|                                                             | `invalidRefreshToken()` | 401    | `auth.invalidRefreshToken` |
+| [`user-errors.ts`](src/identity/application/user-errors.ts) | `userNotFound(id)`      | 404    | `identity.userNotFound`    |
+|                                                             | `emailConflict(email)`  | 409    | `identity.emailConflict`   |
+|                                                             | `roleNotFound(key)`     | 404    | `identity.roleNotFound`    |
+
+Auth errors stay deliberately vague (never reveal whether the email or the password was wrong)
+and take no params; the admin-facing user errors name the offending value via `params`.
+
 ## Contracts (`@sanad/contracts/identity`)
 
 `loginRequestSchema`, `refreshRequestSchema`, `AuthResult`, `TokenPair`, `AuthUser`,
@@ -46,15 +63,25 @@ Drizzle; migrations in `src/db/migrations` (generate → migrate, never push).
 
 ## Message patterns (MS2 — request/reply)
 
-| Pattern                 | Payload                               | Reply                 |
-| ----------------------- | ------------------------------------- | --------------------- |
-| `identity.auth.login`   | `LoginRequest`                        | `AuthResult`          |
-| `identity.auth.refresh` | `RefreshRequest`                      | `TokenPair`           |
-| `identity.auth.logout`  | `RefreshRequest`                      | `LogoutResult`        |
-| `identity.users.list`   | `ListQuery` (+ identity headers, MS4) | `Paginated<AuthUser>` |
+| Pattern                      | Payload                               | Reply                 |
+| ---------------------------- | ------------------------------------- | --------------------- |
+| `identity.auth.login`        | `LoginRequest`                        | `AuthResult`          |
+| `identity.auth.refresh`      | `RefreshRequest`                      | `TokenPair`           |
+| `identity.auth.logout`       | `RefreshRequest`                      | `LogoutResult`        |
+| `identity.users.list`        | `ListQuery` (+ identity headers, MS4) | `Paginated<AuthUser>` |
+| `identity.users.create`      | `UserCreateRequest`                   | `AuthUser`            |
+| `identity.users.update`      | `UserUpdateRequest`                   | `AuthUser`            |
+| `identity.users.role-assign` | `UserRoleAssignRequest`               | `AuthUser`            |
+| `identity.users.role-revoke` | `UserRoleAssignRequest`               | `AuthUser`            |
+| `identity.roles.list`        | — (+ identity headers, MS4)           | `RoleSummary[]`       |
 
 Auth failures are raised as `RpcException({ statusCode, message })` so the gateway maps
-them to the right HTTP status.
+them to the right HTTP status. P7.D adds `UserWriteService` (admin user CRUD + role
+assign/revoke) — **N14-compliant**: it depends on repositories + the injected
+`TransactionRunner` (the create hashes the password and inserts the user + its role
+assignments in ONE transaction), never the `DRIZZLE` handle. `user-errors.ts` raises
+404/409 (`userNotFound`/`emailConflict`/`roleNotFound`). The role write/list reuses the
+existing `RbacRepository` (new `revokeRoleFromUser` + `listRoles`).
 
 ## Events emitted (MS3 — Outbox)
 
@@ -72,12 +99,16 @@ None yet (settings-service is P3). Config comes from the typed env accessor (`en
 
 - `db/schema` — Drizzle tables + the aggregate schema/handle.
 - `identity/infrastructure` — repositories (queries live here, N1).
-- `identity/application` — `AuthService`, `TokenService`, `PasswordHasher`, `UserReadService`.
-- `identity/presentation` — thin `@MessagePattern` controllers (U5).
+- `identity/application` — `AuthService`, `TokenService`, `PasswordHasher`, `UserReadService`,
+  `UserWriteService` (N14 — create/update + role assign/revoke), `user-errors`.
+- `identity/presentation` — thin `@MessagePattern` controllers (U5): `auth`, `users`, `roles`.
 - `seed`, `outbox`, `health` — bootstrap seed, the Outbox relay lifecycle, readiness.
 
 ## Tests
 
-Unit tests (no DB): `TokenService` (RS256 sign/verify) and `AuthService` (login/refresh
-rotation/logout with fakes). End-to-end DB + RMQ is boot-verified via the dev stack
-(login → refresh → `me`, and the RBAC reject) against `identity_test` (TDD2).
+Unit tests (no DB): `TokenService` (RS256 sign/verify), `AuthService` (login/refresh
+rotation/logout with fakes), and `UserWriteService` (create hashes + assigns atomically,
+409 on dupe, 404 on missing, update/assign/revoke — with faked repos/hasher/tx).
+**`identity-db.int.spec.ts`** (P7.D, the first identity DB test) exercises the real CRUD on
+`identity_test` (TDD2): create→assign→list reflects roles, deactivate, revoke, unique-email 409. End-to-end DB + RMQ is also boot-verified via the dev stack (login → refresh → `me`,
+the RBAC reject, and the user-management writes).

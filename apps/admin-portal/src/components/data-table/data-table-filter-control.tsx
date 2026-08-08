@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Input } from '../ui/input';
+import { SelectField } from '../ui/select';
 import type { FilterDef } from './types';
 
 interface DataTableFilterControlProps {
@@ -8,8 +9,9 @@ interface DataTableFilterControlProps {
   onChange: (value: string | undefined) => void;
 }
 
-const selectClass =
-  'h-9 rounded-input border border-border-2 bg-surface px-2 text-sm text-text focus-visible:border-accent-line focus-visible:outline-none';
+/** The "All / Any" cleared state is a real sentinel option (Radix forbids an empty-string
+ * item), mapped back to `undefined` on change. */
+const ALL_VALUE = '__all__';
 
 /**
  * One whitelisted filter control (N7), rendered by kind: select / boolean (plain selects —
@@ -27,19 +29,18 @@ export function DataTableFilterControl({
     return (
       <label className="flex flex-col gap-1 text-xs text-dim">
         <span>{filter.label}</span>
-        <select
+        <SelectField
           aria-label={filter.label}
-          value={value ?? ''}
-          onChange={(event) => onChange(event.target.value || undefined)}
-          className={selectClass}
-        >
-          <option value="">{t('filter.all')}</option>
-          {(filter.options ?? []).map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          size="sm"
+          value={value ?? ALL_VALUE}
+          onValueChange={(next) =>
+            onChange(next === ALL_VALUE ? undefined : next)
+          }
+          options={[
+            { value: ALL_VALUE, label: t('filter.all') },
+            ...(filter.options ?? []),
+          ]}
+        />
       </label>
     );
   }
@@ -48,16 +49,19 @@ export function DataTableFilterControl({
     return (
       <label className="flex flex-col gap-1 text-xs text-dim">
         <span>{filter.label}</span>
-        <select
+        <SelectField
           aria-label={filter.label}
-          value={value ?? ''}
-          onChange={(event) => onChange(event.target.value || undefined)}
-          className={selectClass}
-        >
-          <option value="">{t('filter.any')}</option>
-          <option value="true">{t('filter.yes')}</option>
-          <option value="false">{t('filter.no')}</option>
-        </select>
+          size="sm"
+          value={value ?? ALL_VALUE}
+          onValueChange={(next) =>
+            onChange(next === ALL_VALUE ? undefined : next)
+          }
+          options={[
+            { value: ALL_VALUE, label: t('filter.any') },
+            { value: 'true', label: t('filter.yes') },
+            { value: 'false', label: t('filter.no') },
+          ]}
+        />
       </label>
     );
   }

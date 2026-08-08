@@ -2,6 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import {
   buildPaginationMeta,
   type MediaFolder,
+  type MediaFolderTree,
   type Paginated,
 } from '@sanad/contracts';
 import { registerApi } from '../api/api-registry';
@@ -26,6 +27,7 @@ interface FolderSearchArg {
 export const folderLookupApi = createApi({
   reducerPath: 'folderLookupApi',
   baseQuery: baseQueryWithAuth,
+  tagTypes: ['FolderTree'],
   endpoints: (builder) => ({
     searchFolderLookup: builder.query<Paginated<MediaFolder>, FolderSearchArg>({
       query: () => ({ url: '/media/folders' }),
@@ -45,6 +47,15 @@ export const folderLookupApi = createApi({
         };
       },
     }),
+    /**
+     * The whole folder tree in ONE call — what the explorer's sidebar renders (nesting, per-node
+     * asset counts, and the root's own count). It lives on this read-only bridge, not on the media
+     * module's api, because the picker modal shows the same explorer from inside any form (W5).
+     */
+    getFolderTree: builder.query<MediaFolderTree, void>({
+      query: () => ({ url: '/media/folders/tree' }),
+      providesTags: [{ type: 'FolderTree', id: 'LIST' }],
+    }),
     getFoldersByIds: builder.query<MediaFolder[], string[]>({
       query: () => ({ url: '/media/folders' }),
       transformResponse: (
@@ -56,7 +67,10 @@ export const folderLookupApi = createApi({
   }),
 });
 
-export const { useSearchFolderLookupQuery, useGetFoldersByIdsQuery } =
-  folderLookupApi;
+export const {
+  useSearchFolderLookupQuery,
+  useGetFoldersByIdsQuery,
+  useGetFolderTreeQuery,
+} = folderLookupApi;
 
 registerApi(folderLookupApi);

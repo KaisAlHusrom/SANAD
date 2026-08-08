@@ -1,0 +1,66 @@
+/*
+ * Map Quill's snow theme onto the portal design tokens (U6 — no hardcoded colours). The outer
+ * `.sanad-rich-text` wrapper owns the border + radius (token classes); here we strip Quill's
+ * own borders, recolour the toolbar/editor/placeholder/icons to `var(--*)`, and give the editing
+ * area a comfortable min-height. Logical-property friendly (U7) — the toolbar flows with `dir`.
+ */
+.sanad-rich-text .ql-toolbar.ql-snow {
+  border: 0;
+  border-block-end: 1px solid var(--border-2);
+  background-color: var(--surface-2);
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+}
+
+.sanad-rich-text .ql-container.ql-snow {
+  border: 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.sanad-rich-text .ql-editor {
+  min-height: 12rem;
+}
+
+.sanad-rich-text .ql-editor.ql-blank::before {
+  color: var(--faint);
+  font-style: normal;
+}
+
+/* Toolbar controls: dim by default, accent on hover/active. */
+.sanad-rich-text .ql-snow .ql-stroke {
+  stroke: var(--dim);
+}
+.sanad-rich-text .ql-snow .ql-fill {
+  fill: var(--dim);
+}
+.sanad-rich-text .ql-snow .ql-picker {
+  color: var(--dim);
+}
+.sanad-rich-text .ql-snow.ql-toolbar button:hover .ql-stroke,
+.sanad-rich-text .ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.sanad-rich-text .ql-snow .ql-picker-label:hover .ql-stroke {
+  stroke: var(--accent);
+}
+.sanad-rich-text .ql-snow.ql-toolbar button:hover .ql-fill,
+.sanad-rich-text .ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: var(--accent);
+}
+.sanad-rich-text .ql-snow.ql-toolbar button:hover,
+.sanad-rich-text .ql-snow.ql-toolbar button.ql-active,
+.sanad-rich-text .ql-snow .ql-picker-label:hover {
+  color: var(--accent);
+}
+
+/* The picker dropdown (heading sizes) on a token surface. */
+.sanad-rich-text .ql-snow .ql-picker-options {
+  background-color: var(--surface-3);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+}
+
+/* Links rendered inside the editor follow the accent. */
+.sanad-rich-text .ql-editor a {
+  color: var(--accent);
+}

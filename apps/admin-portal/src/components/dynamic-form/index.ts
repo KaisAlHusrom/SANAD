@@ -1,7 +1,10 @@
 export * from './dynamic-form';
+export * from './dynamic-form-fields';
 export * from './dynamic-form-modal';
 export * from './field-renderer';
+export * from './slug-field';
 export * from './build-default-values';
+export * from './localized-form';
 export * from './field.types';
 export * from './dynamic-form.types';
 export { useDynamicForm } from './use-dynamic-form';

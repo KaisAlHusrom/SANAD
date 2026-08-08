@@ -16,6 +16,8 @@ export const sectionTypeSchema = z.enum([
   'blog',
   'cta',
   'richtext',
+  'faq',
+  'team',
 ]);
 
 export type SectionType = z.infer<typeof sectionTypeSchema>;

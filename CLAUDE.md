@@ -41,6 +41,14 @@ All on a **NestJS microservices backend** behind an API gateway, brokered by **R
 
 Ship **website + admin dashboard** (admin fully controls website content + sees stats) → **deploy staging then production** → *then* build the ERP/client-portal services. The build spine is `.claude/plans/02-mvp.md` (phases **P0 → P9**).
 
+> **⚠️ We are building the FINAL product — NOT an MVP.**
+>
+> `02-mvp.md` is a **filename**, not a quality bar. Nothing here is provisional, "good enough for
+> now", or "fine because it's the MVP". Every phase ships its scope **finished on every axis** —
+> logic, design, interaction, i18n, polish (U21). A cross-cutting gap is fixed **platform-wide**,
+> never patched only at the screen where it was noticed. If doing it properly needs another
+> session, **split the work — never lower the bar**. (Owner directive, 2026-07-20.)
+
 ## How every session must work
 
 1. **Read `.claude/rules.md`** — the binding law (MUST/NEVER). Non-negotiable.
@@ -49,7 +57,7 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 4. **Build** following the rules + architecture. **TDD**: write the failing test first. Keep the module's `<module>.md` doc in the same change.
 5. **Update `PROGRESS.md`** — what was done, what's next, decisions made, issues hit.
 6. **Run the `verifier` agent** — it must report **PASS** before a phase is marked done. **Then run the `boot-verifier` agent** — bring up the Docker dev stack and confirm it actually runs (gateway answers through nginx, the phase's routes are mapped, no crash-looped container). The verifier checks *code*; boot-verifier checks *runtime* — a phase isn't done until both are green.
-7. **Grow the rules** — if you fixed a bug or hit a recurring mistake, add a dated rule so it never recurs.
+7. **Keep the rules lean (U13)** — session bugs, fixes, and "what I did" belong in `PROGRESS.md`, **not** `.claude/rules.md`. Add a rule ONLY for a genuinely reusable, platform-wide constraint that will recur; when unsure, ask. No rule-per-session.
 
 ## Commands & agents (project-local)
 

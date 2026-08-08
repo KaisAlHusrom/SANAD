@@ -1,11 +1,5 @@
-import {
-  DEFAULT_PAGE_SIZE,
-  type MediaAsset,
-  type MediaListQuery,
-} from '@sanad/contracts';
-import { useState } from 'react';
-import { useRequirePermission } from '../../app/guards/use-require-permission';
-import { useSearchMediaLookupQuery } from '../../data/lookups/media-lookup.api';
+import type { ReactNode } from 'react';
+import { useMediaLibraryPicker } from './use-media-library-picker';
 
 interface UseMediaPickerArgs {
   onSelect: (url: string) => void;
@@ -14,47 +8,22 @@ interface UseMediaPickerArgs {
 interface UseMediaPickerResult {
   /** Whether the user may browse the library (media.read); false → URL-input only. */
   canBrowse: boolean;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  items: MediaAsset[];
-  isLoading: boolean;
-  isError: boolean;
-  pick: (asset: MediaAsset) => void;
+  /** Open the full media-library modal (browse + folders + upload). */
+  openPicker: () => void;
+  /** The library modal element to render (null when the user can't browse). */
+  pickerElement: ReactNode;
 }
 
 /**
- * Media-picker logic (U5/W5): bridges to the shared `media-lookup` api (never the media
- * module's own api). Only fetches while the dialog is open and the user can browse, and
- * filters to images (logos/favicons). Picking an asset emits its url and closes.
+ * Media-**url**-picker logic (U5/W5): opens the reusable `MediaLibraryModal` (browse + folder nav
+ * + create-folder + upload) and emits the chosen asset's public url — for URL-valued fields
+ * (e.g. branding logos). Bridges via the shared lookups/write bridge, never the media module.
  */
 export function useMediaPicker({
   onSelect,
 }: UseMediaPickerArgs): UseMediaPickerResult {
-  const canBrowse = useRequirePermission('media.read');
-  const [open, setOpen] = useState(false);
-
-  const query: MediaListQuery = {
-    page: 1,
-    pageSize: DEFAULT_PAGE_SIZE,
-    order: 'asc',
-    type: 'image',
-  };
-  const { data, isLoading, isError } = useSearchMediaLookupQuery(query, {
-    skip: !open || !canBrowse,
+  const { open, canBrowse, element } = useMediaLibraryPicker({
+    onPick: (asset) => onSelect(asset.url),
   });
-
-  const pick = (asset: MediaAsset) => {
-    onSelect(asset.url);
-    setOpen(false);
-  };
-
-  return {
-    canBrowse,
-    open,
-    setOpen,
-    items: data?.items ?? [],
-    isLoading,
-    isError,
-    pick,
-  };
+  return { canBrowse, openPicker: open, pickerElement: element };
 }

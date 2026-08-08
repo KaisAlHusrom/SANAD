@@ -5,12 +5,14 @@ import {
   CONTENT_PORTFOLIO_DELETE,
   CONTENT_PORTFOLIO_GET,
   CONTENT_PORTFOLIO_LIST,
+  CONTENT_PORTFOLIO_REORDER,
   CONTENT_PORTFOLIO_UPDATE,
   contentIdSchema,
   contentSlugSchema,
   portfolioCreateSchema,
   portfolioListQuerySchema,
   portfolioUpdateSchema,
+  reorderRequestSchema,
   type ContentId,
   type ContentSlug,
   type Paginated,
@@ -18,6 +20,7 @@ import {
   type PortfolioListQuery,
   type PortfolioProjectItem,
   type PortfolioUpdateRequest,
+  type ReorderRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import { PortfolioProjectService } from '../application/services/portfolio-project.service.js';
@@ -60,6 +63,14 @@ export class PortfolioProjectMessageController {
     body: PortfolioUpdateRequest,
   ): Promise<PortfolioProjectItem> {
     return this.projects.update(body);
+  }
+
+  @MessagePattern(CONTENT_PORTFOLIO_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.projects.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_PORTFOLIO_DELETE)

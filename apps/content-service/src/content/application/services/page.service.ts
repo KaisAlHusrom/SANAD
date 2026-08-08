@@ -13,7 +13,11 @@ import type {
   SectionNode,
   SectionUpsertRequest,
 } from '@sanad/contracts';
-import type { BlockRow, SectionRow } from '../../../db/schema/index.js';
+import type {
+  BlockRow,
+  PageRow,
+  SectionRow,
+} from '../../../db/schema/index.js';
 import { BlockRepository } from '../../infrastructure/persistence/repositories/block.repository.js';
 import { PageRepository } from '../../infrastructure/persistence/repositories/page.repository.js';
 import { SectionRepository } from '../../infrastructure/persistence/repositories/section.repository.js';
@@ -24,6 +28,7 @@ import {
   assembleSection,
 } from '../assemblers/page.assembler.js';
 import { contentNotFound, slugConflict } from '../errors/content-errors.js';
+import { CollectionHydrationService } from './collection-hydration.service.js';
 
 const EMPTY: LocalizedText = { ar: '', en: '' };
 
@@ -43,6 +48,7 @@ export class PageService {
     private readonly pages: PageRepository,
     private readonly sections: SectionRepository,
     private readonly blocks: BlockRepository,
+    private readonly hydration: CollectionHydrationService,
   ) {}
 
   /** The assembled published tree for the website (WEB2). Null when no published page matches. */
@@ -51,34 +57,19 @@ export class PageService {
     if (!page || page.status !== 'published') {
       return null;
     }
-    const pageFields = await this.pages.localizedFieldsFor(page.id);
+    return this.assembleTree(page, { publishedOnly: true });
+  }
 
-    const sections = (await this.sections.listForPage(page.id))
-      .filter((section) => section.published)
-      .sort(bySortOrder);
-    const sectionFields = await this.sections.localizedFieldsForMany(
-      sections.map((section) => section.id),
-    );
-
-    const blocks = (
-      await this.blocks.listForSections(sections.map((section) => section.id))
-    ).sort(bySortOrder);
-    const blockFields = await this.blocks.localizedFieldsForMany(
-      blocks.map((block) => block.id),
-    );
-    const blocksBySection = this.groupBlocks(blocks);
-
-    const nodes: SectionNode[] = sections.map((section) =>
-      assembleSection(
-        section,
-        sectionFields.get(section.id),
-        (blocksBySection.get(section.id) ?? []).map((block) =>
-          assembleBlock(block, blockFields.get(block.id)),
-        ),
-      ),
-    );
-
-    return assemblePageTree(page, pageFields, nodes);
+  /**
+   * The full tree by page id for the admin builder (P7) — drafts + unpublished sections
+   * visible (W6). Null when the id matches no live page (the gateway maps it to 404).
+   */
+  async getAdminTree(id: string): Promise<PageTree | null> {
+    const page = await this.pages.find(id);
+    if (!page) {
+      return null;
+    }
+    return this.assembleTree(page, { publishedOnly: false });
   }
 
   /** The admin page list (P7), paginated (no tree). */
@@ -123,6 +114,9 @@ export class PageService {
       type: req.type,
       sortOrder: req.sortOrder,
       published: req.published,
+      // `config` is written only when provided (partial semantics) so an inline copy edit —
+      // which sends no config — never wipes a section's collection link.
+      ...(req.config !== undefined ? { config: req.config } : {}),
     };
     const id = req.id
       ? (await this.sections.update(req.id, base)).id
@@ -156,6 +150,21 @@ export class PageService {
     return assembleBlock(row, fields);
   }
 
+  /** Atomically renumber pages to the given id order (admin list drag-and-drop, U21). */
+  reorderPages(ids: string[]): Promise<void> {
+    return this.pages.reorderByIds(ids);
+  }
+
+  /** Atomically renumber a page's sections to the given id order (builder drag, U21). */
+  reorderSections(ids: string[]): Promise<void> {
+    return this.sections.reorderByIds(ids);
+  }
+
+  /** Atomically renumber a section's blocks to the given id order (builder drag, U21). */
+  reorderBlocks(ids: string[]): Promise<void> {
+    return this.blocks.reorderByIds(ids);
+  }
+
   /** Soft-delete a page (admin). */
   async deletePage(id: string): Promise<ContentId> {
     await this.ensureExists(this.pages, 'Page', id);
@@ -178,6 +187,49 @@ export class PageService {
   }
 
   // ===== helpers =====
+  /** Assemble a page row into the full tree; `publishedOnly` gates unpublished sections (WEB2 vs P7). */
+  private async assembleTree(
+    page: PageRow,
+    opts: { publishedOnly: boolean },
+  ): Promise<PageTree> {
+    const pageFields = await this.pages.localizedFieldsFor(page.id);
+
+    const sections = (await this.sections.listForPage(page.id))
+      .filter((section) => !opts.publishedOnly || section.published)
+      .sort(bySortOrder);
+    const sectionFields = await this.sections.localizedFieldsForMany(
+      sections.map((section) => section.id),
+    );
+
+    const blocks = (
+      await this.blocks.listForSections(sections.map((section) => section.id))
+    ).sort(bySortOrder);
+    const blockFields = await this.blocks.localizedFieldsForMany(
+      blocks.map((block) => block.id),
+    );
+    const blocksBySection = this.groupBlocks(blocks);
+
+    const nodes: SectionNode[] = await Promise.all(
+      sections.map(async (section) => {
+        const collection = await this.hydration.hydrate(
+          section.type,
+          section.config ?? null,
+          { publishedOnly: opts.publishedOnly },
+        );
+        return assembleSection(
+          section,
+          sectionFields.get(section.id),
+          (blocksBySection.get(section.id) ?? []).map((block) =>
+            assembleBlock(block, blockFields.get(block.id)),
+          ),
+          collection,
+        );
+      }),
+    );
+
+    return assemblePageTree(page, pageFields, nodes);
+  }
+
   private async sectionNode(id: string): Promise<SectionNode> {
     const row = await this.sections.findOrFail(id);
     const fields = await this.sections.localizedFieldsFor(id);
@@ -185,10 +237,19 @@ export class PageService {
     const blockFields = await this.blocks.localizedFieldsForMany(
       blocks.map((block) => block.id),
     );
+    // Admin write-back path → drafts visible (publishedOnly: false).
+    const collection = await this.hydration.hydrate(
+      row.type,
+      row.config ?? null,
+      {
+        publishedOnly: false,
+      },
+    );
     return assembleSection(
       row,
       fields,
       blocks.map((block) => assembleBlock(block, blockFields.get(block.id))),
+      collection,
     );
   }
 

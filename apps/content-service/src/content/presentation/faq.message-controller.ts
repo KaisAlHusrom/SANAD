@@ -4,17 +4,20 @@ import {
   CONTENT_FAQ_CREATE,
   CONTENT_FAQ_DELETE,
   CONTENT_FAQ_LIST,
+  CONTENT_FAQ_REORDER,
   CONTENT_FAQ_UPDATE,
   contentIdSchema,
   faqCreateSchema,
   faqListQuerySchema,
   faqUpdateSchema,
+  reorderRequestSchema,
   type ContentId,
   type FaqCreateRequest,
   type FaqItem,
   type FaqListQuery,
   type FaqUpdateRequest,
   type Paginated,
+  type ReorderRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
 import { FaqService } from '../application/services/faq.service.js';
@@ -46,6 +49,14 @@ export class FaqMessageController {
     @Payload(new ZodValidationPipe(faqUpdateSchema)) body: FaqUpdateRequest,
   ): Promise<FaqItem> {
     return this.faqs.update(body);
+  }
+
+  @MessagePattern(CONTENT_FAQ_REORDER)
+  async reorder(
+    @Payload(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    await this.faqs.reorder(body.ids);
+    return body;
   }
 
   @MessagePattern(CONTENT_FAQ_DELETE)

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { i18n } from '../../i18n';
 import { renderWithProviders } from '../../test/render-with-providers';
+import { selectOption } from '../../test/select-option';
 import { DataTableFilterControl } from './data-table-filter-control';
 
 beforeEach(async () => {
@@ -28,11 +29,12 @@ describe('DataTableFilterControl', () => {
         onChange={onChange}
       />,
     );
-    await user.selectOptions(screen.getByLabelText('Status'), 'published');
+    await selectOption(user, 'Status', 'Published');
     expect(onChange).toHaveBeenCalledWith('published');
   });
 
-  it('boolean renders Any / Yes / No', () => {
+  it('boolean renders Any / Yes / No', async () => {
+    const user = userEvent.setup();
     renderWithProviders(
       <DataTableFilterControl
         filter={{ key: 'featured', kind: 'boolean', label: 'Featured' }}
@@ -40,7 +42,10 @@ describe('DataTableFilterControl', () => {
         onChange={vi.fn()}
       />,
     );
-    expect(screen.getByRole('option', { name: 'Any' })).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'Featured' }));
+    expect(
+      await screen.findByRole('option', { name: 'Any' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Yes' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'No' })).toBeInTheDocument();
   });

@@ -59,6 +59,23 @@ export class BlogPostService {
   }
 
   /**
+   * Posts for a set of ids, returned IN THE GIVEN ORDER (the `picked` section-config hydration
+   * — the landing blog teaser). Embeds category/author/tags via `assembleMany` (N+1-safe) and
+   * resolves copy to both locales (F7). Unknown/soft-deleted ids are simply dropped.
+   */
+  async listByIds(ids: readonly string[]): Promise<BlogPostItem[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.posts.findByIds(ids);
+    const items = await this.assembleMany(rows);
+    const byId = new Map(items.map((item) => [item.id, item]));
+    return ids
+      .map((id) => byId.get(id))
+      .filter((item): item is BlogPostItem => item !== undefined);
+  }
+
+  /**
    * A single PUBLISHED post by slug (the website article). 404 when absent OR a draft — drafts
    * never leak on the public detail (WEB2). The admin reads draft data from the `manage` list.
    */
@@ -68,6 +85,11 @@ export class BlogPostService {
       throw contentNotFound('BlogPost', slug);
     }
     return this.byId(row.id);
+  }
+
+  /** Admin fetch by id — drafts visible (the edit page; 404 when absent). */
+  getById(id: string): Promise<BlogPostItem> {
+    return this.byId(id);
   }
 
   /** Create a post + both-locale copy + its tag set (admin). Stamps publishedAt if created published. */

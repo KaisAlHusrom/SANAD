@@ -1,4 +1,4 @@
-import { Controller, UnauthorizedException } from '@nestjs/common';
+import { Controller, HttpStatus } from '@nestjs/common';
 import {
   Ctx,
   MessagePattern,
@@ -16,6 +16,7 @@ import {
   type NotificationMarkRead,
   type Paginated,
 } from '@sanad/contracts';
+import { rpcError } from '@sanad/i18n';
 import { readMessageHeaders } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
 import { NotificationQueryService } from '../application/services/index.js';
@@ -51,7 +52,7 @@ export class NotificationMessageController {
   private identity(context: RmqContext): IdentityContext {
     const identity = identityFromHeaders(readMessageHeaders(context));
     if (!identity) {
-      throw new UnauthorizedException('Missing forwarded identity');
+      throw rpcError(HttpStatus.UNAUTHORIZED, 'auth.noIdentity');
     }
     return identity;
   }

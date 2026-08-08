@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -25,6 +26,12 @@ const TEST_DB_URL =
   'postgresql://sanad:sanad@localhost:5440/notifications_test';
 const TEAM_EMAIL = 'team@sanad.tech';
 
+// Resolve the migrations dir from THIS file, not the CWD — vitest's cwd differs by how it is
+// invoked, and a CWD-relative path made `migrate()` throw and the suite SILENTLY skip (false green).
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL('../../db/migrations', import.meta.url),
+);
+
 async function tryConnect(): Promise<pg.Pool | null> {
   const pool = new pg.Pool({
     connectionString: TEST_DB_URL,
@@ -32,7 +39,7 @@ async function tryConnect(): Promise<pg.Pool | null> {
   });
   try {
     await pool.query('select 1');
-    await migrate(drizzle(pool), { migrationsFolder: 'src/db/migrations' });
+    await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
   } catch {
     await pool.end().catch(() => undefined);

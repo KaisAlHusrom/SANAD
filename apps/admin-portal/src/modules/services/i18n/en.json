@@ -1,0 +1,52 @@
+{
+  "title": "Services",
+  "subtitle": "The capabilities shown on the website services page.",
+  "columns": {
+    "title": "Title",
+    "slug": "Slug",
+    "category": "Category",
+    "sortOrder": "Order",
+    "updatedAt": "Updated"
+  },
+  "filters": {
+    "category": "Category"
+  },
+  "categories": {
+    "core": "Core",
+    "support": "Support"
+  },
+  "fields": {
+    "slug": "Slug",
+    "category": "Category",
+    "iconKey": "Icon key",
+    "iconKeyPlaceholder": "e.g. rocket",
+    "sortOrder": "Sort order",
+    "cover": "Cover image",
+    "title": "Title",
+    "summary": "Summary",
+    "detailBody": "Detail"
+  },
+  "actions": {
+    "create": "New service",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "createTitle": "New service",
+    "editTitle": "Edit service",
+    "created": "Service created.",
+    "updated": "Service updated."
+  },
+  "delete": {
+    "title": "Delete service",
+    "message": "This service will be permanently removed from the website.",
+    "confirm": "Delete",
+    "toastSuccess": "Service deleted.",
+    "bulkTitle": "Delete services",
+    "bulkMessage": "Delete {{count}} selected services? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} services deleted."
+  },
+  "errors": {
+    "deleteFailed": "Couldn't delete the service."
+  }
+}

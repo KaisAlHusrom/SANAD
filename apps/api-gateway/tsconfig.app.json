@@ -24,6 +24,9 @@
       "path": "../../libs/contracts/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/shared/i18n/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/shared/auth/tsconfig.lib.json"
     }
   ],

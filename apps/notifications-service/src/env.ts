@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEFAULT_LOCALE, localeSchema } from '@sanad/contracts';
 import { appEnvSchema, loadEnv } from '@sanad/util';
 
 /** Empty string (`${VAR:-}` from compose) → undefined, so an optional var stays unset. */
@@ -38,6 +39,9 @@ const notificationsEnvSchema = z.object({
   SMTP_PASSWORD: optionalNonEmpty,
   // Where new-lead team alerts are emailed.
   NOTIFICATIONS_TEAM_EMAIL: z.string().email().default('team@sanad.tech'),
+  // The language the TEAM reads its alerts in — staff are Arabic-first too (U8/U24d). The
+  // visitor's acknowledgement follows the lead's own locale instead.
+  NOTIFICATIONS_TEAM_LOCALE: localeSchema.default(DEFAULT_LOCALE),
 });
 
 export type NotificationsEnv = z.infer<typeof notificationsEnvSchema>;

@@ -21,9 +21,12 @@ import {
   type LogoutResult,
   type RefreshRequest,
   type TokenPair,
+  type Locale,
 } from '@sanad/contracts';
 import { sendRequest } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
+import { RequestLocale } from '../core/decorators/index.js';
+import { forwardHeaders } from '../core/helpers/index.js';
 import { IDENTITY_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
 
@@ -38,24 +41,27 @@ export class AuthController {
 
   @Post('login')
   login(
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(loginRequestSchema)) body: LoginRequest,
   ): Promise<AuthResult> {
-    return this.call(IDENTITY_AUTH_LOGIN, body);
+    return this.call(IDENTITY_AUTH_LOGIN, body, locale);
   }
 
   @Post('refresh')
   refresh(
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(refreshRequestSchema)) body: RefreshRequest,
   ): Promise<TokenPair> {
-    return this.call(IDENTITY_AUTH_REFRESH, body);
+    return this.call(IDENTITY_AUTH_REFRESH, body, locale);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(refreshRequestSchema)) body: RefreshRequest,
   ): Promise<LogoutResult> {
-    return this.call(IDENTITY_AUTH_LOGOUT, body);
+    return this.call(IDENTITY_AUTH_LOGOUT, body, locale);
   }
 
   @Get('me')
@@ -67,9 +73,12 @@ export class AuthController {
   private async call<TResult>(
     pattern: string,
     payload: unknown,
+    locale: Locale,
   ): Promise<TResult> {
     try {
-      return await sendRequest<TResult>(this.client, pattern, payload);
+      return await sendRequest<TResult>(this.client, pattern, payload, {
+        headers: forwardHeaders(null, locale),
+      });
     } catch (error) {
       throw toHttpException(error);
     }

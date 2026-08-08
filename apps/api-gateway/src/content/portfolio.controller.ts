@@ -14,7 +14,6 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import {
   CurrentUser,
-  identityToHeaders,
   JwtAuthGuard,
   PermissionsGuard,
   RequirePermissions,
@@ -26,19 +25,25 @@ import {
   CONTENT_PORTFOLIO_DELETE,
   CONTENT_PORTFOLIO_GET,
   CONTENT_PORTFOLIO_LIST,
+  CONTENT_PORTFOLIO_REORDER,
   CONTENT_PORTFOLIO_UPDATE,
   portfolioCreateSchema,
   portfolioListQuerySchema,
   portfolioUpdateSchema,
+  reorderRequestSchema,
   type ContentId,
   type Paginated,
   type PortfolioCreateRequest,
   type PortfolioListQuery,
   type PortfolioProjectItem,
   type PortfolioUpdateRequest,
+  type ReorderRequest,
+  type Locale,
 } from '@sanad/contracts';
 import { sendRequest } from '@sanad/messaging';
 import { ZodValidationPipe } from '@sanad/util';
+import { RequestLocale } from '../core/decorators/index.js';
+import { forwardHeaders } from '../core/helpers/index.js';
 import { CONTENT_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
 
@@ -54,14 +59,19 @@ export class PortfolioController {
 
   @Get()
   async list(
+    @RequestLocale() locale: Locale,
     @Query(new ZodValidationPipe(portfolioListQuerySchema))
     query: PortfolioListQuery,
   ): Promise<Paginated<PortfolioProjectItem>> {
     // Public path: force published — a client can never request drafts (N7).
-    return this.forwardPublic(CONTENT_PORTFOLIO_LIST, {
-      ...query,
-      status: 'published',
-    });
+    return this.forwardPublic(
+      CONTENT_PORTFOLIO_LIST,
+      {
+        ...query,
+        status: 'published',
+      },
+      locale,
+    );
   }
 
   @Get('manage')
@@ -69,16 +79,20 @@ export class PortfolioController {
   @RequirePermissions(CONTENT_PERMISSIONS.read)
   async manageList(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Query(new ZodValidationPipe(portfolioListQuerySchema))
     query: PortfolioListQuery,
   ): Promise<Paginated<PortfolioProjectItem>> {
     // Admin path: honors the supplied `status` (or omits it to see every project).
-    return this.forward(CONTENT_PORTFOLIO_LIST, query, identity);
+    return this.forward(CONTENT_PORTFOLIO_LIST, query, identity, locale);
   }
 
   @Get(':slug')
-  async get(@Param('slug') slug: string): Promise<PortfolioProjectItem> {
-    return this.forwardPublic(CONTENT_PORTFOLIO_GET, { slug });
+  async get(
+    @RequestLocale() locale: Locale,
+    @Param('slug') slug: string,
+  ): Promise<PortfolioProjectItem> {
+    return this.forwardPublic(CONTENT_PORTFOLIO_GET, { slug }, locale);
   }
 
   @Post()
@@ -86,10 +100,22 @@ export class PortfolioController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async create(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Body(new ZodValidationPipe(portfolioCreateSchema))
     body: PortfolioCreateRequest,
   ): Promise<PortfolioProjectItem> {
-    return this.forward(CONTENT_PORTFOLIO_CREATE, body, identity);
+    return this.forward(CONTENT_PORTFOLIO_CREATE, body, identity, locale);
+  }
+
+  @Patch('reorder')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequirePermissions(CONTENT_PERMISSIONS.manage)
+  async reorder(
+    @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
+    @Body(new ZodValidationPipe(reorderRequestSchema)) body: ReorderRequest,
+  ): Promise<ReorderRequest> {
+    return this.forward(CONTENT_PORTFOLIO_REORDER, body, identity, locale);
   }
 
   @Patch(':id')
@@ -97,11 +123,17 @@ export class PortfolioController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async update(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(portfolioUpdateSchema.omit({ id: true })))
     body: Omit<PortfolioUpdateRequest, 'id'>,
   ): Promise<PortfolioProjectItem> {
-    return this.forward(CONTENT_PORTFOLIO_UPDATE, { id, ...body }, identity);
+    return this.forward(
+      CONTENT_PORTFOLIO_UPDATE,
+      { id, ...body },
+      identity,
+      locale,
+    );
   }
 
   @Delete(':id')
@@ -109,19 +141,21 @@ export class PortfolioController {
   @RequirePermissions(CONTENT_PERMISSIONS.manage)
   async delete(
     @CurrentUser() identity: IdentityContext,
+    @RequestLocale() locale: Locale,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ContentId> {
-    return this.forward(CONTENT_PORTFOLIO_DELETE, { id }, identity);
+    return this.forward(CONTENT_PORTFOLIO_DELETE, { id }, identity, locale);
   }
 
   private async forward<TResult>(
     pattern: string,
     payload: object,
     identity: IdentityContext,
+    locale: Locale,
   ): Promise<TResult> {
     try {
       return await sendRequest<TResult>(this.client, pattern, payload, {
-        headers: identityToHeaders(identity),
+        headers: forwardHeaders(identity, locale),
       });
     } catch (error) {
       throw toHttpException(error);
@@ -131,9 +165,12 @@ export class PortfolioController {
   private async forwardPublic<TResult>(
     pattern: string,
     payload: object,
+    locale: Locale,
   ): Promise<TResult> {
     try {
-      return await sendRequest<TResult>(this.client, pattern, payload);
+      return await sendRequest<TResult>(this.client, pattern, payload, {
+        headers: forwardHeaders(null, locale),
+      });
     } catch (error) {
       throw toHttpException(error);
     }

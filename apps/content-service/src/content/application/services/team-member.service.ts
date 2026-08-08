@@ -43,6 +43,27 @@ export class TeamMemberService {
     };
   }
 
+  /**
+   * Team members for a set of ids, returned IN THE GIVEN ORDER (the `picked` section-config
+   * hydration — a curated `/about` roster). Reads resolve copy to both locales (F7).
+   * Unknown/soft-deleted ids are simply dropped.
+   */
+  async listByIds(ids: readonly string[]): Promise<TeamMemberItem[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.members.findByIds(ids);
+    const fields = await this.members.localizedFieldsForMany(
+      rows.map((row) => row.id),
+    );
+    const byId = new Map(
+      rows.map((row) => [row.id, assembleTeamMember(row, fields.get(row.id))]),
+    );
+    return ids
+      .map((id) => byId.get(id))
+      .filter((item): item is TeamMemberItem => item !== undefined);
+  }
+
   /** A single team member by slug (a future detail page). 404 when absent. */
   async getBySlug(slug: string): Promise<TeamMemberItem> {
     const row = await this.members.findBySlug(slug);
@@ -103,6 +124,11 @@ export class TeamMemberService {
     }
 
     return this.byId(req.id);
+  }
+
+  /** Atomically renumber sortOrder to match the given id order (drag-and-drop reorder, U21). */
+  reorder(ids: string[]): Promise<void> {
+    return this.members.reorderByIds(ids);
   }
 
   /** Soft-delete a team member (admin). */

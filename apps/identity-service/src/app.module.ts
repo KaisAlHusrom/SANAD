@@ -9,10 +9,12 @@ import { AuthService } from './identity/application/auth.service.js';
 import { PasswordHasher } from './identity/application/password.hasher.js';
 import { TokenService } from './identity/application/token.service.js';
 import { UserReadService } from './identity/application/user-read.service.js';
+import { UserWriteService } from './identity/application/user-write.service.js';
 import { RbacRepository } from './identity/infrastructure/rbac.repository.js';
 import { RefreshTokenRepository } from './identity/infrastructure/refresh-token.repository.js';
 import { UserRepository } from './identity/infrastructure/user.repository.js';
 import { AuthMessageController } from './identity/presentation/auth.message-controller.js';
+import { RolesMessageController } from './identity/presentation/roles.message-controller.js';
 import { UsersMessageController } from './identity/presentation/users.message-controller.js';
 import {
   IDENTITY_EVENTS_CLIENT,
@@ -44,6 +46,7 @@ const env = loadIdentityEnv();
   controllers: [
     AuthMessageController,
     UsersMessageController,
+    RolesMessageController,
     HealthController,
   ],
   providers: [
@@ -56,6 +59,7 @@ const env = loadIdentityEnv();
     PasswordHasher,
     AuthService,
     UserReadService,
+    UserWriteService,
     SeedService,
     OutboxRelayService,
   ],

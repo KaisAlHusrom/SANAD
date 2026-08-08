@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { i18n } from '../../i18n';
 import { renderWithProviders } from '../../test/render-with-providers';
+import { selectOption } from '../../test/select-option';
 import { DataTablePagination } from './data-table-pagination';
 import type { ListState, UseListUrlStateResult } from './types';
 
@@ -80,7 +81,7 @@ describe('DataTablePagination', () => {
     renderWithProviders(
       <DataTablePagination list={makeList({}, { setPageSize })} total={100} />,
     );
-    await user.selectOptions(screen.getByLabelText('Rows per page'), '50');
+    await selectOption(user, 'Rows per page', '50');
     expect(setPageSize).toHaveBeenCalledWith(50);
   });
 });

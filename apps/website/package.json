@@ -1,0 +1,41 @@
+{
+  "name": "@sanad/website",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "nx": {
+    "name": "website",
+    "tags": [
+      "scope:web",
+      "type:app"
+    ]
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.10.0",
+    "@react-three/fiber": "^9.0.0",
+    "@sanad/config": "workspace:*",
+    "@sanad/contracts": "workspace:*",
+    "@sanad/web-ui": "workspace:*",
+    "framer-motion": "^11.15.0",
+    "gsap": "^3.12.5",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.54.2",
+    "three": "^0.171.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@nx/next": "23.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "@types/three": "^0.171.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "^25.0.1",
+    "vitest": "~4.1.0"
+  }
+}

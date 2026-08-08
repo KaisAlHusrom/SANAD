@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -25,6 +26,12 @@ void MEDIA_ENV; // (DI token unused in direct construction; imported for type lo
 // infra/postgres/init/01-create-databases.sql. Tests SKIP cleanly when it's down.
 const TEST_DB_URL = 'postgresql://sanad:sanad@localhost:5440/media_test';
 
+// Resolve the migrations dir from THIS file, not the CWD — vitest's cwd differs by how it is
+// invoked, and a CWD-relative path made `migrate()` throw and the suite SILENTLY skip (false green).
+const MIGRATIONS_DIR = fileURLToPath(
+  new URL('../../db/migrations', import.meta.url),
+);
+
 async function tryConnect(): Promise<pg.Pool | null> {
   const pool = new pg.Pool({
     connectionString: TEST_DB_URL,
@@ -32,7 +39,7 @@ async function tryConnect(): Promise<pg.Pool | null> {
   });
   try {
     await pool.query('select 1');
-    await migrate(drizzle(pool), { migrationsFolder: 'src/db/migrations' });
+    await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
   } catch {
     await pool.end().catch(() => undefined);
@@ -48,6 +55,7 @@ const testEnv: MediaEnv = {
   DATABASE_URL: TEST_DB_URL,
   RABBITMQ_URL: 'amqp://unused',
   MEDIA_MAX_UPLOAD_BYTES: 26214400,
+  ADMIN_PUBLIC_ORIGINS: [],
 };
 
 /**
@@ -150,6 +158,72 @@ describeDb('media-service DB integration (media_test, TDD2)', () => {
     expect(listed).toBeDefined();
     expect(listed?.url).toBe(`https://cdn.test/${confirmed.key}`);
     expect(listed?.alt).toEqual({ ar: 'شعار', en: 'Logo' });
+  });
+
+  it('resolvePublic returns ONLY ready assets (public-safe refs) — pending/deleted/unknown are absent', async () => {
+    const storage = new FakeStorageProvider({ publicBase: 'https://cdn.test' });
+    const svc = new MediaService(
+      assets,
+      translations,
+      storage,
+      clock,
+      testEnv,
+      db,
+    );
+
+    // A ready asset (signed → PUT simulated → confirmed) with alt + dimensions.
+    const readySigned = await svc.signUpload({
+      filename: 'hero.png',
+      contentType: 'image/png',
+      size: 1024,
+      alt: { ar: 'بطل', en: 'Hero' },
+    });
+    storage.objects.set(readySigned.asset.key, {
+      size: 1024,
+      contentType: 'image/png',
+    });
+    const ready = await svc.confirmUpload({
+      assetId: readySigned.asset.id,
+      width: 1200,
+      height: 800,
+    });
+
+    // A still-pending upload (never confirmed) and a soft-deleted asset.
+    const pending = await svc.signUpload({
+      filename: 'pending.png',
+      contentType: 'image/png',
+      size: 10,
+    });
+    const removed = await svc.signUpload({
+      filename: 'gone.png',
+      contentType: 'image/png',
+      size: 10,
+    });
+    storage.objects.set(removed.asset.key, {
+      size: 10,
+      contentType: 'image/png',
+    });
+    await svc.confirmUpload({ assetId: removed.asset.id });
+    await svc.delete(removed.asset.id);
+
+    const refs = await svc.resolvePublic([
+      ready.id,
+      pending.asset.id,
+      removed.asset.id,
+      '00000000-0000-0000-0000-000000000000', // unknown
+    ]);
+
+    expect(refs).toHaveLength(1);
+    expect(refs[0]).toEqual({
+      id: ready.id,
+      url: `https://cdn.test/${ready.key}`,
+      alt: { ar: 'بطل', en: 'Hero' },
+      width: 1200,
+      height: 800,
+    });
+
+    // Empty input short-circuits to an empty array.
+    expect(await svc.resolvePublic([])).toEqual([]);
   });
 
   it('rejects a disallowed content type with a 400 (coded policy)', async () => {

@@ -12,4 +12,7 @@ WORKDIR /workspace
 EXPOSE 3002
 
 # Install, apply migrations (DB-per-service, MS5), then start the watch serve target.
-CMD ["sh", "-c", "pnpm install --frozen-lockfile && pnpm exec nx db-migrate settings-service && pnpm exec nx serve settings-service"]
+# Supervised dev entry (no `nx serve`/`nx db-migrate` — see infra/scripts/dev-entry.sh):
+# install -> SWC compile -> migrate -> supervised `node dist/main.js` (auto-restart on
+# crash + on shared-lib dist changes). Shared libs built once by the libs-builder container.
+CMD ["sh", "infra/scripts/dev-entry.sh", "settings-service"]

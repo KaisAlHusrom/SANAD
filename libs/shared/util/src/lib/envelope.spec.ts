@@ -7,9 +7,17 @@ const PATH = '/api/things';
 const TS = '2026-06-22T10:00:00.000Z';
 
 describe('envelope builders', () => {
-  it('wraps data in a success envelope', () => {
-    const env = ok({ id: 1 }, 'created');
-    expect(env).toEqual({ success: true, message: 'created', data: { id: 1 } });
+  it('wraps data in a success envelope carrying a message KEY (U24)', () => {
+    const env = ok({ id: 1 }, 'common.created');
+    expect(env).toEqual({
+      success: true,
+      message: 'common.created',
+      data: { id: 1 },
+    });
+  });
+
+  it('defaults to the `common.ok` key, never the literal "OK" (U24)', () => {
+    expect(ok({ id: 1 }).message).toBe('common.ok');
   });
 
   it('builds a failure envelope with null data', () => {
@@ -24,7 +32,7 @@ describe('http envelope (N9 5-field)', () => {
     const env = toHttpEnvelope({ id: 1 }, PATH, TS);
     expect(env).toEqual({
       success: true,
-      message: 'OK',
+      message: 'common.ok',
       data: { id: 1 },
       path: PATH,
       timestamp: TS,
@@ -35,8 +43,8 @@ describe('http envelope (N9 5-field)', () => {
   });
 
   it('enriches an existing core envelope instead of double-wrapping', () => {
-    const env = toHttpEnvelope(ok({ id: 2 }, 'created'), PATH, TS);
-    expect(env.message).toBe('created');
+    const env = toHttpEnvelope(ok({ id: 2 }, 'common.created'), PATH, TS);
+    expect(env.message).toBe('common.created');
     expect(env.data).toEqual({ id: 2 });
     expect(env.path).toBe(PATH);
   });

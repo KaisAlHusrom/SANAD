@@ -15,7 +15,8 @@ describe('HealthController', () => {
     const result = await controller.check();
 
     expect(result.success).toBe(true);
-    expect(result.message).toBe('OK');
+    // The envelope carries a KEY; the response interceptor renders it per locale (U24).
+    expect(result.message).toBe('common.ok');
     expect(result.data.status).toBe('ok');
 
     // Proves the response matches the real, strict envelope contract — not an invented shape (U15).

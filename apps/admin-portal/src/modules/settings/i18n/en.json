@@ -1,47 +1,65 @@
 {
-  "title": "Visual identity",
-  "subtitle": "Control the site's logo, colors, fonts and links — all rendered live on the website.",
-  "sections": {
-    "identity": "Identity",
-    "colors": "Colors",
-    "typography": "Typography",
-    "social": "Social links",
-    "contact": "Contact details"
+  "title": "Settings",
+  "subtitle": "Your brand identity and company details — applied across the portals and the website.",
+  "actions": {
+    "save": "Save changes",
+    "reset": "Reset",
+    "saved": "Settings saved."
   },
-  "fields": {
-    "logoUrl": "Logo",
-    "faviconUrl": "Favicon",
-    "brandName": "Brand name",
-    "tagline": "Tagline",
-    "shortDesc": "Short description",
-    "urlPlaceholder": "https://…",
-    "fontSans": "Primary font",
-    "fontMono": "Monospace font",
-    "twitter": "X (Twitter)",
-    "linkedin": "LinkedIn",
-    "instagram": "Instagram",
-    "github": "GitHub",
-    "youtube": "YouTube",
-    "email": "Email",
-    "phone": "Phone",
-    "address": "Address"
+  "group": {
+    "branding": "Visual identity"
   },
-  "colors": {
-    "primary": "Primary color",
-    "secondary": "Secondary color",
-    "advanced": "Advanced color system",
-    "groups": {
-      "pageAccents": "Page accents",
-      "surface": "Surfaces",
-      "text": "Text colors"
+  "section": {
+    "branding": {
+      "identity": "Identity",
+      "colors": "Colors",
+      "contact": "Contact details",
+      "social": "Social links",
+      "legal": "Legal",
+      "seo": "SEO"
     }
   },
+  "colorGroups": {
+    "base": "Brand colors"
+  },
+  "field": {
+    "branding": {
+      "brand": {
+        "name": "Brand name",
+        "tagline": "Tagline"
+      },
+      "logoUrl": "Logo",
+      "faviconUrl": "Favicon",
+      "colors": {
+        "primary": "Primary color",
+        "secondary": "Secondary color"
+      },
+      "contact": {
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address"
+      },
+      "social": {
+        "twitter": "X (Twitter)",
+        "linkedin": "LinkedIn",
+        "instagram": "Instagram",
+        "github": "GitHub",
+        "youtube": "YouTube"
+      },
+      "legal": {
+        "copyright": "Copyright notice"
+      },
+      "seo": {
+        "siteUrl": "Site address",
+        "shareImageUrl": "Share image"
+      }
+    }
+  },
+  "placeholder": {
+    "url": "https://…"
+  },
   "errors": {
-    "loadFailed": "Couldn't load the visual identity.",
-    "hex": "Invalid color (e.g. #22d3ee).",
-    "url": "Invalid URL.",
-    "email": "Invalid email.",
-    "required": "This field is required.",
+    "loadFailed": "Couldn't load settings.",
     "unknown": "Something went wrong."
   }
 }

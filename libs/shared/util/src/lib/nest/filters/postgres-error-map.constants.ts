@@ -1,24 +1,25 @@
 import { HttpStatus } from '@nestjs/common';
 
 /**
- * Maps the Postgres error codes we surface to an HTTP status + safe message (N9).
- * Keyed by SQLSTATE; anything unmapped falls through to a generic 500.
+ * Maps the Postgres error codes we surface to an HTTP status + **message key** (N9/U24).
+ * Keyed by SQLSTATE; the exception filter renders the key into the caller's locale, and
+ * anything unmapped falls through to the localized generic 500.
  */
 export const POSTGRES_ERROR_MAP: Record<
   string,
-  { status: number; message: string }
+  { status: number; messageKey: string }
 > = {
-  '23505': { status: HttpStatus.CONFLICT, message: 'Resource already exists' },
+  '23505': { status: HttpStatus.CONFLICT, messageKey: 'common.duplicate' },
   '23503': {
     status: HttpStatus.CONFLICT,
-    message: 'Related resource constraint failed',
+    messageKey: 'common.relatedConstraint',
   },
   '23502': {
     status: HttpStatus.BAD_REQUEST,
-    message: 'A required field is missing',
+    messageKey: 'common.requiredFieldMissing',
   },
   '23514': {
     status: HttpStatus.BAD_REQUEST,
-    message: 'A field failed a validation constraint',
+    messageKey: 'common.checkConstraint',
   },
 };

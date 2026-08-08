@@ -34,10 +34,19 @@ export const httpEnvelopeSchema = <T extends z.ZodTypeAny>(data: T) =>
       data,
       path: z.string(),
       timestamp: z.string(),
+      /** Present only on a validation failure — see {@link HttpResponseEnvelope.errors}. */
+      errors: z.record(z.string()).optional(),
     })
     .strict();
 
 export interface HttpResponseEnvelope<T> extends ResponseEnvelope<T> {
   path: string;
   timestamp: string;
+  /**
+   * Field path → **already-localized** message, set only when validation rejected the request
+   * (N7). The pipe emits catalog keys and the exception filter renders them alongside the
+   * top-level message (U24), so a form can attach a real reason to the exact field instead of
+   * showing one generic sentence.
+   */
+  errors?: Record<string, string>;
 }

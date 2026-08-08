@@ -135,6 +135,32 @@ describe('useDynamicForm', () => {
     expect(toastError).toHaveBeenCalledWith('Server boom');
   });
 
+  it('surfaces a toast + root error when a submit is blocked by validation (never a silent no-op)', async () => {
+    const submit = vi.fn();
+    const toastError = vi.spyOn(toast, 'error').mockReturnValue('id');
+    const { result } = renderHook(
+      () =>
+        useDynamicForm<Values>({
+          fields: baseFields,
+          schema, // requires title.min(1); default '' is invalid
+          mode: 'create',
+          submit,
+          successMessage: 'Saved',
+        }),
+      { wrapper },
+    );
+    await act(async () => {
+      await result.current.onSubmit();
+    });
+    expect(submit).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith('Something went wrong'),
+    );
+    expect(result.current.form.formState.errors.root?.message).toBe(
+      'Something went wrong',
+    );
+  });
+
   it('resets a dependent field when its parent changes (cascading)', async () => {
     const fields: FieldConfig<Values>[] = [
       { name: 'country', type: 'select', label: 'Country' },

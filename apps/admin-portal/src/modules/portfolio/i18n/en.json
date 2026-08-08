@@ -1,0 +1,91 @@
+{
+  "title": "Portfolio",
+  "subtitle": "Case studies shown on the website work section.",
+  "columns": {
+    "title": "Title",
+    "category": "Category",
+    "status": "Status",
+    "featured": "Featured",
+    "updatedAt": "Updated"
+  },
+  "filters": {
+    "status": "Status",
+    "featured": "Featured"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published"
+  },
+  "fields": {
+    "slug": "Slug",
+    "status": "Status",
+    "category": "Category",
+    "categoryPlaceholder": "Pick a category",
+    "featured": "Featured",
+    "clientName": "Client name",
+    "projectUrl": "Project URL",
+    "projectUrlPlaceholder": "https://example.com",
+    "sortOrder": "Sort order",
+    "cover": "Cover image",
+    "title": "Title",
+    "summary": "Summary",
+    "challenge": "Challenge",
+    "solution": "Solution",
+    "result": "Result"
+  },
+  "actions": {
+    "create": "New project",
+    "manageCategories": "Manage categories",
+    "createCategory": "New category",
+    "backToProjects": "Back to projects",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "createTitle": "New project",
+    "editTitle": "Edit project",
+    "created": "Project created.",
+    "updated": "Project updated."
+  },
+  "delete": {
+    "title": "Delete project",
+    "message": "This project will be permanently removed from the website.",
+    "confirm": "Delete",
+    "toastSuccess": "Project deleted.",
+    "bulkTitle": "Delete projects",
+    "bulkMessage": "Delete {{count}} selected projects? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} projects deleted."
+  },
+  "categoryTitle": "Portfolio categories",
+  "categorySubtitle": "Group case studies and filter the website work grid.",
+  "categoryColumns": {
+    "name": "Name",
+    "slug": "Slug",
+    "sortOrder": "Order",
+    "updatedAt": "Updated"
+  },
+  "categoryFields": {
+    "slug": "Slug",
+    "sortOrder": "Sort order",
+    "name": "Name"
+  },
+  "categoryForm": {
+    "createTitle": "New category",
+    "editTitle": "Edit category",
+    "created": "Category created.",
+    "updated": "Category updated."
+  },
+  "categoryDelete": {
+    "title": "Delete category",
+    "message": "Projects in this category will keep their content but lose the category.",
+    "confirm": "Delete",
+    "toastSuccess": "Category deleted.",
+    "bulkTitle": "Delete categories",
+    "bulkMessage": "Delete {{count}} selected categories? This cannot be undone.",
+    "bulkToastSuccess": "{{count}} categories deleted."
+  },
+  "errors": {
+    "deleteFailed": "Couldn't delete the item.",
+    "updateFailed": "Couldn't save the change."
+  }
+}

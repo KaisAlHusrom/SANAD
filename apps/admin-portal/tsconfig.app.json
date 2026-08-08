@@ -17,7 +17,8 @@
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.json"],
   "references": [
     { "path": "../../libs/contracts/tsconfig.lib.json" },
-    { "path": "../../libs/shared/config/tsconfig.lib.json" }
+    { "path": "../../libs/shared/config/tsconfig.lib.json" },
+    { "path": "../../libs/web/ui/tsconfig.lib.json" }
   ],
   "exclude": [
     "vite.config.ts",

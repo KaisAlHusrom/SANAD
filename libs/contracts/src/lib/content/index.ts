@@ -2,12 +2,15 @@
 // Barrel only (U10). Mirrors the media domain layout.
 export * from './page-status.zod.types.js';
 export * from './section-type.zod.types.js';
+export * from './section-config.zod.types.js';
+export * from './section-collection.types.js';
 export * from './block-type.zod.types.js';
 export * from './service-category.zod.types.js';
 export * from './lead-source.zod.types.js';
 export * from './lead-status.zod.types.js';
 export * from './content-id.zod.types.js';
 export * from './content-slug.zod.types.js';
+export * from './reorder.zod.types.js';
 export * from './page-tree.types.js';
 export * from './page-upsert.zod.types.js';
 export * from './section-upsert.zod.types.js';

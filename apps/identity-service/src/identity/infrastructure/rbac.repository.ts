@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { DRIZZLE } from '@sanad/database';
+import type { RoleSummary } from '@sanad/contracts';
+import type { DbExecutor } from '../../db/executor.js';
 import {
   permissionTable,
   rolePermissionTable,
@@ -68,11 +70,36 @@ export class RbacRepository {
       .onConflictDoNothing();
   }
 
-  async assignRoleToUser(userId: string, roleId: string): Promise<void> {
-    await this.db
+  async assignRoleToUser(
+    userId: string,
+    roleId: string,
+    exec: DbExecutor = this.db,
+  ): Promise<void> {
+    await exec
       .insert(userRoleTable)
       .values({ userId, roleId })
       .onConflictDoNothing();
+  }
+
+  /** Remove a role from a user (idempotent — a no-op if it wasn't assigned). */
+  async revokeRoleFromUser(userId: string, roleId: string): Promise<void> {
+    await this.db
+      .delete(userRoleTable)
+      .where(
+        and(eq(userRoleTable.userId, userId), eq(userRoleTable.roleId, roleId)),
+      );
+  }
+
+  /** The full role catalog for the admin users surface (`identity.roles.read`). */
+  async listRoles(): Promise<RoleSummary[]> {
+    return this.db
+      .select({
+        key: roleTable.key,
+        name: roleTable.name,
+        description: roleTable.description,
+      })
+      .from(roleTable)
+      .orderBy(roleTable.key);
   }
 
   /** The role keys a user holds (e.g. `['admin']`). */

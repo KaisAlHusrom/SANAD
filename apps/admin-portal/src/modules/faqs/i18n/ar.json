@@ -1,0 +1,49 @@
+{
+  "title": "الأسئلة الشائعة",
+  "subtitle": "الأسئلة والأجوبة المعروضة في صفحة الأسئلة الشائعة.",
+  "columns": {
+    "question": "السؤال",
+    "category": "الفئة",
+    "sortOrder": "الترتيب",
+    "updatedAt": "آخر تحديث"
+  },
+  "filters": {
+    "category": "الفئة"
+  },
+  "categories": {
+    "none": "غير مصنّف",
+    "general": "عام",
+    "pricing": "الأسعار",
+    "process": "آلية العمل",
+    "support": "الدعم"
+  },
+  "fields": {
+    "category": "الفئة",
+    "sortOrder": "ترتيب العرض",
+    "question": "السؤال",
+    "answer": "الإجابة"
+  },
+  "actions": {
+    "create": "سؤال جديد",
+    "edit": "تعديل",
+    "delete": "حذف"
+  },
+  "form": {
+    "createTitle": "سؤال جديد",
+    "editTitle": "تعديل السؤال",
+    "created": "تم إنشاء السؤال.",
+    "updated": "تم تحديث السؤال."
+  },
+  "delete": {
+    "title": "حذف السؤال",
+    "message": "سيُحذف هذا السؤال نهائيًا من الموقع.",
+    "confirm": "حذف",
+    "toastSuccess": "تم حذف السؤال.",
+    "bulkTitle": "حذف الأسئلة",
+    "bulkMessage": "حذف {{count}} أسئلة محددة؟ لا يمكن التراجع عن ذلك.",
+    "bulkToastSuccess": "تم حذف {{count}} أسئلة."
+  },
+  "errors": {
+    "deleteFailed": "تعذّر حذف السؤال."
+  }
+}

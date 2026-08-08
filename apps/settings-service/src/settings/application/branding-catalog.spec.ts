@@ -28,7 +28,6 @@ describe('branding catalog defaults', () => {
   });
 
   it('projects every catalog field into the flat SETTINGS_DEFAULTS map', () => {
-    expect(Object.keys(SETTINGS_DEFAULTS).length).toBe(BRANDING_FIELDS.length);
     expect(SETTINGS_DEFAULTS['branding.brand.name']).toEqual({
       ar: 'سَنَد التقنية',
       en: 'Sanad Tech',
@@ -38,4 +37,34 @@ describe('branding catalog defaults', () => {
     );
     expect(SETTINGS_DEFAULTS['branding.logoUrl']).toBeNull();
   });
+
+  it('has a BRANDING_FIELDS entry for EVERY leaf of the record (nothing unsettable)', () => {
+    // NOT `keys(SETTINGS_DEFAULTS).length === BRANDING_FIELDS.length` — that is tautological
+    // (SETTINGS_DEFAULTS is built BY mapping BRANDING_FIELDS, so it can never disagree). This
+    // walks the RECORD instead, so adding a leaf to `BRANDING_DEFAULTS` without a matching
+    // field — which would make it permanently unsettable, the exact class of bug behind
+    // "I changed the setting and nothing happened" — fails here.
+    const leaves = walkLeafPaths(BRANDING_DEFAULTS).map((p) => `branding.${p}`);
+    const fields = BRANDING_FIELDS.map((f) => f.key);
+    expect(new Set(leaves)).toEqual(new Set(fields));
+  });
 });
+
+/**
+ * Every leaf path of the branding record. A `{ ar, en }` localized object counts as ONE leaf
+ * (it is a single `localized_text` setting), and `null` leaves (logo/social/contact) count too.
+ */
+function walkLeafPaths(node: unknown, path: readonly string[] = []): string[] {
+  if (node === null || typeof node !== 'object') {
+    return [path.join('.')];
+  }
+  const keys = Object.keys(node as Record<string, unknown>);
+  const isLocalized =
+    keys.length === 2 && keys.includes('ar') && keys.includes('en');
+  if (isLocalized) {
+    return [path.join('.')];
+  }
+  return keys.flatMap((key) =>
+    walkLeafPaths((node as Record<string, unknown>)[key], [...path, key]),
+  );
+}

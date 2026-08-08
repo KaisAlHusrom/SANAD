@@ -11,6 +11,14 @@ export interface RmqConnectionConfig {
   queue: string;
   /** Optional prefetch override for the consumer side. */
   prefetchCount?: number;
+  /**
+   * Broker-side auto-ack. **Request/reply COMMAND queues must set `true`** — NestJS does NOT
+   * auto-ack a `@MessagePattern` under `noAck:false`, so without it every handled command stays
+   * unacknowledged and after `prefetchCount` (10) the consumer stalls ("Upstream service error").
+   * The reply IS the acknowledgement for RPC, and auto-ack avoids redelivering a half-done write.
+   * **EVENT queues keep `false`** (the default) and ack manually for exactly-once redelivery (MS6).
+   */
+  noAck?: boolean;
 }
 
 /** The request/reply (commands) queue for a service: `<service>.commands`. */
@@ -32,7 +40,9 @@ export function createRmqServerOptions(
     options: {
       urls: [config.url],
       queue: config.queue,
-      noAck: false,
+      // Commands pass `noAck:true` (auto-ack); events default to manual ack (MS6). See the
+      // `noAck` doc on RmqConnectionConfig — the un-acked-command stall is why this exists.
+      noAck: config.noAck ?? false,
       prefetchCount: config.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
       queueOptions: { durable: true },
     },

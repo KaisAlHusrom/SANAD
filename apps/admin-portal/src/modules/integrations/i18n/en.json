@@ -1,0 +1,75 @@
+{
+  "title": "Integrations",
+  "subtitle": "Configure a provider for each capability, then choose which one to use.",
+  "activeLabel": "Active:",
+  "capability": {
+    "storage": "Storage",
+    "email": "Email"
+  },
+  "provider": {
+    "r2": "Cloudflare R2",
+    "smtp": "SMTP"
+  },
+  "status": {
+    "active": "Active",
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "noneActive": "None selected"
+  },
+  "actions": {
+    "configure": "Configure",
+    "test": "Test connection",
+    "setActive": "Set active"
+  },
+  "dialog": {
+    "configureTitle": "Configure {{provider}}",
+    "saved": "Integration saved."
+  },
+  "test": {
+    "failed": "The connection test could not be completed."
+  },
+  "field": {
+    "r2": {
+      "accountId": "Account ID",
+      "bucket": "Bucket",
+      "accessKeyId": "Access key ID",
+      "secretAccessKey": "Secret access key",
+      "endpoint": "Endpoint",
+      "publicUrl": "Public URL"
+    },
+    "smtp": {
+      "host": "Host",
+      "port": "Port",
+      "secure": "Use TLS",
+      "user": "Username",
+      "password": "Password",
+      "from": "From address"
+    }
+  },
+  "errors": {
+    "loadFailed": "Couldn't load integrations."
+  },
+  "cors": {
+    "state": {
+      "ok": "Browser uploads are allowed",
+      "missing": "Browser uploads are blocked — the bucket has no CORS rules",
+      "origin-not-allowed": "Browser uploads are blocked — this origin isn't allowed",
+      "cannot-check": "Couldn't read the bucket's CORS settings",
+      "unconfigured": "Storage isn't configured yet"
+    },
+    "origins": "Uploads come from: {{origins}}",
+    "currentlyAllowed": "The bucket currently allows: {{origins}}",
+    "manualHint": "Your API token may not change bucket settings. Copy the policy below and paste it into Cloudflare → R2 → your bucket → Settings → CORS policy.",
+    "fix": "Configure CORS",
+    "fixed": "CORS configured — browser uploads should work now.",
+    "fixFailed": "Couldn't write the CORS policy.",
+    "copyPolicy": "Copy policy",
+    "copied": "Policy copied to the clipboard.",
+    "copyFailed": "Couldn't copy — select the policy and copy it manually.",
+    "recheck": "Re-check",
+    "checkFailed": "The CORS check couldn't be completed."
+  },
+  "warnings": {
+    "publicUrlIsApiEndpoint": "The public URL points at the S3 API endpoint, which requires a signature — uploaded images won't load. Use your r2.dev public URL or a custom domain."
+  }
+}

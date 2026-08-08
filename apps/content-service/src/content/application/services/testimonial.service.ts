@@ -40,6 +40,27 @@ export class TestimonialService {
     };
   }
 
+  /**
+   * Testimonials for a set of ids, returned IN THE GIVEN ORDER (the `picked` section-config
+   * hydration — the landing testimonials wall). Reads resolve copy to both locales (F7).
+   * Unknown/soft-deleted ids are simply dropped.
+   */
+  async listByIds(ids: readonly string[]): Promise<TestimonialItem[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.testimonials.findByIds(ids);
+    const fields = await this.testimonials.localizedFieldsForMany(
+      rows.map((row) => row.id),
+    );
+    const byId = new Map(
+      rows.map((row) => [row.id, assembleTestimonial(row, fields.get(row.id))]),
+    );
+    return ids
+      .map((id) => byId.get(id))
+      .filter((item): item is TestimonialItem => item !== undefined);
+  }
+
   /** Create a testimonial + both-locale copy (admin). */
   async create(req: TestimonialCreateRequest): Promise<TestimonialItem> {
     const created = await this.testimonials.create({
@@ -86,6 +107,11 @@ export class TestimonialService {
     }
 
     return this.byId(req.id);
+  }
+
+  /** Atomically renumber sortOrder to match the given id order (drag-and-drop reorder, U21). */
+  reorder(ids: string[]): Promise<void> {
+    return this.testimonials.reorderByIds(ids);
   }
 
   /** Soft-delete a testimonial (admin). */

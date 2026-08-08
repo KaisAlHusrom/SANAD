@@ -138,6 +138,11 @@ export class MenuService {
     return this.itemNode(req.id);
   }
 
+  /** Atomically renumber menu items to the given id order (drag within a menu/parent, U21). */
+  reorderItems(ids: string[]): Promise<void> {
+    return this.items.reorderByIds(ids);
+  }
+
   /** Soft-delete a menu item (admin) — its children cascade. */
   async deleteItem(id: string): Promise<ContentId> {
     const existing = await this.items.find(id);

@@ -1,0 +1,2240 @@
+/*
+ * @sanad/web-ui — the website renderer's self-contained stylesheet.
+ *
+ * Everything is scoped under `.sanad-web` and themed from `--web-*` custom properties whose
+ * literal values are the website token set (`websiteTokens`/`radius`/`fonts` in `@sanad/config`,
+ * U6 single source — kept in lockstep by `web-ui.tokens.spec.ts`). The scope NEVER references an
+ * admin/portal token (`--surface`/`--accent`/`--text`), so the renderer always shows the
+ * website's fixed-dark signature theme (WEB7) regardless of the host app's light/dark state — the
+ * preview inside the admin portal looks like the live site, not the dashboard chrome. Logical
+ * properties only (U7) so the same components flip for RTL (ar default) and LTR.
+ *
+ * Per-page accent (`--web-accent`/`--web-accent-ink`) defaults to the landing palette here and is
+ * overridden inline by `WebsiteShell` from `pageAccents[key]`.
+ */
+
+.sanad-web {
+  /* surfaces (websiteTokens.surface) */
+  --web-bg: #05080d;
+  --web-track: #070a10;
+  --web-s1: #0c111c;
+  --web-s2: #161d2a;
+  /* text ramp (websiteTokens.text) */
+  --web-text: #e7eaf0;
+  --web-dim: #aab2c5;
+  --web-muted: #8b93a7;
+  --web-faint: #5d6678;
+  /* hairlines (websiteTokens.hairline) — values match @sanad/config verbatim (drift spec) */
+  --web-hairline: rgba(255, 255, 255, 0.08);
+  --web-hairline-strong: rgba(255, 255, 255, 0.14);
+  /* per-page accent (pageAccents.landing default; overridden inline) */
+  --web-accent: #22d3ee;
+  --web-secondary: #3b82f6;
+  --web-accent-ink: #06121c;
+  /* process phase-accent cycle (processPhaseAccents — cyan/sky/indigo/teal; drift-guarded) */
+  --web-phase-0: #22d3ee;
+  --web-phase-1: #38bdf8;
+  --web-phase-2: #818cf8;
+  --web-phase-3: #2dd4bf;
+  /* radius (radius scale, px) */
+  --web-radius-md: 11px;
+  --web-radius-lg: 14px;
+  --web-radius-pill: 999px;
+  /* type families (fonts) */
+  --web-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --web-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  background: var(--web-bg);
+  color: var(--web-text);
+  font-family: var(--web-sans);
+  text-align: start;
+}
+
+.sanad-web *,
+.sanad-web *::before,
+.sanad-web *::after {
+  box-sizing: border-box;
+}
+
+/* ---- section ---- */
+
+.web-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 30px 26px;
+  border: 1px solid var(--web-hairline);
+  border-radius: var(--web-radius-lg);
+  background: radial-gradient(
+    90% 80% at 75% 8%,
+    color-mix(in srgb, var(--web-accent) 10%, transparent),
+    var(--web-bg) 70%
+  );
+}
+
+.web-section--unpublished {
+  opacity: 0.5;
+}
+
+.web-kicker {
+  margin: 0;
+  font-family: var(--web-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--web-accent);
+}
+
+.sanad-web[dir='rtl'] .web-kicker {
+  /* WEB5 — no latin tracking on Arabic eyebrows */
+  letter-spacing: normal;
+}
+
+.web-heading {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+}
+
+.web-subtitle {
+  margin: 0;
+  max-width: 48ch;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--web-dim);
+}
+
+.web-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block-start: 4px;
+}
+
+/* ---- blocks ---- */
+
+.web-block-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--web-text);
+}
+
+.web-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 140px;
+}
+
+.web-stat-value {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--web-accent);
+}
+
+.web-stat-suffix {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.web-stat-label {
+  font-size: 13px;
+  color: var(--web-dim);
+}
+
+.web-cta {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 28px;
+  border-radius: var(--web-radius-pill);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    box-shadow 0.4s ease,
+    transform 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.web-cta--primary {
+  background: var(--web-accent);
+  color: var(--web-accent-ink);
+  box-shadow: 0 0 40px color-mix(in oklab, var(--web-accent) 45%, transparent);
+}
+
+.web-cta--primary:hover {
+  box-shadow: 0 0 60px color-mix(in oklab, var(--web-accent) 70%, transparent);
+  transform: translateY(-2px);
+}
+
+.web-cta--secondary {
+  background: color-mix(in oklab, var(--web-bg) 40%, transparent);
+  color: var(--web-text);
+  border: 1px solid var(--web-hairline-strong);
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+
+.web-cta--secondary:hover {
+  background: color-mix(in oklab, var(--web-text) 8%, transparent);
+  border-color: color-mix(in oklab, var(--web-text) 24%, transparent);
+}
+
+.web-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 200px;
+  padding: 16px;
+  border: 1px solid var(--web-hairline);
+  border-radius: var(--web-radius-md);
+  background: var(--web-s2);
+}
+
+.web-card-icon {
+  color: var(--web-accent);
+}
+
+.web-card-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--web-dim);
+  white-space: pre-line;
+}
+
+.web-image {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 100%;
+}
+
+.web-image-frame {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--web-hairline);
+  border-radius: var(--web-radius-md);
+  background: var(--web-s1);
+  color: var(--web-faint);
+}
+
+.web-image-caption {
+  font-size: 12px;
+  color: var(--web-faint);
+}
+
+.web-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 100%;
+}
+
+.web-text-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--web-dim);
+  white-space: pre-line;
+}
+
+.web-richtext {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 100%;
+}
+
+.web-richtext-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--web-dim);
+}
+
+.web-richtext-body a {
+  color: var(--web-accent);
+}
+
+.web-richtext-body h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--web-text);
+}
+
+.web-richtext-body h3 {
+  margin: 20px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--web-text);
+}
+
+.web-richtext-body p {
+  margin: 0;
+}
+
+.web-richtext-body p + p,
+.web-richtext-body h3 + p {
+  margin-block-start: 12px;
+}
+
+/* ---- per-type section: hero ---- */
+
+.web-hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(28px, 6vh, 64px);
+  min-block-size: min(78vh, 640px);
+  padding-block: clamp(40px, 8vh, 96px);
+  padding-inline: 24px;
+  text-align: center;
+}
+
+.web-hero-top,
+.web-hero-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-inline-size: min(94%, 1040px);
+}
+
+.web-hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 22px;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: color-mix(in oklab, var(--web-accent) 82%, white);
+}
+
+.sanad-web[dir='rtl'] .web-hero-eyebrow {
+  letter-spacing: normal;
+}
+
+.web-hero-eyebrow::before,
+.web-hero-eyebrow::after {
+  content: '';
+  inline-size: 36px;
+  block-size: 1px;
+  background: color-mix(in oklab, var(--web-accent) 40%, transparent);
+}
+
+.web-hero-title {
+  margin: 0;
+  max-inline-size: 15ch;
+  font-size: clamp(46px, 7vw, 104px);
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.015em;
+  color: var(--web-text);
+  /* legibility over the WebGL star (live) — invisible over the flat preview surface */
+  text-shadow:
+    0 2px 28px color-mix(in oklab, var(--web-bg) 92%, transparent),
+    0 0 64px color-mix(in oklab, var(--web-bg) 60%, transparent);
+}
+
+/* Latin glyphs run wider than Arabic — the EN headline needs a smaller ramp + more line room or
+   the full-viewport live hero (title + lead + CTAs + proof + cue) overflows one screen. Scoped by
+   `dir` (set by WebsiteShell in both live + preview), not `:lang` (unreliable in the admin). */
+.sanad-web[dir='ltr'] .web-hero-title {
+  font-size: clamp(38px, 4.8vw, 72px);
+  max-inline-size: 22ch;
+}
+
+.web-hero-lead {
+  margin: 0 0 34px;
+  max-inline-size: 52ch;
+  font-size: clamp(15px, 1.4vw, 19px);
+  line-height: 1.85;
+  color: var(--web-dim);
+  text-shadow: 0 2px 26px color-mix(in oklab, var(--web-bg) 90%, transparent);
+}
+
+.web-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.web-hero-proof {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 26px;
+  margin-block-start: 24px;
+}
+
+.web-hero-proof-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 8px;
+  padding-inline: 16px;
+  border-inline: 1px solid
+    color-mix(in oklab, var(--web-accent) 28%, transparent);
+  font-family: var(--web-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  color: var(--web-dim);
+}
+
+.sanad-web[dir='rtl'] .web-hero-proof-item {
+  letter-spacing: normal;
+}
+
+.web-hero-proof-item::before {
+  content: '';
+  inline-size: 4px;
+  block-size: 4px;
+  flex: none;
+  transform: rotate(45deg);
+  background: var(--web-accent);
+  box-shadow: 0 0 7px color-mix(in oklab, var(--web-accent) 85%, transparent);
+}
+
+/* the legibility veil (injected `Backdrop` slot) so the hero text reads over the WebGL star (live);
+   the admin injects no Backdrop → the preview shows the flat surface. */
+.web-hero-veil {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    48% 44% at 50% 42%,
+    color-mix(in oklab, var(--web-bg) 78%, transparent),
+    color-mix(in oklab, var(--web-bg) 40%, transparent) 52%,
+    transparent 72%
+  );
+}
+
+/* the "begin the journey" scroll cue (injected `Cue` slot) */
+.web-hero-cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  margin-block-start: 26px;
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--web-faint);
+}
+
+.sanad-web[dir='rtl'] .web-hero-cue {
+  letter-spacing: normal;
+}
+
+.web-hero-cue-line {
+  inline-size: 1px;
+  block-size: 34px;
+  background: linear-gradient(var(--web-accent), transparent);
+  animation: webCuePulse 2s ease-in-out infinite;
+}
+
+@keyframes webCuePulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .web-hero-cue-line {
+    animation: none;
+  }
+}
+
+/* ---- per-type section: stats (telemetry band) ---- */
+
+.web-stats {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(28px, 5vh, 52px);
+  padding-block: clamp(32px, 6vh, 72px);
+}
+
+.web-stats-head {
+  text-align: center;
+  max-inline-size: 46ch;
+  margin-inline: auto;
+}
+
+.web-stats-eyebrow {
+  margin: 0 0 14px;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: var(--web-accent);
+}
+
+.sanad-web[dir='rtl'] .web-stats-eyebrow {
+  letter-spacing: normal;
+}
+
+.web-stats-title {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 50px);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+}
+
+.web-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-block: 1px solid var(--web-hairline);
+}
+
+@media (max-width: 900px) {
+  .web-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .web-stats-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.web-stat {
+  position: relative;
+  text-align: center;
+  padding: clamp(28px, 5vh, 48px) 18px;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.web-stat:last-child {
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.web-stat-value {
+  font-family: var(--web-mono);
+  font-size: clamp(40px, 5vw, 68px);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.web-stat-suffix {
+  color: var(--web-accent);
+}
+
+.web-stat-label {
+  margin-block-start: 8px;
+  font-size: 15px;
+  color: var(--web-muted);
+}
+
+.web-stat-note {
+  margin-block-start: 10px;
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--web-faint);
+}
+
+/* ---- LTR-isolated mono readouts (counters, step indices) — never let RTL bidi reorder "01 / 04";
+   the lib-owned equivalent of the website's `.lp-ltr` so the admin preview isolates them too. */
+.web-ltr {
+  unicode-bidi: isolate;
+  direction: ltr;
+}
+
+/* ---- per-type section: cta (launch band) ---- */
+/* The bespoke landing's `.lp-cta-*` visuals, ported to the shared component. The cosmos chrome
+   (veil/glow/rings) stays website-injected as the `Backdrop` slot on its own `.lp-cta-*` classes
+   (live-only); the band/copy/steps below render in BOTH the live site and the admin preview. The
+   step tint reads `--lp-world` (the live chapter's world colour) and falls back to `--web-accent`
+   in the admin preview where no `.lp-chapter` sets it (U6/U7, logical props). */
+.web-cta-band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.web-cta-eyebrow {
+  position: relative;
+  margin: 0 0 14px;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--web-accent);
+}
+.sanad-web[dir='rtl'] .web-cta-eyebrow {
+  letter-spacing: 0;
+}
+.web-cta-title {
+  position: relative;
+  margin: 0 0 22px;
+  font-size: clamp(38px, 5.5vw, 82px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  max-inline-size: 16ch;
+  color: #fff;
+  text-shadow:
+    0 2px 28px rgba(3, 6, 11, 0.92),
+    0 0 64px rgba(3, 6, 11, 0.6);
+}
+.web-cta-lead {
+  position: relative;
+  margin: 0 0 38px;
+  font-size: 19px;
+  line-height: 1.8;
+  max-inline-size: 50ch;
+  color: var(--web-text);
+  text-shadow:
+    0 2px 26px rgba(5, 8, 13, 0.9),
+    0 0 40px rgba(5, 8, 13, 0.7);
+}
+.web-cta-steps {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 18px 0;
+  margin-block-start: 46px;
+}
+.web-cta-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-inline-size: 220px;
+  padding-inline: 26px;
+  text-align: center;
+}
+.web-cta-step + .web-cta-step {
+  border-inline-start: 1px solid
+    color-mix(in oklab, var(--lp-world, var(--web-accent)) 22%, transparent);
+}
+.web-cta-step-index {
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: color-mix(in oklab, var(--lp-world, var(--web-accent)) 78%, white);
+  text-shadow: 0 1px 14px rgba(3, 6, 11, 0.9);
+}
+.web-cta-step-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--web-text);
+  text-shadow:
+    0 1px 18px rgba(3, 6, 11, 0.9),
+    0 0 30px rgba(3, 6, 11, 0.65);
+}
+@media (max-width: 640px) {
+  .web-cta-steps {
+    flex-direction: column;
+    align-items: center;
+  }
+  .web-cta-step + .web-cta-step {
+    border-inline-start: none;
+    border-block-start: 1px solid
+      color-mix(in oklab, var(--lp-world, var(--web-accent)) 22%, transparent);
+    padding-block-start: 18px;
+  }
+}
+/* the larger launch-band CTA button (the ghost + primary reuse `.web-cta`/`--primary`/`--secondary`) */
+.web-cta--lg {
+  font-size: 18px;
+  padding: 18px 38px;
+}
+
+/* ---- per-type section: process (phases as moons + phase-briefing cards, WEB10) ---- */
+/* The bespoke landing's `.proc-*`/`.lp-phase--*` visuals, ported to the shared component so the live
+   `ProcessMoons` (injected `System` slot) AND the admin preview/edit cards render the SAME card look
+   (preview===live). The orbital chrome (system/ring/moons/step/track) is driven live by the website's
+   GSAP; the cards render statically (`.web-process-static`) in the preview and editably in `edit`.
+   Phase accent cycles cyan → sky → indigo → teal per `phase % 4` (processPhaseAccents). */
+.web-phase--0 {
+  --web-phase: var(--web-phase-0);
+}
+.web-phase--1 {
+  --web-phase: var(--web-phase-1);
+}
+.web-phase--2 {
+  --web-phase: var(--web-phase-2);
+}
+.web-phase--3 {
+  --web-phase: var(--web-phase-3);
+}
+.web-process {
+  position: relative;
+}
+.web-process-head {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+.web-process-eyebrow {
+  margin: 0;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--web-accent);
+}
+.sanad-web[dir='rtl'] .web-process-eyebrow {
+  letter-spacing: 0;
+}
+.web-process-title {
+  margin: 0;
+  font-size: clamp(28px, 3.6vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+}
+/* the phase-briefing card — the shared visual for live (deck) + preview/edit (static) */
+.web-process-card {
+  position: relative;
+  --web-phase: var(--web-accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding-block: 22px;
+  padding-inline: 28px;
+  border: 1px solid color-mix(in oklab, var(--web-phase) 14%, transparent);
+  border-radius: 4px;
+  background: rgba(8, 14, 22, 0.66);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    0 0 40px color-mix(in oklab, var(--web-phase) 10%, transparent);
+}
+/* phase-briefing corner brackets, tinted by the phase */
+.web-process-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --web-tick-c: color-mix(in oklab, var(--web-phase) 60%, transparent);
+  background:
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 0 / 18px 1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 0 / 1px 18px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 0 / 18px 1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 0 / 1px 18px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 100% / 18px 1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 100% / 1px 18px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 100% / 18px 1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 100% / 1px 18px;
+  background-repeat: no-repeat;
+}
+.web-process-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--web-phase);
+}
+.web-process-card-meta-dur {
+  color: var(--web-faint);
+  border-inline-start: 1px solid
+    color-mix(in oklab, var(--web-phase) 35%, transparent);
+  padding-inline-start: 14px;
+}
+.web-process-card-title {
+  margin: 0;
+  font-size: clamp(18px, 2vw, 23px);
+  font-weight: 600;
+  color: var(--web-text);
+}
+.web-process-card-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--web-muted);
+  max-inline-size: 40ch;
+}
+.web-process-card-give {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+.web-process-card-give-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--web-dim);
+}
+.web-process-card-give-item::before {
+  content: '';
+  inline-size: 12px;
+  block-size: 1px;
+  flex: none;
+  background: color-mix(in oklab, var(--web-phase) 60%, transparent);
+}
+/* static card layout — the admin preview + edit deck (all cards visible, normal flow) */
+.web-process-static {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-block-start: 34px;
+}
+.web-process-static .web-process-card {
+  inline-size: min(92%, 540px);
+}
+/* ---- live orbital chrome (rendered by the website's ProcessMoons via the `System` slot) ---- */
+.web-process-system {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.web-process-ring {
+  position: absolute;
+  inset-inline: 0;
+  margin-inline: auto;
+  inset-block-start: calc(50% + 26px);
+  inline-size: min(72vw, 640px);
+  block-size: min(30vw, 250px);
+  transform: translateY(-50%) rotate(-3deg);
+  border: 1px dashed color-mix(in oklab, var(--web-accent) 20%, transparent);
+  border-radius: 50%;
+  box-shadow: inset 0 0 80px
+    color-mix(in oklab, var(--web-phase-2) 8%, transparent);
+  opacity: 0;
+  will-change: opacity;
+}
+.web-process-moon {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: 48px;
+  block-size: 48px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: auto;
+  will-change: transform, opacity;
+  transition: box-shadow 0.3s ease;
+}
+/* moon surfaces — 3-stop gradients locked from the design source (lit crescent → body → dark limb;
+   genuine visual-design values, a U6 carve-out like the cosmos) */
+.web-process-moon--0 {
+  background: radial-gradient(circle at 33% 28%, #e7faff, #22d3ee 58%, #0a4d5c);
+}
+.web-process-moon--1 {
+  background: radial-gradient(circle at 33% 28%, #e6f1ff, #3b9ff0 58%, #123e6b);
+}
+.web-process-moon--2 {
+  background: radial-gradient(circle at 33% 28%, #e7e9ff, #6366f1 58%, #2a2a72);
+}
+.web-process-moon--3 {
+  background: radial-gradient(circle at 33% 28%, #defff6, #2dd4bf 58%, #0a5e53);
+}
+.web-process-moon.is-active {
+  box-shadow:
+    0 0 38px
+      color-mix(in oklab, var(--web-phase, var(--web-accent)) 70%, transparent),
+    0 0 12px rgba(255, 255, 255, 0.9);
+}
+.web-process-moon:hover {
+  box-shadow:
+    0 0 30px
+      color-mix(in oklab, var(--web-phase, var(--web-accent)) 55%, transparent),
+    0 0 10px rgba(255, 255, 255, 0.7);
+}
+.web-process-step {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: calc(50% - 4px);
+  transform: translate(calc(-50% * var(--dir, 1)), -50%);
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: color-mix(in oklab, var(--web-text) 55%, transparent);
+  text-shadow: 0 0 14px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+}
+/* the live deck — cards absolutely stacked; the website's GSAP cross-fades one per active moon */
+.web-process-cards {
+  position: absolute;
+  inset-block-end: 6vh;
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: min(92vw, 540px);
+  block-size: 238px;
+  z-index: 2;
+}
+.web-process-cards .web-process-card {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+.web-process-track {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: calc(50% + 20px);
+  transform: translate(calc(-50% * var(--dir, 1)), 0);
+  inline-size: 150px;
+  block-size: 1px;
+  background: color-mix(in oklab, var(--web-text) 14%, transparent);
+  opacity: 0;
+}
+.web-process-track-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--web-accent), var(--web-phase-2));
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+.sanad-web[dir='rtl'] .web-process-track-fill {
+  transform-origin: right center;
+}
+.web-process-track-stop {
+  position: absolute;
+  inset-block-start: 50%;
+  inline-size: 5px;
+  block-size: 5px;
+  border-radius: 50%;
+  transform: translate(calc(-50% * var(--dir, 1)), -50%);
+  background: color-mix(in oklab, var(--web-text) 35%, transparent);
+}
+
+/* ---- per-type section: services (capability systems on an orbit grid, WEB1) ---- */
+/* The bespoke landing's `.lp-services*`/`.lp-panel`/`.lp-sys*`/`.lp-micro` visuals, ported to the
+   shared component so the live website AND the admin preview/edit render the SAME card look
+   (preview===live). Cards are world-tinted on the site (the cosmos chapter sets `--lp-world`); the
+   admin preview has no cosmos, so `--web-world` falls back to `--web-accent`. */
+.web-services {
+  --web-world: var(--lp-world, var(--web-accent));
+  position: relative;
+}
+.web-services-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-block-end: 34px;
+}
+.web-services-eyebrow {
+  margin: 0;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: color-mix(in oklab, var(--web-accent) 82%, white);
+}
+.sanad-web[dir='rtl'] .web-services-eyebrow {
+  letter-spacing: 0;
+}
+.web-services-title {
+  margin: 0;
+  font-size: clamp(28px, 3.6vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+}
+.web-services-lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--web-muted);
+  max-inline-size: 62ch;
+}
+/* the orbit grid — two columns with an asymmetric drift + a faint arcing orbital path */
+.web-services-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.web-services-grid::before {
+  content: '';
+  position: absolute;
+  inset-block-start: -12%;
+  inset-inline: -6%;
+  block-size: 120%;
+  border: 1px solid color-mix(in oklab, var(--web-world) 8%, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.web-services-grid > :nth-child(even) {
+  margin-block-start: 26px;
+}
+@media (max-width: 860px) {
+  .web-services-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .web-services-grid > :nth-child(even) {
+    margin-block-start: 0;
+  }
+  .web-services-grid::before {
+    display: none;
+  }
+}
+/* a received transmission — bracket-framed panel (the shared `.web-panel` frame vocabulary) */
+.web-panel {
+  position: relative;
+  padding: 28px 26px;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 23, 0.72),
+    rgba(7, 11, 18, 0.55)
+  );
+  backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.045);
+  transition:
+    box-shadow 0.45s ease,
+    transform 0.45s ease;
+}
+.web-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --web-tick: 20px;
+  --web-tick-c: color-mix(in oklab, var(--web-world) 65%, transparent);
+  background:
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 0 / var(--web-tick)
+      1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 0 / 1px
+      var(--web-tick),
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 0 /
+      var(--web-tick) 1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 0 / 1px
+      var(--web-tick),
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 100% /
+      var(--web-tick) 1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 0 100% / 1px
+      var(--web-tick),
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 100% /
+      var(--web-tick) 1px,
+    linear-gradient(var(--web-tick-c), var(--web-tick-c)) 100% 100% / 1px
+      var(--web-tick);
+  background-repeat: no-repeat;
+  transition:
+    background-size 0.45s ease,
+    filter 0.45s ease;
+}
+.web-panel:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    0 0 34px color-mix(in oklab, var(--web-world) 12%, transparent);
+  transform: translateY(-3px);
+}
+.web-panel:hover::before {
+  --web-tick: 34px;
+  filter: drop-shadow(
+    0 0 6px color-mix(in oklab, var(--web-world) 45%, transparent)
+  );
+}
+.web-sys {
+  padding: 22px 20px;
+}
+.web-sys-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-end: 20px;
+}
+/* a mono micro-label with the brand diamond mark, world-tinted */
+.web-micro {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: color-mix(in oklab, var(--web-world) 78%, white);
+}
+.web-micro::before {
+  content: '';
+  inline-size: 5px;
+  block-size: 5px;
+  flex: none;
+  transform: rotate(45deg);
+  background: var(--web-world);
+  box-shadow: 0 0 8px color-mix(in oklab, var(--web-world) 80%, transparent);
+}
+.web-sys-mark {
+  display: block;
+  inline-size: 26px;
+  block-size: 26px;
+  flex: none;
+  border: 1px solid color-mix(in oklab, var(--web-world) 55%, transparent);
+  box-shadow: inset 0 0 10px
+    color-mix(in oklab, var(--web-world) 20%, transparent);
+}
+.web-sys-mark--0 {
+  border-radius: 7px;
+  transform: rotate(45deg);
+}
+.web-sys-mark--1 {
+  border-radius: 50%;
+}
+.web-sys-mark--2 {
+  border-radius: 4px;
+}
+.web-sys-mark--3 {
+  border-radius: 50% 4px 50% 4px;
+  transform: rotate(45deg);
+}
+.web-sys-title {
+  font-size: 19px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--web-text);
+}
+.web-sys-body {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--web-muted);
+  margin: 0;
+}
+.web-sys-caps {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.web-sys-cap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--web-dim);
+}
+.web-sys-cap::before {
+  content: '';
+  inline-size: 14px;
+  block-size: 1px;
+  flex: none;
+  background: color-mix(in oklab, var(--web-world) 55%, transparent);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--web-world) 35%, transparent);
+}
+.web-sys-tech {
+  margin-block-start: 16px;
+  padding-block-start: 12px;
+  border-block-start: 1px dashed
+    color-mix(in oklab, var(--web-world) 22%, transparent);
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--web-faint);
+}
+
+/* ---- inline editing (mode='edit', Content Studio) ---- */
+
+/* The editable wrapper is layout-transparent: text stays in the inner content span so the host's
+   typography class still styles it. The hover outline uses `outline` (no reflow) and the pencil is
+   absolutely placed at the inline-start top corner (RTL-correct via logical inset). */
+.web-editable {
+  position: relative;
+  border-radius: 4px;
+  cursor: text;
+  transition: outline-color 0.12s ease;
+}
+
+.web-editable:hover {
+  outline: 1px dashed color-mix(in srgb, var(--web-accent) 65%, transparent);
+  outline-offset: 3px;
+}
+
+.web-editable--editing {
+  outline: 1px solid var(--web-accent);
+  outline-offset: 3px;
+  cursor: auto;
+}
+
+.web-editable-content {
+  outline: none;
+}
+
+.web-editable-content:empty[data-placeholder]::before {
+  content: attr(data-placeholder);
+  color: var(--web-faint);
+}
+
+.web-edit-pencil {
+  position: absolute;
+  inset-block-start: -10px;
+  inset-inline-start: -10px;
+  z-index: 2;
+  display: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--web-radius-pill);
+  background: var(--web-accent);
+  color: var(--web-accent-ink);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.web-editable:hover > .web-edit-pencil,
+.web-editable:focus-within > .web-edit-pencil {
+  display: grid;
+}
+
+/* Editable image (an `image` block in the studio): the frame is unchanged; a hover outline + a
+   corner "change image" button open the media picker. The wrapper is a positioned box tight to the
+   frame so the button pins to the inline-end top corner (RTL-correct via logical inset). */
+.web-editable-image {
+  position: relative;
+  display: block;
+  border-radius: var(--web-radius-md);
+  cursor: pointer;
+}
+
+.web-editable-image:hover {
+  outline: 1px dashed color-mix(in srgb, var(--web-accent) 65%, transparent);
+  outline-offset: 3px;
+}
+
+.web-edit-image-btn,
+.web-record-edit-btn {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 8px;
+  z-index: 3;
+  display: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: var(--web-radius-pill);
+  background: var(--web-accent);
+  color: var(--web-accent-ink);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.web-editable-image:hover > .web-edit-image-btn,
+.web-editable-image:focus-within > .web-edit-image-btn {
+  display: grid;
+}
+
+/* Collection-cover edit frame (work/testimonial/blog cards in the studio): a layout-neutral wrapper
+   that reveals a corner "edit record" button on hover, deep-linking to that record's editor. Only
+   mounted in `mode==='edit'` (the website never renders it). */
+.web-record-edit {
+  position: relative;
+  display: block;
+  block-size: 100%;
+}
+
+.web-record-edit:hover > .web-record-edit-btn,
+.web-record-edit:focus-within > .web-record-edit-btn {
+  display: grid;
+}
+
+/* ==========================================================================
+   trust — the domain constellation (shared; ported from the bespoke landing)
+   World-tinted on the site (the cosmos chapter sets `--lp-world`); the admin
+   preview has no cosmos, so `--web-world` falls back to `--web-accent`.
+   ========================================================================== */
+.web-trust {
+  --web-world: var(--lp-world, var(--web-accent));
+  position: relative;
+}
+.web-trust-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.web-trust-eyebrow {
+  margin: 0;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: color-mix(in oklab, var(--web-accent) 82%, white);
+}
+.sanad-web[dir='rtl'] .web-trust-eyebrow {
+  letter-spacing: 0;
+}
+.web-trust-title {
+  margin: 0;
+  font-size: clamp(28px, 3.6vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+}
+.web-trust-lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--web-muted);
+  max-inline-size: 62ch;
+}
+.web-trust-field {
+  inline-size: 100%;
+  margin-block-start: 8px;
+}
+/* the chips are the SMALL-SCREEN fallback for the constellation (breadth-starved viewports) */
+.web-trust-chips {
+  display: none;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-block-start: 44px;
+}
+.web-trust-chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 30px 20px;
+  min-inline-size: 150px;
+  border: 1px solid color-mix(in oklab, var(--web-world) 24%, transparent);
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 23, 0.72),
+    rgba(7, 11, 18, 0.55)
+  );
+  backdrop-filter: blur(12px);
+  transition:
+    border-color 0.45s ease,
+    box-shadow 0.45s ease,
+    transform 0.45s ease;
+}
+.web-trust-chip:hover {
+  border-color: color-mix(in oklab, var(--web-world) 55%, transparent);
+  box-shadow: 0 16px 46px color-mix(in oklab, var(--web-world) 16%, transparent);
+  transform: translateY(-4px);
+}
+.web-trust-chip-mark {
+  inline-size: 5px;
+  block-size: 5px;
+  background: var(--web-world);
+  border-radius: 1px;
+  transform: rotate(45deg);
+  box-shadow: 0 0 9px color-mix(in oklab, var(--web-world) 80%, transparent);
+}
+.web-trust-chip-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+}
+/* width capped against the viewport HEIGHT too (aspect 100:60) so the whole chapter —
+   heading + lead + figure — always fits the 100vh sticky stage without riding under the nav */
+.web-constellation {
+  position: relative;
+  inline-size: min(100%, 860px, 66vh);
+  margin-inline: auto;
+  margin-block-start: clamp(22px, 4vh, 40px);
+}
+.web-const-svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+}
+/* mirror the star GEOMETRY under RTL so the chain starts at the inline-start (WEB6);
+   the HTML labels anchor with logical insets so they re-flip onto their stars naturally */
+.sanad-web[dir='rtl'] .web-const-svg {
+  transform: scaleX(-1);
+}
+.web-const-line {
+  stroke: color-mix(in oklab, var(--web-world) 38%, transparent);
+  stroke-width: 1;
+  fill: none;
+}
+.web-const-core {
+  fill: color-mix(in oklab, var(--web-world) 85%, white);
+}
+.web-const-halo {
+  fill: var(--web-world);
+  opacity: 0.16;
+}
+.web-const-label {
+  position: absolute;
+  transform: translate(calc(-50% * var(--dir, 1)), 0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  pointer-events: auto;
+}
+.web-const-label .web-const-name {
+  transition:
+    color 0.35s ease,
+    text-shadow 0.35s ease;
+}
+.web-const-label:hover .web-const-name {
+  color: color-mix(in oklab, var(--web-world) 60%, white);
+  text-shadow:
+    0 0 22px color-mix(in oklab, var(--web-world) 55%, transparent),
+    0 1px 16px rgba(3, 6, 11, 0.9);
+}
+.web-const-label:hover .web-const-count {
+  color: color-mix(in oklab, var(--web-world) 78%, white);
+}
+.web-const-label--above {
+  transform: translate(calc(-50% * var(--dir, 1)), -100%) translateY(-16px);
+}
+.web-const-label--below {
+  transform: translate(calc(-50% * var(--dir, 1)), 0) translateY(16px);
+}
+.web-const-name {
+  font-size: clamp(14px, 1.5vw, 19px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+  text-shadow: 0 1px 16px rgba(3, 6, 11, 0.9);
+  white-space: nowrap;
+}
+.sanad-web:lang(ar) .web-const-name {
+  letter-spacing: 0;
+}
+.web-const-count {
+  font-family: var(--web-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: color-mix(in oklab, var(--web-world) 72%, white);
+  opacity: 0.85;
+}
+@media (max-width: 640px) {
+  /* the asterism needs breadth — small screens fall back to the labeled chips column */
+  .web-trust-chips {
+    display: flex;
+  }
+  .web-constellation {
+    display: none;
+  }
+  .web-const-name {
+    font-size: 13px;
+  }
+}
+
+/* ==========================================================================
+   work — the WEB10 case-study orbit (shared; ported from the bespoke landing)
+   Card + head + static-grid styling live here (admin preview + live both use them);
+   the LIVE pinned/scrubbed ring positioning + counter reveal are website motion
+   (landing.css `.web-works-track`/`--live`). World-tinted: the cosmos chapter sets
+   `--lp-world` (violet for works); the admin preview has no cosmos → `--web-accent`.
+   ========================================================================== */
+.web-works {
+  --web-world: var(--lp-world, var(--web-accent));
+  padding-block-end: 0;
+}
+.web-works-head {
+  inline-size: 100%;
+  text-align: center;
+}
+.web-works-eyebrow {
+  display: inline-block;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: color-mix(in oklab, var(--web-world) 82%, white);
+  margin: 0 0 14px;
+}
+.web-works-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--web-text);
+  margin: 0 0 14px;
+}
+.web-works-lead {
+  max-inline-size: 62ch;
+  margin: 0 auto;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--web-muted);
+}
+
+/* the static (admin preview / reduced-motion / SSR) figure — a calm grid of the cards */
+.web-orbit {
+  position: relative;
+  inline-size: 100%;
+}
+.web-orbit--static {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-block-start: clamp(28px, 5vh, 56px);
+}
+
+/* one case-study card (shared live + static) — cover on top, then the instrument readout */
+.web-orbit-card {
+  inline-size: 100%;
+  max-inline-size: 380px;
+  margin-inline: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--web-world) 22%, transparent);
+  border-radius: var(--web-radius-md);
+  background: color-mix(in oklab, var(--web-bg) 78%, #120d1c);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.45),
+    0 0 34px color-mix(in oklab, var(--web-world) 10%, transparent);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.web-orbit-card:hover {
+  border-color: color-mix(in oklab, var(--web-world) 55%, transparent);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.45),
+    0 0 52px color-mix(in oklab, var(--web-world) 22%, transparent);
+}
+.web-orbit-tilt {
+  transition: transform 0.18s ease-out;
+}
+.web-orbit-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+/* the cover — a fixed-ratio window; a resolved CDN image or a placeholder frame (never broken) */
+.web-orbit-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: color-mix(in oklab, var(--web-world) 8%, var(--web-bg));
+  border-block-end: 1px solid
+    color-mix(in oklab, var(--web-world) 18%, transparent);
+}
+.web-orbit-cover-img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+.web-orbit-cover-frame {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: color-mix(in oklab, var(--web-world) 45%, var(--web-faint));
+}
+.web-orbit-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-block-end: 1px solid
+    color-mix(in oklab, var(--web-world) 18%, transparent);
+  background: color-mix(in oklab, var(--web-world) 8%, transparent);
+}
+.web-orbit-client {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: color-mix(in oklab, var(--web-world) 70%, white);
+  min-inline-size: 0;
+}
+.web-orbit-client::before {
+  content: '';
+  inline-size: 4px;
+  block-size: 4px;
+  flex: none;
+  transform: rotate(45deg);
+  background: var(--web-world);
+  box-shadow: 0 0 7px color-mix(in oklab, var(--web-world) 85%, transparent);
+}
+.web-orbit-tag {
+  font-family: var(--web-mono);
+  font-size: 11px;
+  color: var(--web-world);
+  border: 1px solid color-mix(in oklab, var(--web-world) 22%, transparent);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+.web-orbit-body {
+  padding: 22px;
+}
+.web-orbit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-block-end: 12px;
+}
+.web-orbit-title {
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--web-text);
+}
+.web-orbit-challenge {
+  display: block;
+  margin: 0 0 4px;
+  font-family: var(--web-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  color: var(--web-faint);
+}
+.web-orbit-result {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-block-start: 16px;
+  padding: 12px 16px;
+  background: color-mix(in oklab, var(--web-world) 8%, transparent);
+  border-inline-start: 2px solid var(--web-world);
+}
+.web-orbit-result-value {
+  font-family: var(--web-mono);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--web-text);
+  white-space: nowrap;
+}
+.web-orbit-result-label {
+  font-size: 12.5px;
+  color: var(--web-dim);
+  line-height: 1.5;
+}
+.web-orbit-counter {
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: color-mix(in oklab, var(--web-text) 55%, transparent);
+}
+@media (max-width: 640px) {
+  .web-orbit--static {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- preview-only placeholder (empty section/block) ---- */
+
+.web-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+  flex: 1 1 100%;
+  padding: 24px;
+  border: 1px dashed var(--web-hairline-strong);
+  border-radius: var(--web-radius-md);
+  color: var(--web-faint);
+}
+
+.web-placeholder::after {
+  content: '—';
+}
+
+/* ==========================================================================
+   testimonials — the received-transmissions wall (ported from `.lp-quote*`/`.lp-trx*`;
+   world-tinted via `--web-world`, which falls back to `--web-accent` in the admin — no
+   cosmos there — so NO new design tokens, U6). Cards reuse the shared `.web-panel` frame.
+   ========================================================================== */
+.web-quotes {
+  --web-world: var(--lp-world, var(--web-accent));
+  inline-size: 100%;
+}
+.web-quotes-head {
+  inline-size: 100%;
+  text-align: center;
+  margin-block-end: clamp(28px, 5vh, 48px);
+}
+.web-quotes-eyebrow {
+  display: inline-block;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: color-mix(in oklab, var(--web-world) 82%, white);
+  margin: 0 0 14px;
+}
+.web-quotes-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--web-text);
+  margin: 0;
+}
+.web-quotes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+@media (max-width: 640px) {
+  .web-quotes-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* a received transmission — the shared `.web-panel` carries the bracket frame */
+.web-quote {
+  margin: 0;
+  padding: 30px 32px;
+}
+.web-trx-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-end: 16px;
+}
+.web-trx-rating {
+  display: inline-flex;
+  gap: 6px;
+}
+.web-trx-rating-mark {
+  inline-size: 6px;
+  block-size: 6px;
+  transform: rotate(45deg);
+  background: color-mix(in oklab, var(--web-world) 75%, white);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--web-world) 55%, transparent);
+}
+.web-trx-signal {
+  display: block;
+  inline-size: 100%;
+  block-size: 14px;
+  margin-block-end: 14px;
+  opacity: 0.5;
+}
+.web-trx-signal polyline {
+  fill: none;
+  stroke: color-mix(in oklab, var(--web-world) 55%, transparent);
+  stroke-width: 1;
+  /* pathLength=1 on the polyline normalizes the dash so the hover redraw below is exact */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+/* hovering a transmission re-receives it — the trace redraws once */
+@media (prefers-reduced-motion: no-preference) {
+  .web-quote:hover .web-trx-signal polyline {
+    animation: webSignalDraw 1.1s ease-out;
+  }
+  .web-quote:hover .web-trx-signal {
+    opacity: 0.85;
+  }
+  .web-trx-signal {
+    transition: opacity 0.4s ease;
+  }
+}
+@keyframes webSignalDraw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.web-quote-text {
+  font-size: 20px;
+  line-height: 1.85;
+  color: var(--web-text);
+  font-weight: 500;
+  margin: 0 0 22px;
+}
+.web-quote-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.web-avatar {
+  inline-size: 42px;
+  block-size: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--web-world), var(--web-accent));
+  flex-shrink: 0;
+}
+/* the resolved author photo — same disc footprint, cover-fit */
+.web-avatar-img {
+  object-fit: cover;
+  background: color-mix(in oklab, var(--web-world) 10%, var(--web-bg));
+}
+.web-quote-name {
+  display: block;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--web-text);
+}
+.web-quote-role {
+  display: block;
+  font-size: 13px;
+  color: var(--web-muted);
+}
+
+/* ==========================================================================
+   blog — the ship's-log teaser (ported from `.lp-log*`/`.lp-empty`/`.lp-link-arrow`;
+   world-tinted via `--web-world`; a cover-thumbnail cell added, U6 tokens-only).
+   ========================================================================== */
+.web-log-section {
+  --web-world: var(--lp-world, var(--web-accent));
+  inline-size: 100%;
+}
+.web-log-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-block-end: clamp(24px, 4vh, 40px);
+}
+.web-log-eyebrow {
+  display: block;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: color-mix(in oklab, var(--web-world) 82%, white);
+  margin: 0 0 14px;
+}
+.web-log-h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--web-text);
+  margin: 0;
+}
+.web-link-arrow {
+  color: var(--web-dim);
+  text-decoration: none;
+  font-size: 15px;
+  border-block-end: 1px solid var(--web-hairline-strong);
+  padding-block-end: 3px;
+  transition:
+    color 0.3s ease,
+    border-color 0.3s ease;
+}
+.web-link-arrow:hover {
+  color: var(--web-text);
+  border-color: var(--web-world);
+}
+.web-empty {
+  text-align: center;
+  color: var(--web-muted);
+  font-size: 15px;
+  padding-block: 40px;
+}
+.web-log {
+  border-block-start: 1px solid var(--web-hairline);
+}
+.web-log-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px 108px 128px minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding-block: 24px;
+  padding-inline: 6px;
+  border-block-end: 1px solid var(--web-hairline);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.35s ease;
+}
+/* rows without a cover keep the original 4-column rhythm (the cover cell collapses) */
+.web-log-row:not(:has(.web-log-cover)) {
+  grid-template-columns: 108px 128px minmax(0, 1fr) auto;
+}
+.web-log-row::after {
+  content: '';
+  position: absolute;
+  inset-block-end: -1px;
+  inset-inline: 0;
+  block-size: 1px;
+  background: linear-gradient(90deg, var(--web-world), transparent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.5s ease;
+}
+.sanad-web[dir='rtl'] .web-log-row::after {
+  background: linear-gradient(-90deg, var(--web-world), transparent);
+  transform-origin: right center;
+}
+.web-log-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+.web-log-row:hover::after {
+  transform: scaleX(1);
+}
+.web-log-cover {
+  display: block;
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: var(--web-radius-sm);
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--web-world) 18%, transparent);
+}
+.web-log-cover-img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+.web-log-date {
+  font-family: var(--web-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  color: var(--web-faint);
+}
+.web-log-cat {
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: color-mix(in oklab, var(--web-world) 80%, white);
+}
+.web-log-title {
+  margin: 0;
+  font-size: clamp(17px, 1.6vw, 20px);
+  font-weight: 600;
+  color: var(--web-text);
+}
+.web-log-excerpt {
+  margin: 7px 0 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--web-muted);
+  max-inline-size: 58ch;
+}
+.web-log-arrow {
+  font-family: var(--web-mono);
+  font-size: 14px;
+  color: var(--web-faint);
+  transition: color 0.3s ease;
+}
+.web-log-row:hover .web-log-arrow {
+  color: color-mix(in oklab, var(--web-world) 80%, white);
+}
+@media (max-width: 720px) {
+  .web-log-row,
+  .web-log-row:not(:has(.web-log-cover)) {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    row-gap: 8px;
+    align-items: baseline;
+  }
+  .web-log-cover {
+    grid-row: 1 / span 2;
+  }
+  .web-log-date,
+  .web-log-cat {
+    grid-column: 2;
+  }
+  .web-log-main {
+    grid-column: 2;
+  }
+  .web-log-arrow {
+    grid-row: 1;
+    grid-column: 3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .web-log-row,
+  .web-log-row::after,
+  .web-trx-signal {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Phase 5 — marketing-page section types (richtext prose / faq accordion / team
+   roster). Ported from the website's `.mk-*` marketing primitives, world-tinted via
+   `--web-world` (→ `--web-accent` in the admin, no cosmos) so NO new tokens (U6);
+   logical properties throughout (RTL, U7).
+   ========================================================================== */
+
+/* ---- richtext: the prose band (head + Quill-authored block HTML) ---- */
+.web-richtext-section {
+  --web-world: var(--lp-world, var(--web-accent));
+  inline-size: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vh, 32px);
+}
+.web-richtext-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.web-richtext-eyebrow {
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: color-mix(in oklab, var(--web-world) 82%, white);
+  margin: 0;
+}
+.web-richtext-title {
+  font-size: clamp(24px, 3.4vw, 38px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--web-text);
+  margin: 0;
+}
+.web-richtext-lead {
+  font-size: clamp(15px, 1.6vw, 18px);
+  line-height: 1.7;
+  color: var(--web-muted);
+  margin: 0;
+  max-inline-size: 68ch;
+}
+.web-richtext-prose {
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.8;
+  color: var(--web-dim);
+  max-inline-size: 74ch;
+}
+
+/* ---- faq: the disclosure accordion ---- */
+.web-faq {
+  --web-world: var(--lp-world, var(--web-accent));
+  inline-size: 100%;
+}
+.web-faq-head {
+  inline-size: 100%;
+  text-align: center;
+  margin-block-end: clamp(24px, 4vh, 40px);
+}
+.web-faq-eyebrow {
+  display: inline-block;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: color-mix(in oklab, var(--web-world) 82%, white);
+  margin: 0 0 14px;
+}
+.web-faq-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--web-text);
+  margin: 0;
+}
+.web-faq-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* each item is a `.web-panel`; the button + answer own the padding so the whole
+   header row is clickable edge-to-edge */
+.web-faq-item {
+  padding: 0;
+  overflow: hidden;
+}
+.web-faq-q {
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: clamp(16px, 2vw, 20px);
+  padding-inline: clamp(18px, 2.4vw, 26px);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: start;
+  color: var(--web-text);
+  font-family: inherit;
+  font-size: clamp(16px, 1.5vw, 18px);
+  font-weight: 600;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+}
+.web-faq-q:hover {
+  color: color-mix(in oklab, var(--web-accent) 40%, var(--web-text));
+}
+.web-faq-q-text {
+  flex: 1;
+}
+/* a small caret drawn from two borders; the rotation is symmetric so it is RTL-safe */
+.web-faq-chevron {
+  flex: none;
+  inline-size: 10px;
+  block-size: 10px;
+  border-inline-end: 2px solid
+    color-mix(in oklab, var(--web-accent) 60%, var(--web-dim));
+  border-block-end: 2px solid
+    color-mix(in oklab, var(--web-accent) 60%, var(--web-dim));
+  transform: rotate(45deg);
+  transition: transform 0.3s ease;
+  margin-block-end: 4px;
+}
+.web-faq-item[data-open='true'] .web-faq-chevron {
+  transform: rotate(-135deg);
+  margin-block: 4px 0;
+}
+.web-faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s ease;
+}
+.web-faq-item[data-open='true'] .web-faq-answer {
+  grid-template-rows: 1fr;
+}
+.web-faq-answer-inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-inline: clamp(18px, 2.4vw, 26px);
+  padding-block-end: clamp(18px, 2.2vw, 24px);
+}
+.web-faq-cat {
+  font-family: var(--web-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--web-accent) 70%, var(--web-muted));
+}
+.web-faq-answer-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--web-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+  .web-faq-answer,
+  .web-faq-chevron {
+    transition: none;
+  }
+}
+
+/* ---- team: the roster grid ---- */
+.web-team {
+  --web-world: var(--lp-world, var(--web-accent));
+  inline-size: 100%;
+}
+.web-team-head {
+  inline-size: 100%;
+  text-align: center;
+  margin-block-end: clamp(24px, 4vh, 40px);
+}
+.web-team-eyebrow {
+  display: inline-block;
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: color-mix(in oklab, var(--web-world) 82%, white);
+  margin: 0 0 14px;
+}
+.web-team-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--web-text);
+  margin: 0;
+}
+.web-team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .web-team-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .web-team-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.web-team-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  block-size: 100%;
+  padding: 26px 22px;
+}
+.web-team-avatar {
+  inline-size: 88px;
+  block-size: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--web-hairline-strong);
+  background: radial-gradient(
+    120% 120% at 30% 20%,
+    color-mix(in oklab, var(--web-world) 24%, transparent),
+    color-mix(in oklab, var(--web-text) 4%, transparent) 68%
+  );
+}
+.web-team-avatar-img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+.web-team-avatar-fallback {
+  font-family: var(--web-mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--web-world) 30%, var(--web-text));
+}
+.web-team-name {
+  margin: 4px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--web-text);
+}
+.web-team-role {
+  color: var(--web-muted);
+  margin: 0;
+  font-size: 14px;
+}
+.web-team-social {
+  display: flex;
+  gap: 8px;
+  margin-block-start: 4px;
+}
+.web-team-pill {
+  font-family: var(--web-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--web-dim);
+  padding: 7px 14px;
+  border-radius: var(--web-radius-pill);
+  border: 1px solid var(--web-hairline);
+  background: color-mix(in oklab, var(--web-text) 4%, transparent);
+  transition:
+    border-color 0.3s ease,
+    color 0.3s ease;
+}
+.web-team-pill:hover {
+  color: var(--web-text);
+  border-color: color-mix(in oklab, var(--web-accent) 40%, transparent);
+}
