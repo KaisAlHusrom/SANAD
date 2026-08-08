@@ -4,6 +4,10 @@
   "license": "UNLICENSED",
   "private": true,
   "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20.19.0 <21",
+    "pnpm": ">=9.15.4 <10"
+  },
   "scripts": {
     "build": "nx run-many -t build",
     "typecheck": "nx run-many -t typecheck",

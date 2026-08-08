@@ -53,7 +53,7 @@ infra/
 App images built from source (multi-stage). Media/assets on **Cloudflare R2** + CDN (media-service). DB backups pushed to R2.
 
 ## CI/CD
-Start with script-driven deploy over SSH (as in the reference). Pre-push hooks (lint/typecheck/build/test) gate every push (OPS4). A GitHub Actions pipeline calling the same scripts can be added later — the scripts return proper exit codes.
+Start with script-driven deploy over SSH (as in the reference). The verification gate runs in three layers (OPS4): pre-commit `lint-staged`, pre-push `nx affected -t typecheck lint test`, and **`.github/workflows/ci.yml`** (added 2026-08-08) running the full `nx run-many -t typecheck lint test build` on every push to `main` and every PR — reporting, not blocking. Deploy is **not** wired into Actions yet; when it is, it calls the same `infra/scripts/*` (they return proper exit codes) and gets its own workflow, gated on the CI one.
 
 ## Deploy order for the priority milestone (P9)
 1. Provision staging host; `validate_env.sh`. 2. Deploy services (identity/settings/media/content/notifications) + gateway + admin + website to **staging**; migrate; health-check; smoke-test. 3. Promote to **production** (same flow). 4. Confirm SSL valid, health green, a DB backup produced (+ R2). Mark P9 done only on green.

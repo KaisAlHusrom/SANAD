@@ -1,2 +1,59 @@
-# Full gate before code leaves the machine (U12 / OPS4 — never bypass with --no-verify).
-pnpm nx run-many -t typecheck lint test build
+# Pre-push gate (U12 / OPS4 — never bypass with --no-verify).
+#
+# Runs typecheck + lint + test over ONLY what this push changes. `build` is no longer run here:
+# .github/workflows/ci.yml re-runs the complete `nx run-many` gate over every project on push.
+#
+# Husky runs this under `sh -e` with node_modules/.bin on PATH, so `nx` is called directly and
+# every branch is an `if` block (errexit would abort on a bare `a && b`).
+
+ZERO=0000000000000000000000000000000000000000
+
+# OPS5 — host `nx` while the dev stack is up can wedge the containers' task runners.
+if command -v docker >/dev/null 2>&1; then
+  if [ -n "$(docker ps -q --filter label=com.docker.compose.project=sanad-dev 2>/dev/null)" ]; then
+    echo "pre-push: the sanad-dev stack is UP — a host 'nx' run violates OPS5." >&2
+    echo "          infra/scripts/dev-down.sh  ->  git push  ->  infra/scripts/dev-up.sh" >&2
+    exit 1
+  fi
+fi
+
+# git feeds this hook one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
+# <remote sha> is read from the remote during THIS push, so it is never stale and needs no
+# fetch. It is 40 zeros when the remote branch does not exist yet.
+BASE=''
+HEAD_SHA=''
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  if [ "$local_sha" = "$ZERO" ]; then
+    continue
+  fi
+  HEAD_SHA="$local_sha"
+  if [ "$remote_sha" != "$ZERO" ]; then
+    if git cat-file -e "${remote_sha}^{commit}" 2>/dev/null; then
+      BASE="$remote_sha"
+    fi
+  fi
+  break
+done
+
+# Deletion-only push, or nothing readable on stdin.
+if [ -z "$HEAD_SHA" ]; then
+  exit 0
+fi
+
+# New remote branch, or a remote commit we don't have locally. Nx reduces the base to the
+# merge-base, so a stale origin/main only ever WIDENS the affected set.
+if [ -z "$BASE" ]; then
+  if git rev-parse --verify --quiet refs/remotes/origin/main >/dev/null 2>&1; then
+    BASE='origin/main'
+    echo "pre-push: no usable remote sha for this ref — narrowing against origin/main."
+  fi
+fi
+
+# No remote ref at all: run everything rather than silently verifying nothing.
+if [ -z "$BASE" ]; then
+  echo "pre-push: no push base could be determined — running the FULL gate."
+  exec nx run-many -t typecheck lint test build --parallel=4
+fi
+
+echo "pre-push: nx affected --base=$BASE --head=$HEAD_SHA -t typecheck lint test"
+exec nx affected --base="$BASE" --head="$HEAD_SHA" -t typecheck lint test --parallel=4

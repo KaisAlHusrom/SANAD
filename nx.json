@@ -1,5 +1,8 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  // `nx affected` with no --base resolves to `defaultBase ?? 'main'`. Pushing to main FROM main
+  // makes merge-base(main, HEAD) === HEAD → zero affected projects → a gate that checks nothing.
+  "defaultBase": "origin/main",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
@@ -10,7 +13,17 @@
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/src/test-setup.[jt]s"
     ],
-    "sharedGlobals": []
+    // Reaches every target that uses the `default`/`production` named inputs — NOT the
+    // `@nx/js/typescript` ones, which carry an explicit file list. `eslint.config.mjs` is
+    // deliberately absent: already an input to every `lint` target, and putting it here would
+    // invalidate the whole repo on a lint-rule tweak.
+    "sharedGlobals": [
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/pnpm-workspace.yaml",
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/tsconfig.json",
+      "{workspaceRoot}/nx.json"
+    ]
   },
   "plugins": [
     {
@@ -60,7 +73,10 @@
       "options": {
         "testTargetName": "test",
         "ciTargetName": "test-ci",
-        "testMode": "watch"
+        // `run`, not `watch`: makes the inferred command `vitest run` instead of relying on all
+        // 17 vitest.config.mts keeping `watch: false`. Never set CI=1 to achieve this — `{env:
+        // 'CI'}` is a hash input on this target, so it would fork the local test cache.
+        "testMode": "run"
       }
     }
   ],
