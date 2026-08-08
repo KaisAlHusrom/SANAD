@@ -7,6 +7,7 @@ out-tsc
 
 # dependencies
 node_modules
+.pnpm-store
 
 # env files — real env is gitignored (OPS1); only *.example templates are committed
 .env
