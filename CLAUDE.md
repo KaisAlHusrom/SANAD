@@ -53,7 +53,7 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 
 1. **Read `.claude/rules.md`** — the binding law (MUST/NEVER). Non-negotiable.
 2. **Read `.claude/docs/PROGRESS.md`** — current state, next step, decisions, open issues.
-3. **Read the relevant `.claude/plans/*`** — `02-mvp.md` for the next phase, plus the matching deep plan (`01-architecture`, `03-microservices-platform`, `04-website`, `05-deployment`, `06-ai-assistant`).
+3. **Read the relevant `.claude/plans/*`** — `02-mvp.md` for the next phase, plus the matching deep plan (`01-architecture`, `03-microservices-platform`, `04-website`, `05-deployment`, `06-ai-assistant`, `07-shared-ui-systems`, **`08-client-intake`** for P8.13–P8.20, **`09-client-portal`** for P8.21–P8.22).
 4. **Build** following the rules + architecture. **TDD**: write the failing test first. Keep the module's `<module>.md` doc in the same change.
 5. **Update `PROGRESS.md`** — what was done, what's next, decisions made, issues hit.
 6. **Run the `verifier` agent** — it must report **PASS** before a phase is marked done. **Then run the `boot-verifier` agent** — bring up the Docker dev stack and confirm it actually runs (gateway answers through nginx, the phase's routes are mapped, no crash-looped container). The verifier checks *code*; boot-verifier checks *runtime* — a phase isn't done until both are green.

@@ -33,9 +33,18 @@ Report exact failing output. Any red → **FAIL**.
 - **DOC1:** every module touched this phase has a `<module>.md` updated in the same change (compare git status / mtimes).
 - **U8/F13 i18n parity:** for touched modules, `ar.json` and `en.json` have identical key trees.
 - **TDD2:** test configs point DB tests at `*_test` databases, never dev/prod.
+- **U26 logic unit = folder + spec:** every file carrying logic (`*.service.ts`, `*.controller.ts`, `*.repository.ts`, `*.consumer.ts`, `*.guard.ts`, `*.util.ts`, `*.slice.ts`, `use-*.ts`, component `.tsx`) must sit in a folder named after its **concept**, containing the source and — if a spec exists — the spec beside it. A logic file loose in a kind folder next to other logic files → **FAIL** with `file:line`. Declaration-only files (`*.types.ts`, `*.zod.types.ts`, enums, tables, events, errors, tokens) sit loose in their kind folder and are **not** violations. A multi-unit `*.e2e.spec.ts` at a layer root is the one allowed carve-out. Also confirm no central `tests/` / `__tests__/` / `spec/` tree exists.
+- **U27 event chain:** (a) every `@EventPattern`, every Outbox enqueue, and every `EVENT_BUS.publish` resolves to an entry in `libs/contracts` `EVENT_CATALOG` — an undeclared event name → **FAIL**; (b) every catalog entry either lists ≥1 consumer **or** carries an explicit `consumers: []` **with a stated reason** — a bare empty consumer list with no reason → **FAIL**; (c) no event name is declared twice (U3); (d) for the phase's new write paths, confirm the plan states which *existing* events the new module subscribes to, and that those subscriptions exist in code. A feature that only emits, or only listens, is half-wired.
+- **U0 states:** for every surface touched this phase, confirm loading / empty / error / read-only / permission-denied states exist in code (not just the happy path), and that every mutation surfaces both success and a **named** failure cause. An empty or comment-only `catch` → **FAIL** (U23).
+- **U29 running environment:** confirm the session restarted whatever was already up (dev stack / dev server / watchers) after the change — a "verified by looking" run against a server started before the work does not count.
 
 ### 3. Acceptance
 Re-read the current phase's **"Done when"** and confirm it is actually demonstrable (test exists / endpoint behaves / stack boots). State explicitly whether it's met.
+
+**U0 is the bar, and it outranks everything else here.** A phase that is mechanically green but ships a
+surface that merely works — a raw JSON textarea or key/value grid where the domain has a known shape, a
+missing state, an overlay that clips or scrolls the page behind it, an untested direction or theme — is a
+**FAIL**, not a follow-up. Say so plainly and name the surface.
 
 ## Output format
 ```
