@@ -13,5 +13,6 @@ export * from './user-create.zod.types.js';
 export * from './user-update.zod.types.js';
 export * from './user-role-assign.zod.types.js';
 export * from './role-summary.types.js';
+export * from './user-event.zod.types.js';
 export * from './permission.js';
 export * from './message-pattern.js';

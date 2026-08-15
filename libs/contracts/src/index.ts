@@ -2,6 +2,7 @@
 // Barrel only: re-exports the per-concept files (U10).
 export * from './lib/common/locale.js';
 export * from './lib/common/locale-header.js';
+export * from './lib/common/request-context.zod.types.js';
 export * from './lib/common/direction.js';
 export * from './lib/common/localized-text.js';
 export * from './lib/common/localized-message.js';
@@ -10,9 +11,12 @@ export * from './lib/common/pagination.js';
 export * from './lib/common/paginated.types.js';
 export * from './lib/common/list-query.js';
 export * from './lib/common/boolean-param.js';
+export * from './lib/money/index.js';
+export * from './lib/sequence/index.js';
 export * from './lib/identity/index.js';
 export * from './lib/settings/index.js';
 export * from './lib/media/index.js';
 export * from './lib/content/index.js';
 export * from './lib/notifications/index.js';
 export * from './lib/dashboard/index.js';
+export * from './lib/events/index.js';

@@ -7,7 +7,12 @@ import {
 import { resolveRequestSchema } from './resolve.zod.types.js';
 import { brandingUpdateRequestSchema } from './branding-update.zod.types.js';
 import { SETTINGS_PERMISSIONS } from './permission.js';
-import { SETTINGS_BRANDING_GET, SETTINGS_RESOLVE } from './message-pattern.js';
+import {
+  SETTINGS_BRANDING_GET,
+  SETTINGS_CHANGED_EVENT,
+  SETTINGS_RESOLVE,
+} from './message-pattern.js';
+import { settingsChangedEventSchema } from './settings-event.zod.types.js';
 
 describe('settings contracts', () => {
   it('enumerates setting types and scopes', () => {
@@ -71,5 +76,38 @@ describe('settings contracts', () => {
     expect(SETTINGS_PERMISSIONS.manage).toBe('settings.manage');
     expect(SETTINGS_BRANDING_GET).toBe('settings.branding.get');
     expect(SETTINGS_RESOLVE).toBe('settings.resolve');
+  });
+
+  it('validates the settings.changed event payload, scopeId included (U27)', () => {
+    expect(SETTINGS_CHANGED_EVENT).toBe('settings.changed');
+    expect(
+      settingsChangedEventSchema.safeParse({
+        group: 'branding',
+        scope: 'global',
+        scopeId: null,
+      }).success,
+    ).toBe(true);
+    expect(
+      settingsChangedEventSchema.safeParse({
+        group: 'branding',
+        scope: 'client',
+        scopeId: 'acme',
+      }).success,
+    ).toBe(true);
+    // scopeId is required — a consumer that cannot tell WHICH scope moved would have to
+    // drop every cached scope.
+    expect(
+      settingsChangedEventSchema.safeParse({
+        group: 'branding',
+        scope: 'global',
+      }).success,
+    ).toBe(false);
+    expect(
+      settingsChangedEventSchema.safeParse({
+        group: 'branding',
+        scope: 'nowhere',
+        scopeId: null,
+      }).success,
+    ).toBe(false);
   });
 });

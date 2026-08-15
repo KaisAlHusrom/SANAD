@@ -12,3 +12,9 @@ export const IDENTITY_USERS_UPDATE = 'identity.users.update';
 export const IDENTITY_USERS_ROLE_ASSIGN = 'identity.users.role-assign';
 export const IDENTITY_USERS_ROLE_REVOKE = 'identity.users.role-revoke';
 export const IDENTITY_ROLES_LIST = 'identity.roles.list';
+
+/**
+ * Emitted (Outbox, MS3) when a user account first exists. Uses the `<entity>.<event>` event
+ * convention, not the request/reply one above. Declared in the `EVENT_CATALOG` (U27).
+ */
+export const USER_REGISTERED_EVENT = 'user.registered';

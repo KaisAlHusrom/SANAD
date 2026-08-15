@@ -10,7 +10,9 @@ import {
   IDENTITY_ROLES_LIST,
   IDENTITY_USERS_CREATE,
   IDENTITY_USERS_LIST,
+  USER_REGISTERED_EVENT,
 } from './message-pattern.js';
+import { userRegisteredEventSchema } from './user-event.zod.types.js';
 
 describe('identity contracts', () => {
   it('accepts a valid login and rejects unknown keys (strict, N7)', () => {
@@ -103,6 +105,32 @@ describe('identity contracts', () => {
     ).toBe(true);
     expect(
       userRoleAssignSchema.safeParse({ userId: id, role: 'wizard' }).success,
+    ).toBe(false);
+  });
+
+  it('validates the user.registered event payload (U27)', () => {
+    expect(USER_REGISTERED_EVENT).toBe('user.registered');
+    expect(
+      userRegisteredEventSchema.safeParse({
+        userId: crypto.randomUUID(),
+        email: 'admin@sanad.tech',
+        name: 'Administrator',
+      }).success,
+    ).toBe(true);
+    expect(
+      userRegisteredEventSchema.safeParse({
+        userId: 'not-a-uuid',
+        email: 'admin@sanad.tech',
+        name: 'Administrator',
+      }).success,
+    ).toBe(false);
+    expect(
+      userRegisteredEventSchema.safeParse({
+        userId: crypto.randomUUID(),
+        email: 'admin@sanad.tech',
+        name: 'Administrator',
+        password: 'leaked',
+      }).success,
     ).toBe(false);
   });
 });

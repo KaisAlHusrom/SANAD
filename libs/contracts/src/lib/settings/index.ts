@@ -5,6 +5,7 @@ export * from './branding.types.js';
 export * from './resolve.zod.types.js';
 export * from './branding-update.zod.types.js';
 export * from './settings-update.zod.types.js';
+export * from './settings-event.zod.types.js';
 export * from './setting-catalog.types.js';
 export * from './integration-catalog.js';
 export * from './integration-status.types.js';
