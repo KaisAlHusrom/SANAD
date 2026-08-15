@@ -41,3 +41,18 @@ volume**: a database added to that file after the dev stack first booted never a
 existing machine, so the suite needing it would "skip cleanly" forever — green, and proving nothing
 (the 2026-07-19 false-green class). It throws with the underlying reason rather than swallowing it,
 so a caller that cannot create its database says why.
+
+## `testing/require-db-tests/` — make a skip a failure where the DB is guaranteed
+
+`failIfDbTestsRequired(url, cause)` throws when `REQUIRE_DB_TESTS=1` and the database could not be
+reached, instead of letting the suite degrade to `describe.skip`. Called from the `catch` of every
+`*.int.spec.ts` `tryConnect()`; the connection string is redacted in the message and the original
+error is attached as `cause`.
+
+Skipping is **correct locally** — OPS5 keeps the dev stack DOWN for the verifier, so Postgres
+genuinely is not there. It was **wrong in CI**: the workflow had no Postgres service, so all nine
+integration suites had never executed once while reporting green. `.github/workflows/ci.yml` now
+runs a `postgres:16-alpine` service on the same port and credentials as the dev stack, seeds it
+with `infra/postgres/init/01-create-databases.sql`, and sets `REQUIRE_DB_TESTS=1` — so a skip there
+is now a hard failure. Verified by running a suite with the flag set and no database: it fails with
+the named error rather than passing quietly.

@@ -7,7 +7,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { eq, sql } from 'drizzle-orm';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
-import { DateTimeService } from '@sanad/database';
+import { DateTimeService, failIfDbTestsRequired } from '@sanad/database';
 import {
   blockTable,
   schema,
@@ -65,8 +65,9 @@ async function tryConnect(): Promise<pg.Pool | null> {
     await pool.query('select 1');
     await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
-  } catch {
+  } catch (error) {
     await pool.end().catch(() => undefined);
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
 }

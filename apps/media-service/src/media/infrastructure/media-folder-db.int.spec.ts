@@ -7,7 +7,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DateTimeService } from '@sanad/database';
+import { DateTimeService, failIfDbTestsRequired } from '@sanad/database';
 import { schema, type MediaDb } from '../../db/schema/index.js';
 import { MediaFolderService } from '../application/media-folder.service.js';
 import { MediaAssetRepository } from './persistence/media-asset.repository.js';
@@ -35,8 +35,9 @@ async function tryConnect(): Promise<pg.Pool | null> {
     await pool.query('select 1');
     await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
-  } catch {
+  } catch (error) {
     await pool.end().catch(() => undefined);
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
 }

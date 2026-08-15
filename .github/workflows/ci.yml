@@ -36,6 +36,27 @@ jobs:
       HUSKY: '0'
       NX_TUI: 'false'
       NODE_OPTIONS: '--max-old-space-size=4096'
+      # The nine `*.int.spec.ts` suites degrade to `describe.skip` when Postgres is unreachable.
+      # That is right locally (OPS5 keeps the stack DOWN for the verifier) but it meant they had
+      # NEVER run in CI — nine suites reporting green while proving nothing. With the service
+      # below provisioned, a skip here is a lie, so make it a hard failure instead (TDD2).
+      REQUIRE_DB_TESTS: '1'
+
+    # Matches the dev stack: same credentials, same host port (5440) the int specs hardcode.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sanad
+          POSTGRES_PASSWORD: sanad
+          POSTGRES_DB: sanad
+        ports:
+          - 5440:5432
+        options: >-
+          --health-cmd "pg_isready -U sanad -d sanad"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -74,6 +95,15 @@ jobs:
       # form BEFORE any task, so drift fails the job instead of being silently repaired mid-run.
       - name: Check Nx workspace sync
         run: pnpm nx sync:check
+
+      # Same script the dev stack's postgres runs on first boot, so CI and dev agree on the
+      # database list. `ensureTestDatabase()` also self-heals a missing `*_test`, but creating
+      # them up front keeps a suite from being the first thing to discover the gap.
+      - name: Create service + test databases
+        run: |
+          PGPASSWORD=sanad psql -h localhost -p 5440 -U sanad -d sanad \
+            -v ON_ERROR_STOP=1 -f infra/postgres/init/01-create-databases.sql
+          PGPASSWORD=sanad psql -h localhost -p 5440 -U sanad -d sanad -c '\l'
 
       - name: Gate
         run: pnpm nx run-many -t typecheck lint test build --parallel=3 --output-style=stream

@@ -5,7 +5,11 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
-import { DateTimeService, DrizzleTransactionRunner } from '@sanad/database';
+import {
+  DateTimeService,
+  DrizzleTransactionRunner,
+  failIfDbTestsRequired,
+} from '@sanad/database';
 import type { LeadCreatedEvent } from '@sanad/contracts';
 import {
   notificationTable,
@@ -41,8 +45,9 @@ async function tryConnect(): Promise<pg.Pool | null> {
     await pool.query('select 1');
     await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
-  } catch {
+  } catch (error) {
     await pool.end().catch(() => undefined);
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
 }

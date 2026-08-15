@@ -6,7 +6,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
-import { DateTimeService } from '@sanad/database';
+import { DateTimeService, failIfDbTestsRequired } from '@sanad/database';
 import { schema, type SettingsDb } from '../../db/schema/index.js';
 import type { SettingsEnv } from '../../env.js';
 import { SecretCipherService } from '../application/crypto/secret-cipher.service.js';
@@ -39,6 +39,7 @@ async function tryConnect(): Promise<pg.Pool | null> {
       `settings_test unavailable (${String(error instanceof Error ? error.message : error)})`,
     );
     await pool.end().catch(() => undefined);
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
 }

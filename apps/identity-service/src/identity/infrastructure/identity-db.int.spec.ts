@@ -5,7 +5,11 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
-import { DateTimeService, type TransactionRunner } from '@sanad/database';
+import {
+  DateTimeService,
+  failIfDbTestsRequired,
+  type TransactionRunner,
+} from '@sanad/database';
 import type { RpcException } from '@nestjs/microservices';
 import { HttpStatus } from '@nestjs/common';
 import { schema, type IdentityDb } from '../../db/schema/index.js';
@@ -33,8 +37,9 @@ async function tryConnect(): Promise<pg.Pool | null> {
     await pool.query('select 1');
     await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
-  } catch {
+  } catch (error) {
     await pool.end().catch(() => undefined);
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
 }

@@ -5,7 +5,11 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
-import { DateTimeService, ensureTestDatabase } from '@sanad/database';
+import {
+  DateTimeService,
+  ensureTestDatabase,
+  failIfDbTestsRequired,
+} from '@sanad/database';
 import {
   AUDIT_IMMUTABILITY_ERROR_CODE,
   AUDIT_IMMUTABILITY_SQL,
@@ -60,6 +64,7 @@ async function tryConnect(): Promise<pg.Pool | null> {
     console.warn(
       `audit_test could not be created (${String(error instanceof Error ? error.message : error)})`,
     );
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
   const pool = new pg.Pool({
@@ -79,6 +84,7 @@ async function tryConnect(): Promise<pg.Pool | null> {
       `audit_test unavailable (${String(error instanceof Error ? error.message : error)})`,
     );
     await pool.end().catch(() => undefined);
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
 }

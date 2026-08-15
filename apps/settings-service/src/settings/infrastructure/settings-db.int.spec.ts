@@ -17,6 +17,7 @@ import {
   DateTimeService,
   DrizzleTransactionRunner,
   TranslatableRepository,
+  failIfDbTestsRequired,
 } from '@sanad/database';
 import {
   schema,
@@ -54,8 +55,9 @@ async function tryConnect(): Promise<pg.Pool | null> {
     await pool.query('select 1');
     await migrate(drizzle(pool), { migrationsFolder: MIGRATIONS_DIR });
     return pool;
-  } catch {
+  } catch (error) {
     await pool.end().catch(() => undefined);
+    failIfDbTestsRequired(TEST_DB_URL, error);
     return null;
   }
 }
