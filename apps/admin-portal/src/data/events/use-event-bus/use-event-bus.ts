@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { DomainEventOf, DomainEventType } from './domain-event.types';
-import { eventBus } from './event-bus';
+import type { DomainEventOf, DomainEventType } from '../domain-event.types';
+import { eventBus } from '../event-bus';
 
 /**
  * Subscribe a component to a domain event for its lifetime (W4/F5). The handler is

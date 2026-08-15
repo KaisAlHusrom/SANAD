@@ -21,7 +21,7 @@ src/
     api/             api-registry, base-query (baseQueryWithAuth), transform-error
     auth/            auth.slice, auth.storage, permissions (re-exports @sanad/contracts RBAC), constants
     confirm/         confirm-store (singleton), use-confirm, confirm.types  (P7.C kit)
-    events/          event-bus (typed pub/sub), use-event-bus, domain-event.types
+    events/          event-bus/ + use-event-bus/ (concept folders, U26), domain-event.types
     modal/           modal.slice, modal-registry (singleton), use-modal  (global modal registry)
     store/           store (createAppStore), hooks (typed), types (import type only), register-apis
     toast/           toast-store (singleton), use-toast (+ `toast`), toast.types  (P7.C kit)
@@ -50,7 +50,7 @@ src/
 - **the locale header (U24c)** — `prepareHeaders` is also THE one place the portal tells the backend which language to answer in: `x-sanad-locale` (`LOCALE_HEADER` from `@sanad/contracts`) = `resolveLocale(i18n.language)`, sent on **every** request including `ar` (the in-app language beats the device, F11, and the backend must never have to guess). The gateway renders every `message`/error from that locale, so `ApiError.message` is already translated — the portal never maps a backend string to a local one. See [`libs/shared/i18n/i18n.md`](../../libs/shared/i18n/i18n.md).
 - **`apiRegistry`** — feature api modules `registerApi(theApi)` at import; `createAppStore()` reads `getRegisteredApis()` and wires reducers + middleware once. Adding a module never edits the store (a line in `data/store/register-apis.ts`).
 - **auth slice** — `access`/`refresh`/`identity`, seeded **synchronously** from localStorage at module load (F12); persisted via a store subscriber (reducers stay pure). Permissions come from `GET /auth/me` → `IdentityContext` (no client-side JWT decode — N12 trap avoided).
-- **client event bus** — typed `eventBus.publish/subscribe/subscribeTo` over a `DomainEvent` union; mutations publish in `onQueryStarted` after success (W4), cross-module reads subscribe + invalidate (F5).
+- **client event bus** — typed `eventBus.publish/subscribe/subscribeTo` over a `DomainEvent` union; mutations publish in `onQueryStarted` after success (W4), cross-module reads subscribe + invalidate (F5). **Since P8.7 that union is DERIVED from the `EVENT_CATALOG` in `@sanad/contracts`** (`DomainEvent = ClientBusEvent<'admin-portal'>`, `import type` only so no zod reaches the bundle): publishing an event the catalog does not declare — or one with the wrong payload — is a compile error, and a new admin event is added by adding its `*.event.ts` to the catalog, never by widening a union here (U27c).
 
 ## Shared UI kit — feedback & modals (P7.C Phase 0, Wave 1)
 

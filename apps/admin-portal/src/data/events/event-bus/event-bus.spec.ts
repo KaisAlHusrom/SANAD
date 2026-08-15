@@ -40,4 +40,23 @@ describe('EventBus', () => {
 
     expect(handler).not.toHaveBeenCalled();
   });
+
+  // The probes below assert a compile error EXISTS (U27c) — the bus union is derived from the
+  // EVENT_CATALOG, so an undeclared name or a wrong payload cannot be published. Note
+  // `@ts-expect-error` is the opposite of `@ts-ignore` (U4): it fails the build the moment the
+  // error stops happening.
+  it('refuses an event the EVENT_CATALOG does not declare', () => {
+    const bus = new EventBus();
+
+    // @ts-expect-error U27c: 'lead.exploded' is not a catalogued client-bus event.
+    bus.publish({ type: 'lead.exploded' });
+
+    // @ts-expect-error U27c: `auth.loggedIn` carries a `userId`.
+    bus.publish({ type: 'auth.loggedIn' });
+
+    // @ts-expect-error U27c: `lead.created` is a BROKER event; it never rides the client bus.
+    bus.publish({ type: 'lead.created' });
+
+    expect(true).toBe(true);
+  });
 });

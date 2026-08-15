@@ -30,7 +30,12 @@ New: `DashboardStats` (`{counts, recentLeads, recentActivity}`) + `DashboardCoun
 ## Events
 
 - **Publishes:** none.
-- **Consumes:** `lead.updated`, `notification.read`, `identity.user.changed` (refetch).
+- **Consumes:** `lead.updated`, `notification.read`, `identity.user.changed`,
+  **`content.service.changed`**, **`content.blog.changed`** (all refetch).
+
+The last two were added in P8.7 as a U27 half-wired finding, not housekeeping: `DashboardCounts`
+carries `services` and `blogPosts`, which are derived from exactly those collections — so before this
+the tiles went stale on every service/blog edit while the events were published to nobody.
 
 ## Gateway route used
 

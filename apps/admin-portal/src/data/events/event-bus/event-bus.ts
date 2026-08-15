@@ -2,7 +2,7 @@ import type {
   DomainEvent,
   DomainEventOf,
   DomainEventType,
-} from './domain-event.types';
+} from '../domain-event.types';
 
 type Handler = (event: DomainEvent) => void;
 
