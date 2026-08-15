@@ -4,26 +4,28 @@
 
 ## Surfaces
 
-| Surface | Stack | Audience | Purpose |
-|---|---|---|---|
-| **Website** | Next.js (App Router) | Public | Premium Arabic-first marketing + lead capture; 100% DB-driven content. |
-| **Admin / ERP portal** | React + Vite | Staff (admin, dev, designer, QA, blog-writer, business-manager…) | Manage website + run the agency (projects, CRM, HR, finance, support). |
-| **Client portal** | React + Vite | Clients | Follow projects phase-by-phase, approve deliverables, message, pay, get support. |
-| **API gateway** | NestJS | — | The only public entry; validates JWT, routes/aggregates to services over RMQ. |
+| Surface                | Stack                | Audience                                                         | Purpose                                                                          |
+| ---------------------- | -------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **Website**            | Next.js (App Router) | Public                                                           | Premium Arabic-first marketing + lead capture; 100% DB-driven content.           |
+| **Admin / ERP portal** | React + Vite         | Staff (admin, dev, designer, QA, blog-writer, business-manager…) | Manage website + run the agency (projects, CRM, HR, finance, support).           |
+| **Client portal**      | React + Vite         | Clients                                                          | Follow projects phase-by-phase, approve deliverables, message, pay, get support. |
+| **API gateway**        | NestJS               | —                                                                | The only public entry; validates JWT, routes/aggregates to services over RMQ.    |
 
 ## Backend services (bounded contexts)
 
 Each is its own NestJS app with its **own database**, talking over RabbitMQ. Built incrementally.
 
 ### MVP services (the website + admin priority)
-- **identity** — users, roles, permissions (RBAC), JWT access+refresh; staff roles + client role. *Reusable everywhere.*
-- **settings** — advanced configuration engine: each setting has `key`, `type`, `requirement`, `options`, `defaultValue`, `scope`, `group`; resolves override→global→coded-default; holds branding/visual-identity. *Reusable in any project.*
+
+- **identity** — users, roles, permissions (RBAC), JWT access+refresh; staff roles + client role. _Reusable everywhere._
+- **settings** — advanced configuration engine: each setting has `key`, `type`, `requirement`, `options`, `defaultValue`, `scope`, `group`; resolves override→global→coded-default; holds branding/visual-identity. _Reusable in any project._
 - **content** (CMS) — pages, sections/blocks, services, portfolio/case-studies, blog (posts, categories, tags), testimonials, FAQ, navigation/menus, contact-form submissions → **lead event**. Translatable (ar/en).
-- **media** — Cloudflare R2 uploads, signed URLs, media library. *Reusable.*
-- **notifications** — email + in-app notifications; subscribes to domain events. *Reusable.*
+- **media** — Cloudflare R2 uploads, signed URLs, media library. _Reusable._
+- **notifications** — email + in-app notifications; subscribes to domain events. _Reusable._
 - **analytics** (light) — page views, form submissions, content counts → admin dashboard stats. (May start as a thin module inside the gateway/content and graduate to a service.)
 
 ### Later services (post first-deploy)
+
 - **projects** — projects, **phases/milestones**, tasks, sprints/kanban, **timesheets** (billable flag), deliverables, **client approvals/sign-off**, status reports for the weekly meeting.
 - **crm** — leads (consumes website lead events), pipeline/opportunities, proposals/quotes, sales contracts, (later) retainers/subscriptions.
 - **hr** — employees, departments/positions, attendance/work-time, leave/time-off, payroll-basics, recruitment/ATS, onboarding, appraisals. Shared **approval engine** + **work-entry ledger**.
@@ -33,7 +35,8 @@ Each is its own NestJS app with its **own database**, talking over RabbitMQ. Bui
 - **ai-assistant** — LLM assistant for staff + clients (Claude SDK), reads via RMQ request/reply into services (never raw DB).
 
 ### Someday
-- Native mobile apps for the portals (React Native) — mobile is a *service Sanad sells*; only build Sanad's own app if demand appears.
+
+- Native mobile apps for the portals (React Native) — mobile is a _service Sanad sells_; only build Sanad's own app if demand appears.
 - Multi-tenant white-labeling of the whole platform as a product (the advanced settings engine already leans this way).
 
 ## Admin / ERP portal modules
@@ -60,12 +63,12 @@ Each is its own NestJS app with its **own database**, talking over RabbitMQ. Bui
 
 ## Cross-service event catalog (seed — extend in `03-microservices-platform.md`)
 
-| Event | Emitted by | Consumed by |
-|---|---|---|
-| `lead.created` | content | crm (later), notifications |
-| `user.registered` / `user.role.changed` | identity | notifications, (audit later) |
-| `media.deleted` | media | content (reconcile references) |
-| `phase.signed_off` (later) | projects | finance (milestone billing), notifications, client-portal |
-| `invoice.paid` (later) | finance | projects, notifications |
+| Event                                   | Emitted by | Consumed by                                               |
+| --------------------------------------- | ---------- | --------------------------------------------------------- |
+| `lead.created`                          | content    | crm (later), notifications                                |
+| `user.registered` / `user.role.changed` | identity   | notifications, (audit later)                              |
+| `media.deleted`                         | media      | content (reconcile references)                            |
+| `phase.signed_off` (later)              | projects   | finance (milestone billing), notifications, client-portal |
+| `invoice.paid` (later)                  | finance    | projects, notifications                                   |
 
 All events go through the **Outbox** (MS3); all consumers are **idempotent** (MS6).

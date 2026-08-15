@@ -14,7 +14,7 @@
 - **Wordmark:** `سَنَد` (bold) + `التقنية` (medium, dimmed). Always RTL, never mirrored.
 - **Glyph mark (used in designs):** a rotated rounded square (diamond) outline with a glowing solid
   diamond core — `inset:0` 1px accent border `rotate(45deg)` + `inset:7px` solid accent core with
-  `box-shadow` glow. This is a *placeholder* mark; the real logo comes from `logo-prompt.md`.
+  `box-shadow` glow. This is a _placeholder_ mark; the real logo comes from `logo-prompt.md`.
 - **Typography:**
   - Display + text: **IBM Plex Sans Arabic** (weights 300/400/500/600/700).
   - Mono / labels / code / numerals-in-mono: **IBM Plex Mono** (400/500).
@@ -31,25 +31,28 @@
 ## 1. WEBSITE tokens (single fixed dark signature theme — no toggle, WEB7)
 
 ### Surface ladder (depth by hairlines, not heavy shadow)
-| Token | Value | Use |
-|---|---|---|
-| `bg` | `#05080d` | page base (near-black) |
-| `surface-track` | `#070a10` | scrollbar track / deepest |
-| `surface-1` | `#0c111c` | raised surface |
-| `surface-2` | `#161d2a` | scrollbar thumb / higher surface |
-| card gradient | `linear-gradient(180deg, rgba(15,21,30,.62), rgba(10,14,22,.5))` + `backdrop-filter: blur(12px)` | glass cards |
-| hairline | `rgba(255,255,255,0.08)` | default 1px border |
-| hairline-strong | `rgba(255,255,255,0.14)` | secondary buttons / stronger edge |
+
+| Token           | Value                                                                                            | Use                               |
+| --------------- | ------------------------------------------------------------------------------------------------ | --------------------------------- |
+| `bg`            | `#05080d`                                                                                        | page base (near-black)            |
+| `surface-track` | `#070a10`                                                                                        | scrollbar track / deepest         |
+| `surface-1`     | `#0c111c`                                                                                        | raised surface                    |
+| `surface-2`     | `#161d2a`                                                                                        | scrollbar thumb / higher surface  |
+| card gradient   | `linear-gradient(180deg, rgba(15,21,30,.62), rgba(10,14,22,.5))` + `backdrop-filter: blur(12px)` | glass cards                       |
+| hairline        | `rgba(255,255,255,0.08)`                                                                         | default 1px border                |
+| hairline-strong | `rgba(255,255,255,0.14)`                                                                         | secondary buttons / stronger edge |
 
 ### Text ramp
-| Token | Value | Use |
-|---|---|---|
-| `text` | `#e7eaf0` | primary |
-| `text-dim` | `#aab2c5` / `#aeb6c8` | nav, body lead |
-| `text-muted` | `#8b93a7` / `#9aa3b6` | card body |
-| `text-faint` | `#5d6678` | mono labels, captions |
+
+| Token        | Value                 | Use                   |
+| ------------ | --------------------- | --------------------- |
+| `text`       | `#e7eaf0`             | primary               |
+| `text-dim`   | `#aab2c5` / `#aeb6c8` | nav, body lead        |
+| `text-muted` | `#8b93a7` / `#9aa3b6` | card body             |
+| `text-faint` | `#5d6678`             | mono labels, captions |
 
 ### Per-page accent (the signature color shift per surface)
+
 Each page resolves **one accent** that drives the cosmos scene, the scroll bar, CTA fill, glows.
 | Page | Accent | Secondary | Soft glow rgba | Cosmos `cols` |
 |---|---|---|---|---|
@@ -64,25 +67,29 @@ Each page resolves **one accent** that drives the cosmos scene, the scroll bar, 
 > is near-black: `#06121c` (cyan/teal/sky) / `#0a0c1c` (indigo).
 
 ### Radius scale
+
 `2–3px` (tick accents) · `8/9px` (small) · `11px` (icon tiles) · `13px` (chat) · `16px` (support cards)
 · `18px` (capability cards) · `20px` (image/value cards) · `22px` (service cards) · `999px` (pills) · `50%` (orbs/avatars).
 
 ### Spacing rhythm
+
 Base unit ~`2px`. Common steps: `6 8 10 12 14 16 18 22 24 26 28 30 34 38 46 48`. Section padding uses
 fluid `clamp(22px,6vw,96px)` inline + `5–18vh` block. Content max-width **1320px**, centered.
 
 ### Type scale (fluid)
-| Role | Size |
-|---|---|
-| H1 hero | `clamp(40px,6–6.4vw,88–92px)`, line-height `1.07–1.08`, weight 600, `letter-spacing:-0.02em` |
-| H2 section | `clamp(28px,3.6vw,48px)`, weight 600, `-0.01em` |
-| H2 CTA | `clamp(30px,4.4vw,64px)`, weight 600 |
-| Stat number | `clamp(34px,4vw,56px)`, weight 700 |
-| Lead/body | `clamp(17px,1.5vw,21px)`, line-height `1.9` |
-| Card body | `14–15px`, line-height `1.8–1.85` |
-| Mono eyebrow | `11–13px`, `letter-spacing:0.18–0.3em`, accent color |
+
+| Role         | Size                                                                                         |
+| ------------ | -------------------------------------------------------------------------------------------- |
+| H1 hero      | `clamp(40px,6–6.4vw,88–92px)`, line-height `1.07–1.08`, weight 600, `letter-spacing:-0.02em` |
+| H2 section   | `clamp(28px,3.6vw,48px)`, weight 600, `-0.01em`                                              |
+| H2 CTA       | `clamp(30px,4.4vw,64px)`, weight 600                                                         |
+| Stat number  | `clamp(34px,4vw,56px)`, weight 700                                                           |
+| Lead/body    | `clamp(17px,1.5vw,21px)`, line-height `1.9`                                                  |
+| Card body    | `14–15px`, line-height `1.8–1.85`                                                            |
+| Mono eyebrow | `11–13px`, `letter-spacing:0.18–0.3em`, accent color                                         |
 
 ### Shadow / glow
+
 - Card hover: `0 24–28px 60–70px rgba(0,0,0,0.4–0.45), 0 0 48–56px rgba(<accent>,0.1–0.12)`.
 - CTA: `0 0 24–34px rgba(<accent>,0.35–0.4)` → hover `0 0 46–50px rgba(<accent>,0.6–0.65)`.
 - Hover transforms: card lift `translateY(-4 to -5px)`; CTA `translateY(-2px)`; border → `<accent> @0.5`.
@@ -140,6 +147,7 @@ Applied on a `[data-app]` root; theme switches via `[data-app][data-theme="light
 shadcn-on-tokens base in `libs/web/ui`.
 
 ### Dark (default)
+
 ```
 --bg:#080b11;  --surface:#0d121b;  --surface-2:#111826;  --surface-3:#161f30;  --sidebar:#0a0e15;
 --border:rgba(255,255,255,0.07);   --border-2:rgba(255,255,255,0.12);
@@ -149,7 +157,9 @@ shadcn-on-tokens base in `libs/web/ui`.
 --good:#34d399;  --warn:#fbbf24;   --bad:#fb7185;
 --shadow:0 1px 0 rgba(255,255,255,0.02);
 ```
+
 ### Light
+
 ```
 --bg:#f1f3f6;  --surface:#ffffff;  --surface-2:#fafbfc;  --surface-3:#f4f6f9;  --sidebar:#ffffff;
 --border:rgba(12,18,28,0.09);      --border-2:rgba(12,18,28,0.16);
@@ -159,12 +169,14 @@ shadcn-on-tokens base in `libs/web/ui`.
 --good:#059669;  --warn:#d97706;   --bad:#e11d48;
 --shadow:0 1px 2px rgba(12,18,28,0.04);
 ```
+
 - **Status mixing:** statuses use `color-mix(in oklab, var(--good|warn|bad) 16–18%, transparent)` for
   the pill background + the solid token for text.
 - **Portal radius:** inputs `10px`, small cards `11px`, nav buttons `9px`, medium cards `14px`,
   large/hero `16px`, pills/avatars `999px`/`50%`.
 
 ### Shell (both portals)
+
 - **Sidebar** `266px`, `var(--sidebar)`, `border-inline-start` hairline, sticky full-height:
   brand header → (client only) project switcher → nav list (active = `--accent-soft` bg + `--accent`
   fg + `inset -3px 0 0 --accent` inline-end bar) → footer user card + logout.
@@ -174,12 +186,14 @@ shadcn-on-tokens base in `libs/web/ui`.
 - **Content** scrolls; page padding `26px clamp(20px,3vw,36px) 56px`.
 
 ### Nav inventory
+
 - **Admin:** `لوحة التحكّم` · `إدارة المحتوى` · `الهوية والإعدادات` · `مكتبة الوسائط` ·
   `صندوق العملاء المحتملين` · `المستخدمون والصلاحيات`.
 - **Client:** `مشروعي` · `المراحل والجدول` · `التسليمات` (warn badge) · `الرسائل والاجتماعات` ·
   `الفواتير` · `الدعم`.
 
 ### Portal screen inventory (content-shaped skeleton + empty + error for each, F2)
+
 - **Admin:** Login · Dashboard (3 stat cards + activity + quick actions) · Content management
   (per-locale ar/en tabs + editor + live preview) · Branding & settings (color/logo/type editors) ·
   Media library (asset grid) · Leads inbox (table + status) · Users & roles (list + role matrix) ·
@@ -191,6 +205,7 @@ shadcn-on-tokens base in `libs/web/ui`.
   widget: tier, hours used, coverage left, response time).
 
 ### Shared portal components → build in `libs/web/ui` (reuse-before-create, F9)
+
 Stat tile · data table (CSS-grid header + rows) · status/priority pill · progress bar · phase stepper ·
 chat bubble · form input (focus → `--accent-line`) · primary/secondary button · sidebar nav button ·
 avatar (gradient + initial) · skeleton (content-shaped).

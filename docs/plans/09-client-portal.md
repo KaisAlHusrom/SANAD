@@ -2,13 +2,13 @@
 
 > The canon behind `02-mvp.md` **P8.21–P8.22**, and the concrete form of rule **W7**.
 >
-> **Owner directive, 2026-08-08:** *"don't make it like how you did admin portal please, I need the
+> **Owner directive, 2026-08-08:** _"don't make it like how you did admin portal please, I need the
 > pattern, file organizations, each file contain test file to be in separate folder… review the reference
-> project rules and the pattern and how event bus very well."* Read this before writing a single file of
+> project rules and the pattern and how event bus very well."_ Read this before writing a single file of
 > the client portal.
 >
-> **Why the portal exists at all:** the owner rejected deferring it — *"I don't want to delay what I need
-> in deploy after deploy."* A tech company that asks clients to sign contracts must hand them a
+> **Why the portal exists at all:** the owner rejected deferring it — _"I don't want to delay what I need
+> in deploy after deploy."_ A tech company that asks clients to sign contracts must hand them a
 > professional place to do it. Signing also works from a tokenized link (P8.14) for signers with no
 > account; both paths are complete, neither is the lite version of the other.
 
@@ -16,17 +16,17 @@
 
 ## 1. The references, and what is actually in them
 
-| Reference | What it is | Verified state |
-|---|---|---|
-| `TripproDashboard/TRIPPRO_DASHBOARD` | React + Vite dashboard — the closest structural match | **No rules doc, no `CLAUDE.md`, no `docs/`** (its README links to three files that were never committed — confirmed against all git history). **Zero tests** — no runner, no `@testing-library`, no spec files. **Hooks/services/utils are flat files; only components are folders.** |
-| `Bishola/bishola-app-v2` | Bare React Native — the origin of the component-triplet convention | Read-only pattern reference (U14). |
-| `Aysar/.claude/rules.md` | The **codified** version of both, written down as law | `W2` states verbatim that its tree is *"transcribed from `bishola-app-v2` and `TRIPPRO_DASHBOARD`"*. `U22` + `U18` are the folder/colocated-spec law. |
+| Reference                            | What it is                                                         | Verified state                                                                                                                                                                                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TripproDashboard/TRIPPRO_DASHBOARD` | React + Vite dashboard — the closest structural match              | **No rules doc, no `CLAUDE.md`, no `docs/`** (its README links to three files that were never committed — confirmed against all git history). **Zero tests** — no runner, no `@testing-library`, no spec files. **Hooks/services/utils are flat files; only components are folders.** |
+| `Bishola/bishola-app-v2`             | Bare React Native — the origin of the component-triplet convention | Read-only pattern reference (U14).                                                                                                                                                                                                                                                    |
+| `Aysar/docs/rules.md`                | The **codified** version of both, written down as law              | `W2` states verbatim that its tree is _"transcribed from `bishola-app-v2` and `TRIPPRO_DASHBOARD`"_. `U22` + `U18` are the folder/colocated-spec law.                                                                                                                                 |
 
-**Conclusion, and the reason this file exists:** the law the owner described — *"a component has its file
-and its test file, they both should be in a separate folder"* — is **not written anywhere in TRIPPRO**,
+**Conclusion, and the reason this file exists:** the law the owner described — _"a component has its file
+and its test file, they both should be in a separate folder"_ — is **not written anywhere in TRIPPRO**,
 and TRIPPRO does not implement it (it has no tests at all, and folders only for components). It **is**
 written in Aysar. So: **Aysar is the law, TRIPPRO supplies the concrete file shapes**, and the law is
-applied to *every* logic unit (hooks, services, slices, utils), not only components. That generalisation
+applied to _every_ logic unit (hooks, services, slices, utils), not only components. That generalisation
 is deliberate and is now Sanad rule **U26**.
 
 Reference projects are **read-only patterns — never imported** (U14).
@@ -103,7 +103,7 @@ shared/utils/format-money/{format-money.util.ts, format-money.util.spec.ts, inde
 **Declaration-only files sit loose in their kind folder** — `types/`, `constants/`, `*.zod.types.ts`,
 event declarations. Many of one role together is correct; a service beside a mapper is not.
 
-**The folder exists before the spec does.** A one-file folder is TDD1 debt made *visible* rather than
+**The folder exists before the spec does.** A one-file folder is TDD1 debt made _visible_ rather than
 buried, and it means writing the spec later never forces a second move.
 
 **Naming:** PascalCase folders for components only; everything else kebab-case. `*.api.ts`, `*.slice.ts`,

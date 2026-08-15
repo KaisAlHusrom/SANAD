@@ -33,7 +33,9 @@ sanad/
 ```
 
 ### Nx tags & boundaries (MS1, MS9)
+
 Every project is tagged on two axes; `@nx/enforce-module-boundaries` enforces them in lint/CI:
+
 - `type:` — `app` | `feature` | `data-access` | `util` | `types`
 - `scope:` — `shared` | `identity` | `settings` | `content` | `media` | `notifications` | `web` | …
 
@@ -70,6 +72,7 @@ DTOs/contracts are **never** local — they come from `libs/contracts` (U3, N4).
 ## Contracts (`libs/contracts`)
 
 Single source of truth, imported by services + frontends:
+
 - `common/` — `envelope` (`{ success, message, data, path, timestamp }`), `pagination`, `localized-text` (`{ ar, en }`), `list-query` helper, `locale` (`ar`|`en`, default `ar`), `direction` (`rtl`|`ltr`, `directionForLocale`).
 - `messaging/` — message-pattern names + payload schemas for request/reply (MS2) and event payloads (MS3).
 - `<domain>/` — per-service request/response schemas (`*.request.ts` Zod, `*.response.ts` types, `*.list-query.ts`).
@@ -84,10 +87,12 @@ Single source of truth, imported by services + frontends:
 ## Frontends
 
 ### Website (Next.js App Router) — see `04-website.md`
+
 - Server components fetch resolved content from the gateway (typed fetch client on `libs/contracts`) for SEO; client components own animation.
 - Branding/visual-identity from settings-service with coded defaults (never blank). ar default + RTL.
 
 ### Portals (React + Vite) — admin + client
+
 - App Router-less SPA with a route layer (React Router) + the **Sidebar+Topbar shell** (W1).
 - **Redux Toolkit + RTK Query**, registered via `apiRegistry` (from `libs/web/data`); `baseQueryWithAuth` = refresh (`POST /auth/refresh { refresh }`) + envelope unwrap + auth header.
 - **Client event bus** for cross-module freshness (W4); shared `*-lookup.api` + `ServerSelect` for cross-module/backend reads (W5).
@@ -104,5 +109,6 @@ Single source of truth, imported by services + frontends:
 - The gateway is the trust boundary (MS4). Staff and clients are both `user`s distinguished by role; the client portal authorizes the `client` role + ownership scoping (a client sees only their own projects).
 
 ## Testing (TDD1–TDD2)
+
 - Backend: Jest unit + e2e per service; DB-touching tests against the service's `*_test` database (Docker-provisioned). Contract tests assert handlers honor `libs/contracts`.
 - Frontend: component + hook tests (Vitest/RTL); MSW for API; i18n parity test.

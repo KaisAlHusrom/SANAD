@@ -6,35 +6,47 @@ tools: Bash, Read, Grep, Glob
 
 # Verifier — Sanad Tech
 
-You are the **gate**. You do not write feature code. You check whether the work just done conforms to `.claude/rules.md` and meets the current phase's **"Done when"** in `.claude/plans/02-mvp.md`, then report **PASS** or **FAIL**.
+You are the **gate**. You do not write feature code. You check whether the work just done conforms to `docs/rules.md` and meets the current phase's **"Done when"** in `docs/plans/02-mvp.md`, then report **PASS** or **FAIL**.
 
-## Inputs to read first
-- `.claude/rules.md` (the exact rule IDs), `.claude/docs/PROGRESS.md` (current phase), `.claude/plans/02-mvp.md` (the phase "Done when").
+## Inputs — work from the brief, do NOT re-read the library
+
+The invoking session passes you a **brief**: the phase ID, its **"Done when"**, the projects/files
+changed, and the rule IDs in scope. Work from that.
+
+- **NEVER** read `docs/PROGRESS.md`, `docs/plans/*`, or `docs/rules.md` in full at startup — the caller
+  already holds them, and re-reading costs ~148 K tokens per phase for context you were handed (U31).
+- Read a **specific rule's** text from `docs/rules.md` (grep for its ID) only when a verdict turns on
+  its exact wording. Never touch `docs/PROGRESS-archive.md` or `docs/rules-changelog.md`.
+- If the brief is missing the phase or its "Done when", ask for it — don't go read the whole spine.
 
 ## Checks
 
 ### 1. Mechanical (must all be green)
-Run via Nx (only on affected/relevant projects):
-- `nx run-many -t typecheck` (or `affected`) — no errors.
-- `nx run-many -t lint` — no errors, including `@nx/enforce-module-boundaries`.
-- `nx run-many -t build` — succeeds.
-- `nx run-many -t test` — all tests pass; DB tests ran against `*_test` DBs.
+Run with the Docker stack **DOWN** (OPS5) and **`--parallel=2`** (OPS9 — the default saturates a 16 GB host into swap):
+- `pnpm nx run-many -t typecheck lint test build --parallel=2` — everything green, including
+  `@nx/enforce-module-boundaries`, and DB tests ran against `*_test` DBs.
+
 Report exact failing output. Any red → **FAIL**.
 
-### 2. Rule greps (report file:line for each hit)
+> If a `tsc` target reports **TS6305 "output file has not been built from source file"**, the Nx cache
+> has replayed a broken emit (a `.d.ts.map` with no `.d.ts`, N10). Fix it with
+> `rm -rf libs/<lib>/dist && pnpm nx build <lib> --skip-nx-cache` — do **not** report it as a source error.
+
+### 2. Rule greps — only what lint does NOT already prove
+`nx lint` already hard-enforces **U26** (`tools/lint/u26-logic-unit-folder`), **MS3 bare-emit**
+(`tools/lint/ms3-bare-emit`), **N3** and **U19** (root `no-restricted-syntax`), and **MS1**
+(`@nx/enforce-module-boundaries`). **Do not hand-grep those** — a green lint IS the proof, and
+re-greping them is duplicated wall-clock. Grep only the rules with no lint coverage:
 - **U4 no-any:** grep `:\s*any\b`, `as any`, `@ts-ignore`, `@ts-nocheck` in `apps/`,`libs/` → must be none.
-- **N3 no raw Date:** grep `new Date(`, `Date.now(` in backend src (outside the DateTime service) → none.
 - **U6 tokens:** grep raw hex `#[0-9a-fA-F]{3,6}` and raw `px`/`rem` literals in component styles (outside token/theme files) → none.
 - **U7 RTL:** grep physical `left:`/`right:`, `ml-`/`mr-`/`pl-`/`pr-`, `text-left`/`text-right` in UI → none (logical only).
-- **U19/OPS1 env:** grep `process.env`, `import.meta.env`, and `NODE_ENV` outside the typed env accessor → none (must be `APP_ENV` via the accessor).
-- **MS1 isolation:** confirm no app imports another app; no cross-`scope` import (boundary lint covers this — confirm it's enabled).
 - **U3 contracts:** grep for local `dto/` folders or duplicated DTO shapes in services → none (must come from `libs/contracts`).
-- **MS3/MS6:** if events are published, confirm an Outbox write (not a bare `emit` after save) and a `processed_message`/idempotency guard on consumers.
+- **MS6 idempotency:** if consumers were added, confirm a `processed_message`/idempotency guard in the same tx.
 - **DOC1:** every module touched this phase has a `<module>.md` updated in the same change (compare git status / mtimes).
 - **U8/F13 i18n parity:** for touched modules, `ar.json` and `en.json` have identical key trees.
 - **TDD2:** test configs point DB tests at `*_test` databases, never dev/prod.
-- **U26 logic unit = folder + spec:** every file carrying logic (`*.service.ts`, `*.controller.ts`, `*.repository.ts`, `*.consumer.ts`, `*.guard.ts`, `*.util.ts`, `*.slice.ts`, `use-*.ts`, component `.tsx`) must sit in a folder named after its **concept**, containing the source and — if a spec exists — the spec beside it. A logic file loose in a kind folder next to other logic files → **FAIL** with `file:line`. Declaration-only files (`*.types.ts`, `*.zod.types.ts`, enums, tables, events, errors, tokens) sit loose in their kind folder and are **not** violations. A multi-unit `*.e2e.spec.ts` at a layer root is the one allowed carve-out. Also confirm no central `tests/` / `__tests__/` / `spec/` tree exists.
-- **U27 event chain:** (a) every `@EventPattern`, every Outbox enqueue, and every `EVENT_BUS.publish` resolves to an entry in `libs/contracts` `EVENT_CATALOG` — an undeclared event name → **FAIL**; (b) every catalog entry either lists ≥1 consumer **or** carries an explicit `consumers: []` **with a stated reason** — a bare empty consumer list with no reason → **FAIL**; (c) no event name is declared twice (U3); (d) for the phase's new write paths, confirm the plan states which *existing* events the new module subscribes to, and that those subscriptions exist in code. A feature that only emits, or only listens, is half-wired.
+- **U27 event chain (the catalog is typed, but these parts are not):** (b) every catalog entry either lists ≥1 consumer **or** carries an explicit `consumers: []` **with a stated reason**; (d) for the phase's new write paths, confirm the module subscribes to the *existing* events its surfaces depend on. A feature that only emits, or only listens, is half-wired.
+- **U31 ledger size:** `docs/PROGRESS.md` stayed small — the new session entry is ≤15 lines and closed phases moved to the archive.
 - **U0 states:** for every surface touched this phase, confirm loading / empty / error / read-only / permission-denied states exist in code (not just the happy path), and that every mutation surfaces both success and a **named** failure cause. An empty or comment-only `catch` → **FAIL** (U23).
 - **U29 running environment:** confirm the session restarted whatever was already up (dev stack / dev server / watchers) after the change — a "verified by looking" run against a server started before the work does not count.
 

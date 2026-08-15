@@ -11,6 +11,7 @@ in the previous session; this plan covers only what remains. What already exists
 UI is built on:
 
 **Backend (live, 77 media-service tests green, migration already run on the dev DB):**
+
 - `GET /api/media/folders/tree` → `MediaFolderTree = { roots: MediaFolderNode[], rootAssetCount }`,
   where a node is a `MediaFolder` + `assetCount` (direct, not recursive) + `children[]`; siblings
   name-sorted, orphans rescued to the root.
@@ -42,17 +43,17 @@ F9 (reuse before create), U5 (logic in hooks), U7 (RTL/logical only), U6 (tokens
 
 ## Reuse — found during exploration, do NOT rebuild
 
-| Need | Use this |
-|---|---|
+| Need               | Use this                                                                                                                                                                                                                                      |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | In-app drag & drop | **`@dnd-kit/core` is already a dependency** (`components/sortable/sortable-list.tsx`, `data-table-sortable-row.tsx`). Use `DndContext` + `useDraggable`/`useDroppable` — keyboard-accessible and touch-capable, unlike hand-rolled HTML5 DnD. |
-| Multi-select | `components/data-table/use-bulk-selection.ts` — **extend it** with `selectOnly(id)` + `selectRange(anchorId, id, orderedIds)` (it has toggle/toggleAll/clear but no click/shift semantics). Extending the shared hook, not forking it (F9). |
-| Pagination | `components/data-table/pagination-range.ts` (`buildPaginationRange`, pure) |
-| Render order | `components/feedback/render-gate.tsx` + `empty-state.tsx` / `error-state.tsx` / `skeleton.tsx` |
-| Confirms | `data/confirm/use-confirm.ts` — `await confirm({ title, message, variant, confirmLabel, onConfirm })`; the single `ConfirmationRoot` renders it |
-| Toasts | `data/toast` (`toast.success/error`) |
-| Upload | `lib/run-media-upload.ts` + `classifyUploadError` / `formatUploadFailure` |
-| Permissions | `app/guards/use-require-permission.ts` (`media.read` / `media.manage`) |
-| Reads/writes | the shared bridges `data/lookups/media-lookup.api.ts`, `data/lookups/folder-lookup.api.ts`, `data/media-manage.api.ts` — **never** `modules/media/api` (W5) |
+| Multi-select       | `components/data-table/use-bulk-selection.ts` — **extend it** with `selectOnly(id)` + `selectRange(anchorId, id, orderedIds)` (it has toggle/toggleAll/clear but no click/shift semantics). Extending the shared hook, not forking it (F9).   |
+| Pagination         | `components/data-table/pagination-range.ts` (`buildPaginationRange`, pure)                                                                                                                                                                    |
+| Render order       | `components/feedback/render-gate.tsx` + `empty-state.tsx` / `error-state.tsx` / `skeleton.tsx`                                                                                                                                                |
+| Confirms           | `data/confirm/use-confirm.ts` — `await confirm({ title, message, variant, confirmLabel, onConfirm })`; the single `ConfirmationRoot` renders it                                                                                               |
+| Toasts             | `data/toast` (`toast.success/error`)                                                                                                                                                                                                          |
+| Upload             | `lib/run-media-upload.ts` + `classifyUploadError` / `formatUploadFailure`                                                                                                                                                                     |
+| Permissions        | `app/guards/use-require-permission.ts` (`media.read` / `media.manage`)                                                                                                                                                                        |
+| Reads/writes       | the shared bridges `data/lookups/media-lookup.api.ts`, `data/lookups/folder-lookup.api.ts`, `data/media-manage.api.ts` — **never** `modules/media/api` (W5)                                                                                   |
 
 **Design canon (U21a).** There is no explorer screen in `Sanad Admin.dc.html`, so derive from its
 media screen (lines 387–405) + `design-spec.md` §4: card `1px var(--border)` / radius 13px /
@@ -97,6 +98,7 @@ search (debounced via the existing `hooks/use-debounced-value.ts`), type filter,
 ### 4c · `use-explorer-dnd.ts` — organizing by drag
 
 **Two mechanisms, deliberately:**
+
 1. **In-app drags → `@dnd-kit/core`.** Draggables: asset tiles/rows (selection-aware — dragging a
    selected item drags the whole selection) and tree nodes. Droppables: tree nodes, breadcrumb
    crumbs, folder tiles in the grid, and the pane background (→ current folder). A `DragOverlay`
@@ -176,7 +178,7 @@ the same pattern as `src/i18n/ui-kit/` (F13). One namespace serves both surfaces
 2. **Component:** explorer renders each state from §4f with a stubbed fetch — especially the three
    distinct empty states, the read-only mode, and a failed upload showing a named cause + retry.
 3. **Suites:** `npx vitest run` in `apps/admin-portal` (448 currently green) + `npx tsc -p
-   tsconfig.app.json --noEmit` + `npx eslint` on the new files. Then the **`verifier`** agent with
+tsconfig.app.json --noEmit` + `npx eslint` on the new files. Then the **`verifier`** agent with
    the Docker stack **down** (OPS5) — it must PASS.
 4. **Live, through nginx** (`http://localhost:8190/admin/`): create a nested folder, rename it,
    drag an image into it, drag it back to the root, multi-select 3 and drag them together, try an

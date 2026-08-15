@@ -8,7 +8,7 @@ A bug, regression, failing test, or rule violation needs fixing. Work it methodi
 
 ## Procedure
 
-1. **Load context:** `.claude/rules.md`, `.claude/docs/PROGRESS.md` (open issues), and the relevant plan(s). Note any rule the bug touches.
+1. **Load context:** `docs/rules.md`, `docs/PROGRESS.md` (open issues), and the relevant plan(s). Note any rule the bug touches.
 
 2. **Reproduce & locate.** Reproduce the failure (run the test/app). Find the **root cause**, not the symptom. State it plainly. For data-shape bugs, **verify the real shape against the source of truth** (Drizzle schema, the service's returned object, the message contract) — never assume (U15).
 
@@ -18,7 +18,7 @@ A bug, regression, failing test, or rule violation needs fixing. Work it methodi
 
 5. **Update the module doc (DOC1)** if behavior/contract changed.
 
-6. **Preventive rule — only if genuinely cross-cutting (U13).** Record the root cause + fix in `PROGRESS.md` (step 7). Touch `.claude/rules.md` **only** when the bug is a **reusable, platform-wide class** that will recur across features — then add or sharpen ONE tight rule (no change-log ceremony). A one-off fix does NOT earn a rule; keep the law lean. When unsure, ask.
+6. **Preventive rule — only if genuinely cross-cutting (U13).** Record the root cause + fix in `PROGRESS.md` (step 7). Touch `docs/rules.md` **only** when the bug is a **reusable, platform-wide class** that will recur across features — then add or sharpen ONE tight rule (no change-log ceremony). A one-off fix does NOT earn a rule; keep the law lean. When unsure, ask.
 
 7. **Update `PROGRESS.md`** — the issue, the root cause, the fix (and the rule, only if one was genuinely warranted).
 

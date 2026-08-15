@@ -6,7 +6,7 @@
 > is admin-editable per locale (ar default / en secondary) from the admin portal (WEB1).
 >
 > **Voice:** confident, calm, craft-driven. Sells the method (phase-by-phase delivery, weekly owner
-> meetings, post-delivery support) and the feeling of سَنَد = *backing / trust*. Arabic is primary and
+> meetings, post-delivery support) and the feeling of سَنَد = _backing / trust_. Arabic is primary and
 > must read as native Arabic, not translated. English is a parallel, not a literal gloss.
 >
 > **Format:** `key → { ar, en }`. Keys are stable identifiers later mapped to content blocks.

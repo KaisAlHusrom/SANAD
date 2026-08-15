@@ -5,18 +5,19 @@
 > the generation workflow.
 
 The Claude-generated logo was discarded. Use these prompts at <https://ideogram.ai> to design the real
-mark. The brand: **سَنَد التقنية (Sanad Tech)** — a premium Arabic-first software house. *"Sanad" =
-support / backing / a pillar you lean on → trust, mastery, craft.* It must feel like a serious
+mark. The brand: **سَنَد التقنية (Sanad Tech)** — a premium Arabic-first software house. _"Sanad" =
+support / backing / a pillar you lean on → trust, mastery, craft._ It must feel like a serious
 engineering studio, not a sci-fi or crypto startup.
 
 > ⚠️ **Arabic text in image generators is often garbled.** Recommended workflow:
+>
 > 1. Generate the **symbol/monogram** with Prompt A (no text, or Latin "S" only — reliable).
 > 2. Set the Arabic wordmark `سَنَد التقنية` separately in real type (**IBM Plex Sans Arabic**, the
 >    brand font) and lock it up beside the symbol. Don't rely on the model to spell Arabic.
 > 3. If you do want the model to attempt the wordmark, use Prompt C and generate many variants, then
 >    pick the one with correct letterforms — verify every glyph.
-> In ideogram: pick a **square (1:1)** for the icon, **16:9** for the lockup; set the style toward
-> **Design / Typography**, and paste the negative list into the "Exclude" field.
+>    In ideogram: pick a **square (1:1)** for the icon, **16:9** for the lockup; set the style toward
+>    **Design / Typography**, and paste the negative list into the "Exclude" field.
 
 ---
 

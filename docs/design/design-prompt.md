@@ -4,7 +4,7 @@
 
 ---
 
-**PROJECT:** Design the complete UI for **سند التقنية (Sanad Tech)** — a premium, **professional** Arabic-first software house that builds SaaS, mobile apps, LMS, and ERP systems for clients, delivered phase-by-phase with weekly meetings and post-delivery support. "Sanad" means *support / backing* → the brand feeling is **trust, mastery, and craft.**
+**PROJECT:** Design the complete UI for **سند التقنية (Sanad Tech)** — a premium, **professional** Arabic-first software house that builds SaaS, mobile apps, LMS, and ERP systems for clients, delivered phase-by-phase with weekly meetings and post-delivery support. "Sanad" means _support / backing_ → the brand feeling is **trust, mastery, and craft.**
 
 **THE MANDATE — A SINGULAR IDENTITY, NOT A TEMPLATE.** This must look like **only سند التقنية and no one else.** Invent a distinctive, ownable visual language and a signature interaction that becomes the brand's "tell." **Do NOT reach for the overused moves that thousands of sites already use** (full list of clichés to avoid is below). The goal is an award-caliber, unmistakably-its-own identity — the kind of craft seen on Active Theory, Resn, Framer, and Raycast — reinterpreted uniquely for an Arabic tech company.
 
@@ -16,10 +16,11 @@
 
 ## WEBSITE — one bespoke, signature, fully-animated experience (NO dark/light toggle)
 
-The website has **a single, fixed, signature look** — that fixed art direction *is* the brand identity. Removing the theme switch is deliberate: it frees you to craft one perfect, opinionated, deeply-considered aesthetic instead of two safe ones. Make it unforgettable.
+The website has **a single, fixed, signature look** — that fixed art direction _is_ the brand identity. Removing the theme switch is deliberate: it frees you to craft one perfect, opinionated, deeply-considered aesthetic instead of two safe ones. Make it unforgettable.
 
 **ART DIRECTION (adopt this craft, reinterpreted uniquely):**
-- **A persistent signature hero "moment," not a banner.** Open into one real-time WebGL scene/object that belongs only to Sanad — then resolve gracefully into clear, readable, filterable content so business buyers immediately get "what do you do." Serve both the *wow* and the *clarity*. (Active Theory's dual-mode intro: cinematic + clear.)
+
+- **A persistent signature hero "moment," not a banner.** Open into one real-time WebGL scene/object that belongs only to Sanad — then resolve gracefully into clear, readable, filterable content so business buyers immediately get "what do you do." Serve both the _wow_ and the _clarity_. (Active Theory's dual-mode intro: cinematic + clear.)
 - **A velocity-reactive cursor that emits an on-brand trail** (e.g. a calligraphic ink thread, a geometric tessellation, or a single luminous accent line — **NOT** generic floating dots). The cursor is part of the identity.
 - **Full-screen in-place transitions** — a card/preview expands into its detail view with a fluid transition; avoid hard page reloads; keep the user inside one continuous world.
 - **Premium dark canvas with controlled glow:** a near-black base, a deep surface ladder separated by **1px hairlines** (depth from the ladder + hairlines, not heavy shadows), and **2–3 rationed emissive accent colors** with bloom/additive glow. Render gradients in **Oklab with blue-noise dithering** so dark gradients look rich, never banded or muddy.
@@ -29,6 +30,7 @@ The website has **a single, fixed, signature look** — that fixed art direction
 - **Show the real product/work mid-operation** — live working states, real metrics rendered as UI chips, the actual phased-delivery method visualized — not stock illustration.
 
 **SIGNATURE SCROLL CHOREOGRAPHY — the centerpiece (make this the "wow").** The landing page must NOT be independent stacked sections. It is **one continuous, choreographed journey around a persistent central element**, exactly in the spirit of activetheory.net:
+
 - **A persistent central object stays in the center of the viewport and travels with the user through the entire scroll** — it never just scrolls away. As the user moves between sections, **the same central element morphs/transforms** to express each section (e.g. it forms the Sanad mark in the hero → becomes a flowing conduit through "services" → becomes the **phased-delivery path** → becomes a **spine/axis** at the works section).
 - **At the works / case-studies section, the central element becomes a vertical SPINE, and the project cards ORBIT around it** — as the user scrolls, the cards travel around the central axis (their angle/position is driven by scroll progress) while the section is pinned. Scrolling rotates the ring of work cards around the spine, bringing each project to the front in turn.
 - **Every section animates IN RELATION to this central anchor** as you scroll — content assembles, reveals, and reacts to the shared center, so the whole page reads as one living world, not a slideshow.
@@ -41,6 +43,7 @@ The website has **a single, fixed, signature look** — that fixed art direction
 **ACCESSIBILITY/PERF:** Honor `prefers-reduced-motion` with a graceful reduced fallback (swap horizontal/parallax motion for opacity, disable the heavy WebGL/ambient layer). Animate transform/opacity only; lazy-load the WebGL canvas; adaptively drop post-FX on slow devices; ≥4.5:1 contrast; keyboard-navigable.
 
 **WEBSITE PAGES (all content served from a database):**
+
 1. **Landing** — signature WebGL hero → trust/clients → **services as a distinctive layout** (reinvent the grid — avoid the stock bento) → **phased-delivery timeline** (اكتشاف → تصميم → تطوير → إطلاق) → **case studies** (التحدّي / الحل / النتيجة + real metrics, each bespoke) → animated stats → testimonials → blog teaser → strong CTA → contact/footer.
 2. **About** — story, team, values (trust/mastery).
 3. **Services** + detail pages (SaaS, mobile, LMS, ERP…), each with its own treatment.
@@ -59,13 +62,15 @@ The website has **a single, fixed, signature look** — that fixed art direction
 The two dashboards are the opposite discipline from the website: **clean, fast, easy to use, low-friction** — a professional product UI (shadcn-style on a token system), **with a dark/light theme toggle** (users work in these for hours; comfort and clarity win over spectacle). Keep them visually kin to the brand (same type voice, same accent family) but calm and efficient. One **Sidebar + Topbar + Content** shell. Every list/detail ships **skeleton + empty + error** states (content-shaped skeletons, not spinners). Full RTL, Arabic default + English.
 
 ### Admin / management portal (staff)
+
 - **Login**; **Dashboard** (stats: leads, content, traffic, project KPIs).
 - **Website content management** — pages, services, portfolio, blog, testimonials, FAQ, menus — **editable in Arabic + English via per-locale tabs**.
 - **Settings / Branding** — visual-identity editor that drives the website.
 - **Media library**; **Leads inbox**; **Users & roles** (admin, developer, designer, QA, blog-writer, business-manager…).
-- *(Design the shell to later absorb: Projects/Phases/Tasks/Sprints/Timesheets, CRM + quotes, Invoicing + Payments + Expenses, HR, Helpdesk + SLA.)*
+- _(Design the shell to later absorb: Projects/Phases/Tasks/Sprints/Timesheets, CRM + quotes, Invoicing + Payments + Expenses, HR, Helpdesk + SLA.)_
 
 ### Client portal (clients)
+
 - **Login**; **Project dashboard** (current phase, % complete, next milestone, blockers).
 - **Phases / timeline** roadmap.
 - **Deliverable review per phase** — view/download, **approve or request changes, formal sign-off**.
@@ -78,20 +83,23 @@ The two dashboards are the opposite discipline from the website: **clean, fast, 
 ---
 
 ## CLICHÉS TO AVOID (so the identity is singular, not templated)
+
 Do **not** use these over-done moves:
+
 - Generic floating **particle/dot constellations** behind the hero (the #1 templated WebGL look).
-- Drifting **aurora/blurred-blob mesh gradients** (the "every AI startup" background) — unless Oklab-correct *and* uniquely shaped into something ownable.
+- Drifting **aurora/blurred-blob mesh gradients** (the "every AI startup" background) — unless Oklab-correct _and_ uniquely shaped into something ownable.
 - Spinning **3D blob / torus / icosahedron** with default lighting (reads as a free Three.js demo).
 - **Magnetic buttons + a giant inverting cursor circle** — done to death; any custom cursor must be brand-specific and subtle.
 - **Word-by-word scroll reveal of every paragraph** — fatiguing; reserve a reveal for one headline.
 - **Scroll-jacked horizontal galleries** that fight native scroll / break on trackpads / break RTL.
 - **Awwwards/badge walls, "scroll to explore" + bouncing chevron, fake terminal typewriter loaders, infinite logo marquees, fake loading-percentage theater.**
 - **Autoplaying sound or video** on load.
-Pursue restraint and one or two singular, well-crafted signatures instead of piling on effects.
+  Pursue restraint and one or two singular, well-crafted signatures instead of piling on effects.
 
 ---
 
 **DELIVERABLES:**
+
 1. A **single signature design system for the WEBSITE** (one fixed art direction, the signature hero/cursor/sound, motion specs, all pages above, full RTL, reduced-motion + sound-off "calm mode").
 2. A **dual-theme (dark + light) design system for the DASHBOARDS** — admin + client — clean, usable, shadcn-on-tokens, RTL-first, skeleton/empty/error states.
-Prioritize the **website** and the **admin portal** first (these ship first); the client portal can follow. Above all: make it **unmistakably سند التقنية.**
+   Prioritize the **website** and the **admin portal** first (these ship first); the client portal can follow. Above all: make it **unmistakably سند التقنية.**

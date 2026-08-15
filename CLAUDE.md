@@ -39,7 +39,7 @@ All on a **NestJS microservices backend** behind an API gateway, brokered by **R
 
 ## Priority
 
-Ship **website + admin dashboard** (admin fully controls website content + sees stats) → **deploy staging then production** → *then* build the ERP/client-portal services. The build spine is `.claude/plans/02-mvp.md` (phases **P0 → P9**).
+Ship **website + admin dashboard** (admin fully controls website content + sees stats) → **deploy staging then production** → *then* build the ERP/client-portal services. The build spine is `docs/plans/02-mvp.md` (phases **P0 → P9**).
 
 > **⚠️ We are building the FINAL product — NOT an MVP.**
 >
@@ -51,24 +51,31 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 
 ## How every session must work
 
-1. **Read `.claude/rules.md`** — the binding law (MUST/NEVER). Non-negotiable.
-2. **Read `.claude/docs/PROGRESS.md`** — current state, next step, decisions, open issues.
-3. **Read the relevant `.claude/plans/*`** — `02-mvp.md` for the next phase, plus the matching deep plan (`01-architecture`, `03-microservices-platform`, `04-website`, `05-deployment`, `06-ai-assistant`, `07-shared-ui-systems`, **`08-client-intake`** for P8.13–P8.20, **`09-client-portal`** for P8.21–P8.22).
-4. **Build** following the rules + architecture. **TDD**: write the failing test first. Keep the module's `<module>.md` doc in the same change.
-5. **Update `PROGRESS.md`** — what was done, what's next, decisions made, issues hit.
-6. **Run the `verifier` agent** — it must report **PASS** before a phase is marked done. **Then run the `boot-verifier` agent** — bring up the Docker dev stack and confirm it actually runs (gateway answers through nginx, the phase's routes are mapped, no crash-looped container). The verifier checks *code*; boot-verifier checks *runtime* — a phase isn't done until both are green.
-7. **Keep the rules lean (U13)** — session bugs, fixes, and "what I did" belong in `PROGRESS.md`, **not** `.claude/rules.md`. Add a rule ONLY for a genuinely reusable, platform-wide constraint that will recur; when unsure, ask. No rule-per-session.
+> **Read only this much (U31).** Context is a budget: the four reads below, and nothing else, start a
+> session. **NEVER** open `docs/PROGRESS-archive.md` or `docs/rules-changelog.md` at startup — they are
+> archives, grep them on demand.
+
+1. **Read `docs/rules.md`** — the binding law (MUST/NEVER). Non-negotiable.
+2. **Read `docs/PROGRESS.md`** — current state, next step, decisions, open issues. Its `## MVP phase checklist` is the **only** place phases are checked off.
+3. **Read only the current phase's section** of `docs/plans/02-mvp.md` — not the whole file (it has no checkboxes; don't scan it for one) — plus the matching section of its deep plan (`01-architecture`, `03-microservices-platform`, `04-website`, `05-deployment`, `06-ai-assistant`, `07-shared-ui-systems`, **`08-client-intake`** for P8.13–P8.20, **`09-client-portal`** for P8.21–P8.22).
+4. **Size the phase (U0).** More than ~6–8 files of new logic, or more than one new service + one new admin surface → **split it into lettered sub-phases first**, each with its own "Done when", and build one this session. Splitting is expected; lowering the bar never is.
+5. **Build** following the rules + architecture. **TDD**: write the failing test first. Keep the module's `<module>.md` doc in the same change. Verify as you go with `nx affected -t typecheck lint test --parallel=2` (U12a).
+6. **Update `PROGRESS.md`** — a **≤15-line** entry: what was done, what's next, decisions, issues (U31). Move the closed phase's entries to `docs/PROGRESS-archive.md`.
+7. **Close the gate — both halves, and hand each agent a distilled brief, not the whole library.** With the stack **DOWN**, run the **`verifier`** agent (full `nx run-many … --parallel=2`); it must report **PASS**. **Then** bring the stack up on the phase's profiles (`infra/scripts/dev-up.sh core <profile…>`) and run the **`boot-verifier`** agent. The verifier checks *code*; boot-verifier checks *runtime* — a phase isn't done until both are green (U12b, U29). Never run host `nx` while the stack is up (OPS5/OPS9).
+8. **Keep the rules lean (U13)** — session bugs, fixes, and "what I did" belong in `PROGRESS.md`, **not** `docs/rules.md`. Add a rule ONLY for a genuinely reusable, platform-wide constraint that will recur; when unsure, ask. No rule-per-session.
+9. **Run `/ship`** — commit the session's work in conventional-commit chunks and push to `origin main`.
 
 ## Commands & agents (project-local)
 
 - `/continue-plan` — read rules + PROGRESS + plans, build the next `02-mvp.md` phase, update PROGRESS, run verifier.
 - `/fix` — diagnose & fix a bug/regression/rule-violation, add a preventive rule, update PROGRESS, re-verify.
+- `/ship` — commit the session's work in conventional-commit chunks and push to `origin main` (never adds Claude as a contributor).
 - `verifier` agent — checks built code against the exact rule IDs; runs typecheck/lint/build/test; greps for violations; reports PASS/FAIL.
 - `boot-verifier` agent — runtime gate (run after `verifier`): brings up the Docker dev stack, confirms every container is up (no crash-loop), the gateway answers `GET /api/health` through nginx, and the phase's routes are mapped; reports UP/DOWN with the failing container's logs.
 - `designer` agent — the single design language (tokens-only, dark+light, ar/en RTL; shadcn for portals, bespoke-animated for the website).
 - `planner` agent — plans the next phase/feature; surfaces new settings, events, services, and modules.
 
-## Golden rules (summary — full law in `.claude/rules.md`)
+## Golden rules (summary — full law in `docs/rules.md`)
 
 - **Module/service isolation.** A service NEVER imports another service; modules NEVER import each other's internals. Cross-service reads = RMQ request/reply; writes = events + Outbox; idempotent consumers. (U1, MS1–MS3)
 - **Single source of truth.** Contracts (Zod + types) live once in `libs/contracts`. No duplicated DTO/shape. **Verify shapes, never invent them.** (U3, U15)
@@ -78,6 +85,8 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 - **Per-service own DB; DDD layering; base/translatable repos; never `new Date()`.** (N1–N5)
 - **APP_ENV drives all config; secrets via env; dev in Docker with hot-reload.** (OPS1–OPS3, U19)
 - **TDD always; DB tests use the `*_test` DB; every module has a synced doc; the `docs/postman` collection stays current with every endpoint.** (TDD1–TDD2, DOC1–DOC2)
-- **Plans before building; PROGRESS is the ledger; always verify; rules grow.** (U11–U13)
+- **Plans before building; PROGRESS is the ledger; verify in two tiers; rules grow.** Mid-phase = `nx affected`; the phase-closing gate = full `run-many` + boot-verifier, and a phase is NEVER marked done on the affected tier alone. (U11–U13)
+- **Context is a budget.** Read the law, the ledger, and **only the current phase's** plan section; archives are never read at startup; sub-agents get a distilled brief, not the library; a PROGRESS entry is ≤15 lines. (U31)
+- **One 16 GB machine, three projects, one 6 GiB Docker VM.** Every container caps `mem_limit` + `NODE_OPTIONS`; bring up compose **profiles**, not `full`; host `nx` runs `--parallel=2`; the verifier spike and the running stack never overlap. (OPS9, OPS5)
 
-> Start here, then `.claude/rules.md`, then `.claude/docs/PROGRESS.md`. When in doubt, the rules win.
+> Start here, then `docs/rules.md`, then `docs/PROGRESS.md`. When in doubt, the rules win.

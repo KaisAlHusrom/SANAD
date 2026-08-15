@@ -12,16 +12,16 @@
 
 The owner deploys and **immediately runs paid ads**. Read from the code, not inferred:
 
-| Gap | Evidence |
-|---|---|
-| No contracts / proposals / e-sign / documents — at all | Zero tables, zero message patterns, zero routes across all six services and `libs/contracts`. |
-| No client entity | `CLIENT_ROLE` exists in `libs/contracts/src/lib/identity/role.ts` but is seeded `[]` in `apps/identity-service/src/seed/seed-data.ts` — a label, nothing more. No `client` table anywhere. |
-| A lead is a dead end | `apps/content-service/src/db/schema/lead.table.ts`: `name, email, company, budget, projectType, message, source, locale, status`. **No phone.** `leadStatusEnum = ['new','contacted','archived']`, set free-form with no guards. No owner, notes, activity, follow-up, dedup, or conversion. The admin module is a table + a status dropdown. |
-| `POST /api/leads` public and unprotected | `apps/api-gateway/src/content/leads.controller.ts` — no `ThrottlerModule`, `helmet`, CORS policy, captcha or honeypot exist anywhere in `apps/api-gateway/src`. |
-| No password reset / email verification / login lockout | Explicitly out of scope in `libs/contracts/src/lib/identity/user-update.zod.types.ts`. |
-| A failed email stays failed forever | notifications-service has no retry sweeper; `email_status` goes `pending → failed` and stops. |
-| No audit log, no PDF, no sequential numbering | Only `updated_by_user_id` on three integration tables. All IDs are `uuid`. |
-| Two orphan events | `settings.changed` and `user.registered` are emitted with **no consumer** — the first finding U27 will formalise. |
+| Gap                                                    | Evidence                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No contracts / proposals / e-sign / documents — at all | Zero tables, zero message patterns, zero routes across all six services and `libs/contracts`.                                                                                                                                                                                                                                                 |
+| No client entity                                       | `CLIENT_ROLE` exists in `libs/contracts/src/lib/identity/role.ts` but is seeded `[]` in `apps/identity-service/src/seed/seed-data.ts` — a label, nothing more. No `client` table anywhere.                                                                                                                                                    |
+| A lead is a dead end                                   | `apps/content-service/src/db/schema/lead.table.ts`: `name, email, company, budget, projectType, message, source, locale, status`. **No phone.** `leadStatusEnum = ['new','contacted','archived']`, set free-form with no guards. No owner, notes, activity, follow-up, dedup, or conversion. The admin module is a table + a status dropdown. |
+| `POST /api/leads` public and unprotected               | `apps/api-gateway/src/content/leads.controller.ts` — no `ThrottlerModule`, `helmet`, CORS policy, captcha or honeypot exist anywhere in `apps/api-gateway/src`.                                                                                                                                                                               |
+| No password reset / email verification / login lockout | Explicitly out of scope in `libs/contracts/src/lib/identity/user-update.zod.types.ts`.                                                                                                                                                                                                                                                        |
+| A failed email stays failed forever                    | notifications-service has no retry sweeper; `email_status` goes `pending → failed` and stops.                                                                                                                                                                                                                                                 |
+| No audit log, no PDF, no sequential numbering          | Only `updated_by_user_id` on three integration tables. All IDs are `uuid`.                                                                                                                                                                                                                                                                    |
+| Two orphan events                                      | `settings.changed` and `user.registered` are emitted with **no consumer** — the first finding U27 will formalise.                                                                                                                                                                                                                             |
 
 ### Owner decisions (2026-08-08 — do not relitigate)
 
@@ -38,7 +38,7 @@ The owner deploys and **immediately runs paid ads**. Read from the code, not inf
 ### The legal position, stated once
 
 A contract binds **named parties**, not templates — a generic, country-neutral template is entirely legal
-and is how every CLM product works. What is *not* neutral is the signatory: **with no registered entity,
+and is how every CLM product works. What is _not_ neutral is the signatory: **with no registered entity,
 the owner personally is the contracting party and personally liable**, and naming a company that does not
 exist would be a misrepresentation. Hence `partyMode` defaults to **`individual`**: the template renders a
 correct, honest agreement signed by a named individual trading under a brand. Switching to `company` later
@@ -59,10 +59,10 @@ keep reachable through the provider seam rather than blocking on.
 Two new services. **No service imports another** (MS1); cross-service reads are RMQ request/reply (MS2),
 writes are events + Outbox with idempotent consumers (MS3, MS6); each owns its own DB (MS5).
 
-| Service | Owns | Does NOT own |
-|---|---|---|
-| **`documents-service`** | The *generic* document machinery: clause library, templates + versions, the variable catalog, rendering (HTML + PDF), signature envelopes, signers, envelope events. Domain-agnostic — it has never heard of a "contract". | Any commercial meaning. It does not know what a proposal or a contract is. |
-| **`crm-service`** | The *commercial relationship*: client, contact, activity, task, pipeline stage, deal, proposal, contract, milestones, payment schedule, obligations. | Rendering, PDFs, signatures — it asks `documents-service`. |
+| Service                 | Owns                                                                                                                                                                                                                       | Does NOT own                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **`documents-service`** | The _generic_ document machinery: clause library, templates + versions, the variable catalog, rendering (HTML + PDF), signature envelopes, signers, envelope events. Domain-agnostic — it has never heard of a "contract". | Any commercial meaning. It does not know what a proposal or a contract is. |
+| **`crm-service`**       | The _commercial relationship_: client, contact, activity, task, pipeline stage, deal, proposal, contract, milestones, payment schedule, obligations.                                                                       | Rendering, PDFs, signatures — it asks `documents-service`.                 |
 
 This split is why `documents-service` is built **first**: proposals and contracts are both "a document
 built from a template, sent to a party, accepted or signed". Building the engine twice is the duplication
@@ -93,14 +93,14 @@ Every block carries ar/en translations in a `*_translations` table (N5) — neve
 
 **Tables**
 
-| Table | Purpose |
-|---|---|
-| `clause` + `clause_translation` | The reusable library: category, key, ar/en body, variables used, negotiability note, version. |
-| `document_template` + `_translation` | Named template (`msa`, `sow`, `combined`, `change-order`, `nda-mutual`, `nda-oneway`, `maintenance`, `proposal`), kind, status. |
-| `template_version` | **Immutable once published.** Holds the ordered block list. An edit creates the next version; a draft can diff against the published one. |
-| `template_block` | One row per block: order, kind, payload, optional `clause_id` for a `clause-ref`. |
-| `rendered_document` | A resolved snapshot: template version + resolved variable values + the produced HTML + PDF media reference + content hash. |
-| `outbox` | MS3. |
+| Table                                | Purpose                                                                                                                                   |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `clause` + `clause_translation`      | The reusable library: category, key, ar/en body, variables used, negotiability note, version.                                             |
+| `document_template` + `_translation` | Named template (`msa`, `sow`, `combined`, `change-order`, `nda-mutual`, `nda-oneway`, `maintenance`, `proposal`), kind, status.           |
+| `template_version`                   | **Immutable once published.** Holds the ordered block list. An edit creates the next version; a draft can diff against the published one. |
+| `template_block`                     | One row per block: order, kind, payload, optional `clause_id` for a `clause-ref`.                                                         |
+| `rendered_document`                  | A resolved snapshot: template version + resolved variable values + the produced HTML + PDF media reference + content hash.                |
+| `outbox`                             | MS3.                                                                                                                                      |
 
 ### 3.2 The variable catalog
 
@@ -127,7 +127,7 @@ Arabic-first product whose contracts are governed by their Arabic text, Chromium
 engine. The container gains a Chromium layer and a font layer; that cost is accepted.
 
 **Verification is by eye, not by test:** a green test proves bytes were produced, not that a glyph joined.
-P8.13 is not done until the seeded MSA PDF is *opened and looked at* in Arabic.
+P8.13 is not done until the seeded MSA PDF is _opened and looked at_ in Arabic.
 
 ---
 
@@ -168,7 +168,7 @@ Both are built. Neither is the "lite" version of the other.
 - **Tamper evidence** — SHA-256 of the sealed PDF stored at completion, plus a **certificate of
   completion** page appended to the PDF listing every envelope event, every signer, each signer's
   verification method, and the document hash.
-- **Audit** — every transition writes a `libs/shared/audit` row *and* emits a catalogued event.
+- **Audit** — every transition writes a `libs/shared/audit` row _and_ emits a catalogued event.
 
 ### 4.5 Provider seam
 
@@ -262,7 +262,7 @@ timeline · price & payment schedule · support & warranty period · post-delive
 
 **Also seeded:** change order · NDA (mutual + one-way) · maintenance/support agreement · proposal template.
 
-**The neutrality test for P8.18:** a *fresh install* must render a complete, coherent MSA + SOW in ar and
+**The neutrality test for P8.18:** a _fresh install_ must render a complete, coherent MSA + SOW in ar and
 en with **zero** company-specific text hardcoded. Every party fact resolves from the Legal Entity Profile.
 That is what makes the pack reusable by another agency that buys this platform — and it is checkable, so
 the verifier checks it.
@@ -282,18 +282,18 @@ orphan is a deliberate, reviewable choice rather than an accident.
 
 **Added by this block:**
 
-| Event | Producer | Consumers |
-|---|---|---|
-| `lead.assigned`, `lead.qualified`, `lead.converted` | crm | notifications, admin bus |
-| `client.created`, `client.updated` | crm | notifications, documents (variable cache), admin bus |
-| `proposal.sent/viewed/accepted/declined/expired` | crm | notifications, admin bus, client-portal bus |
-| `contract.sent/approved/signed/executed/expiring/terminated` | crm | notifications, admin bus, client-portal bus |
-| `envelope.sent/viewed/identity-verified/signed/completed/declined/voided/expired` | documents | crm, notifications, audit |
-| `document.rendered`, `template.published` | documents | crm, admin bus |
-| `user.invited/verified`, `password.reset.requested`, `login.failed/locked` | identity | notifications, audit |
+| Event                                                                             | Producer  | Consumers                                            |
+| --------------------------------------------------------------------------------- | --------- | ---------------------------------------------------- |
+| `lead.assigned`, `lead.qualified`, `lead.converted`                               | crm       | notifications, admin bus                             |
+| `client.created`, `client.updated`                                                | crm       | notifications, documents (variable cache), admin bus |
+| `proposal.sent/viewed/accepted/declined/expired`                                  | crm       | notifications, admin bus, client-portal bus          |
+| `contract.sent/approved/signed/executed/expiring/terminated`                      | crm       | notifications, admin bus, client-portal bus          |
+| `envelope.sent/viewed/identity-verified/signed/completed/declined/voided/expired` | documents | crm, notifications, audit                            |
+| `document.rendered`, `template.published`                                         | documents | crm, admin bus                                       |
+| `user.invited/verified`, `password.reset.requested`, `login.failed/locked`        | identity  | notifications, audit                                 |
 
 **The discipline U27 actually adds:** before writing any new action, audit this table for events that
-action should *react* to. A feature that only emits, or only listens, is half-wired.
+action should _react_ to. A feature that only emits, or only listens, is half-wired.
 
 ---
 
@@ -351,8 +351,8 @@ These phases each need one extra, specific proof:
   under. The payment schedule (P8.17) and the sequence lib (P8.8) are built so P10 reads them rather than
   re-deriving them; ZATCA Phase-2 (UBL 2.1 XML, QR, Fatoora clearance) becomes its own phase when an
   entity is registered and VAT-registered.
-- **Realigning `apps/admin-portal` to the `W7` tree.** The owner's instruction was that the *client
-  portal* must not be built the way the admin portal was. The admin portal is ~480 green tests of working
+- **Realigning `apps/admin-portal` to the `W7` tree.** The owner's instruction was that the _client
+  portal_ must not be built the way the admin portal was. The admin portal is ~480 green tests of working
   product; migrating it is a real, separate, post-deploy phase — recorded here rather than silently
   ignored or silently done.
 - **Projects/phases/tasks, HR, finance, support, AI assistant** — P10+ as already planned in

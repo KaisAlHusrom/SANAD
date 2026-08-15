@@ -6,6 +6,7 @@ build has one fixed, authoritative source of truth for tokens, layout, and the s
 interaction — instead of inventing values at build time (U6 / WEB9 / WEB10).
 
 > ⚠️ **Read this before using anything here.**
+>
 > - **Tokens, layout, spacing, the signature scene, RTL handling → authoritative.** Build P7/P8 to match.
 > - **The copy in the designs is PLACEHOLDER.** Do **not** treat the design's Arabic/English strings
 >   as the product's default content. The real default copy is authored in
@@ -21,14 +22,14 @@ interaction — instead of inventing values at build time (U6 / WEB9 / WEB10).
 
 ## What's here
 
-| File | Purpose |
-|---|---|
-| [`design-spec.md`](./design-spec.md) | The locked token system + shell + signature spec. **Build against this.** |
+| File                                           | Purpose                                                                                 |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`design-spec.md`](./design-spec.md)           | The locked token system + shell + signature spec. **Build against this.**               |
 | [`content-defaults.md`](./content-defaults.md) | Professional bilingual (ar-first / en) **default** copy that replaces the placeholders. |
-| [`logo/`](./logo/) | **The delivered final logo** (سَنَد التقنية wordmark) — 5 variants. **Use these.** |
-| [`logo-prompt.md`](./logo-prompt.md) | *(superseded)* the ideogram.ai prompt used before the final mark was delivered. |
-| `source/Sanad Landing.dc.html` | Archived raw design (landing). |
-| `source/Sanad Admin.dc.html` | Archived raw design (admin portal). |
+| [`logo/`](./logo/)                             | **The delivered final logo** (سَنَد التقنية wordmark) — 5 variants. **Use these.**      |
+| [`logo-prompt.md`](./logo-prompt.md)           | _(superseded)_ the ideogram.ai prompt used before the final mark was delivered.         |
+| `source/Sanad Landing.dc.html`                 | Archived raw design (landing).                                                          |
+| `source/Sanad Admin.dc.html`                   | Archived raw design (admin portal).                                                     |
 
 ## Re-pulling any source on demand (canonical store)
 
@@ -49,14 +50,14 @@ via the `claude_design` MCP (`DesignSync` → `get_file`) — re-run `/design-lo
 
 ## How the designs map to the build
 
-| Design file | Surface | Phase |
-|---|---|---|
-| `Sanad Landing.dc.html` | Website landing | P8 |
-| `Sanad About.dc.html` | Website /about | P8 |
-| `Sanad Services.dc.html` | Website /services | P8 |
-| `Sanad Service Detail.dc.html` | Website /services/[slug] | P8 |
-| `Sanad Admin.dc.html` | Admin portal shell + screens | P7 |
-| `Sanad Client.dc.html` | Client portal shell + screens | later (post-MVP) |
+| Design file                    | Surface                       | Phase            |
+| ------------------------------ | ----------------------------- | ---------------- |
+| `Sanad Landing.dc.html`        | Website landing               | P8               |
+| `Sanad About.dc.html`          | Website /about                | P8               |
+| `Sanad Services.dc.html`       | Website /services             | P8               |
+| `Sanad Service Detail.dc.html` | Website /services/[slug]      | P8               |
+| `Sanad Admin.dc.html`          | Admin portal shell + screens  | P7               |
+| `Sanad Client.dc.html`         | Client portal shell + screens | later (post-MVP) |
 
 The token foundation extracted here is seeded into `libs/shared/config` (Tailwind preset + token CSS)
 during **P0**, so every later surface resolves real brand tokens from day one.

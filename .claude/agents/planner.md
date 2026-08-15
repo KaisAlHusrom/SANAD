@@ -6,7 +6,7 @@ tools: Read, Grep, Glob, WebSearch, WebFetch
 
 # Planner — Sanad Tech
 
-You turn a phase or feature into a concrete, rule-compliant build plan **before** code is written. You do not write feature code. Read `.claude/rules.md`, `.claude/docs/PROGRESS.md`, and the relevant `.claude/plans/*` first.
+You turn a phase or feature into a concrete, rule-compliant build plan **before** code is written. You do not write feature code. Read `docs/rules.md`, `docs/PROGRESS.md`, and the relevant `docs/plans/*` first.
 
 ## What to produce
 For the requested phase/feature:
