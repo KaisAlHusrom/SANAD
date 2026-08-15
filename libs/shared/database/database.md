@@ -30,3 +30,14 @@ The single gateway for DB access. A concrete repo declares a **`ModelConfig`** (
 
 **Events/settings:** none.
 **Tests:** `date-time.spec.ts`, `drizzle/repository/base-repository.spec.ts` (read pipeline + mass-assignment); the builder/translatable query execution is covered by the identity + settings service `*_test` integration tests (TDD2).
+
+## P8.8 addition — `testing/ensure-test-database/`
+
+`ensureTestDatabase(url)` creates a `*_test` database if it is missing. **Test harness only** — it
+refuses any name not ending in `_test` (TDD2) and no service ever calls it.
+
+It exists because `infra/postgres/init/01-create-databases.sql` runs **once, on an empty data
+volume**: a database added to that file after the dev stack first booted never appears on an
+existing machine, so the suite needing it would "skip cleanly" forever — green, and proving nothing
+(the 2026-07-19 false-green class). It throws with the underlying reason rather than swallowing it,
+so a caller that cannot create its database says why.

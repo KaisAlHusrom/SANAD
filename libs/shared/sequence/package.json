@@ -1,0 +1,36 @@
+{
+  "name": "@sanad/sequence",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@sanad/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "name": "sequence",
+    "tags": [
+      "scope:shared",
+      "type:util"
+    ]
+  },
+  "dependencies": {
+    "@sanad/contracts": "workspace:^",
+    "@sanad/database": "workspace:^",
+    "drizzle-orm": "^0.44.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.31.0",
+    "pg": "^8.13.0"
+  }
+}

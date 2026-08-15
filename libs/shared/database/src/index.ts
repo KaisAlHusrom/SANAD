@@ -3,3 +3,4 @@
 export * from './lib/date-time.js';
 export * from './lib/repository.js';
 export * from './lib/drizzle/index.js';
+export * from './lib/testing/index.js';

@@ -49,10 +49,16 @@
       "path": "./apps/admin-portal"
     },
     {
-      "path": "./apps/website"
+      "path": "./libs/web/ui"
     },
     {
-      "path": "./libs/web/ui"
+      "path": "./libs/shared/sequence"
+    },
+    {
+      "path": "./libs/shared/money"
+    },
+    {
+      "path": "./libs/shared/audit"
     }
   ]
 }

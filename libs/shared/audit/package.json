@@ -1,0 +1,44 @@
+{
+  "name": "@sanad/audit",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "@sanad/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "nx": {
+    "name": "audit",
+    "tags": [
+      "scope:shared",
+      "type:util"
+    ]
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/microservices": "^11.0.0",
+    "@sanad/auth": "workspace:^",
+    "@sanad/contracts": "workspace:^",
+    "@sanad/database": "workspace:^",
+    "@sanad/messaging": "workspace:^",
+    "drizzle-orm": "^0.44.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.0.0",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "^0.31.0",
+    "pg": "^8.13.0"
+  }
+}

@@ -7,6 +7,7 @@ import {
   type Provider,
 } from '@nestjs/common';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { DateTimeService } from '../date-time.js';
 // pg is CJS — default-import the module object for the runtime value (`pg.Pool`);
 // the type comes via a type-only import (erased, so no ESM named-import issue).
 import pg from 'pg';
@@ -59,10 +60,26 @@ export class DrizzleModule implements OnModuleDestroy {
       useClass: DrizzleTransactionRunner,
     };
 
+    // The shared clock (N3). Provided by the @Global infrastructure root rather than by each
+    // service's own AppModule, because an AppModule-local provider is invisible to the modules
+    // that AppModule IMPORTS — which is exactly how `AuditModule` (P8.8) could not resolve it and
+    // crash-looped settings-service at boot while all 38 of its unit tests stayed green.
+    // Every repository this module serves needs the clock anyway; the six services keep their own
+    // local provider harmlessly (it wins inside AppModule, and both instances are stateless).
+    const clockProvider: Provider = {
+      provide: DateTimeService,
+      useFactory: () => new DateTimeService(),
+    };
+
     return {
       module: DrizzleModule,
-      providers: [poolProvider, drizzleProvider, transactionRunnerProvider],
-      exports: [PG_POOL, DRIZZLE, TransactionRunner],
+      providers: [
+        poolProvider,
+        drizzleProvider,
+        transactionRunnerProvider,
+        clockProvider,
+      ],
+      exports: [PG_POOL, DRIZZLE, TransactionRunner, DateTimeService],
     };
   }
 
