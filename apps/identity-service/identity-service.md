@@ -85,9 +85,16 @@ existing `RbacRepository` (new `revokeRoleFromUser` + `listRoles`).
 
 ## Events emitted (MS3 — Outbox)
 
-| Event             | When                                         | Consumers                     |
-| ----------------- | -------------------------------------------- | ----------------------------- |
-| `user.registered` | a user is created (currently the seed admin) | notifications (P6) — none yet |
+| Event             | When                                         | Consumers                                           |
+| ----------------- | -------------------------------------------- | --------------------------------------------------- |
+| `user.registered` | a user is created (currently the seed admin) | **none — declared orphan, P8.12 owns the consumer** |
+
+Since P8.7 this event has a name constant (`USER_REGISTERED_EVENT`) and a `.strict()` payload schema
+(`identity/user-event.zod.types.ts` — `{ userId, email, name }`); before that it was a hardcoded
+string with an ad-hoc object, so nothing could validate it. It is declared in the `EVENT_CATALOG`
+with `consumers: []` + a reason (U27d): the welcome/verify email needs the DB-backed template system
+P8.12 builds, and P8.11 adds the real registration producers (invitation, verification) beside the
+seeder.
 
 ## Settings used
 

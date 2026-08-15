@@ -116,3 +116,11 @@ Email bodies are payload text the gateway's renderer never sees, so they are com
   keys and `dir` derived from the locale. It was English-only prose until the U24 sweep — staff
   are Arabic-first too. The lead's own values (name, message, source) are **data** and pass
   through untranslated.
+
+## Event catalog (U27)
+
+Every event this service emits or consumes is declared once in the **`EVENT_CATALOG`**
+(`libs/contracts/src/lib/events/`), with its payload schema, its producer and its consumers —
+and the publish path is typed against it, so an un-catalogued name is a typecheck failure
+(`createOutboxRecord` only accepts a `BrokerEventName`). Adding an event here means adding its
+`*.event.ts` to the catalog in the same change.

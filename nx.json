@@ -82,12 +82,30 @@
   ],
   "neverConnectToCloud": true,
   "analytics": false,
+  // 2 concurrent tasks, not Nx's default 3: each Vitest project spawns its own worker pool, so the
+  // default put ~30 node processes on a 16 GB host and pushed the whole machine into swap — which
+  // made the gate slower, not faster (OPS9).
+  "parallel": 2,
   "sync": {
     "applyChanges": true
   },
   "targetDefaults": {
     "test": {
       "dependsOn": ["^build"]
+    },
+    "lint": {
+      // `@nx/eslint/plugin` infers `{workspaceRoot}/tools/eslint-rules/**/*` as a lint input —
+      // a path Nx reserves for its own TS workspace-rules loader, which our ESM plugin
+      // deliberately does not use (it errors on every eslint run there). Our plugin lives in
+      // `tools/lint/`, so name it here or a burndown commit that only edits
+      // `u26-logic-unit-folder/baseline.json` serves stale cached lint results.
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tools/lint/**/*",
+        { "externalDependencies": ["eslint"] }
+      ]
     }
   }
 }

@@ -13,13 +13,14 @@
 // Usage: node infra/scripts/dev-libs.mjs   (run with cwd = /workspace)
 
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import chokidar from 'chokidar';
 
 const WORKSPACE = '/workspace';
 // Nx project names (from each lib package.json `nx.name`), in no particular order —
 // Nx resolves the build order from the dependency graph.
-const PROJECTS = 'contracts,config,util,database,messaging,auth,cache,web-ui';
+const PROJECTS =
+  'contracts,config,util,database,messaging,auth,cache,web-ui,money,sequence,audit';
 const MARKER_DIR = `${WORKSPACE}/.nx`;
 const MARKER = `${MARKER_DIR}/.libs-ready`;
 const DEBOUNCE_MS = 400;
@@ -34,6 +35,15 @@ function build() {
     p.on('exit', (code) => resolve(code ?? 1));
   });
 }
+
+// Clear the marker BEFORE building. It lives in the `libsbuilder_nx` named volume, which
+// survives a stack teardown — so without this the healthcheck goes green on a stale marker from
+// a previous run and every service is released **before** the rebuilt dist exists. Measured on
+// the P8.7 boot: healthy at +9s, build actually finished at +21s — 12 seconds of services
+// booting against an old `libs/*/dist`. Harmless only because the host dist happened to be
+// current; on a cold start after a lib change it is exactly the N12 boot failure this gate exists
+// to catch.
+rmSync(MARKER, { force: true });
 
 // Initial build gates the whole stack — fail the container if it can't produce the libs.
 const first = await build();

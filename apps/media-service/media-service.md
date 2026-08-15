@@ -128,9 +128,9 @@ constants. List reuses the shared `listQuerySchema` (U17).
 
 ## Events emitted (MS3 — Outbox)
 
-| Event           | Payload       | Consumers                                                |
-| --------------- | ------------- | -------------------------------------------------------- |
-| `media.deleted` | `{ id, key }` | (none yet — P5 content-service reference reconciliation) |
+| Event           | Payload       | Consumers                                                                |
+| --------------- | ------------- | ------------------------------------------------------------------------ |
+| `media.deleted` | `{ id, key }` | content-service (`media-deleted.consumer.ts` → reference reconciliation) |
 
 ## Gateway surface (all guarded, MS4)
 
@@ -206,3 +206,11 @@ every `PENDING_SWEEP_INTERVAL_MS`, with a grace period well beyond the URL TTL.
 None yet. The upload allowlist + size ceiling are coded constants (U18) / env
 (`MEDIA_MAX_UPLOAD_BYTES`); resolving them from the settings-service (U9) is a later
 enhancement.
+
+## Event catalog (U27)
+
+Every event this service emits or consumes is declared once in the **`EVENT_CATALOG`**
+(`libs/contracts/src/lib/events/`), with its payload schema, its producer and its consumers —
+and the publish path is typed against it, so an un-catalogued name is a typecheck failure
+(`createOutboxRecord` only accepts a `BrokerEventName`). Adding an event here means adding its
+`*.event.ts` to the catalog in the same change.

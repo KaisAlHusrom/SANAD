@@ -322,3 +322,11 @@ lives only in the ar/en catalogs and is rendered once at the gateway edge.
 
 None yet. (A future enhancement may resolve a feature toggle / locale set from the
 settings-service via `settings.resolve`, U9.)
+
+## Event catalog (U27)
+
+Every event this service emits or consumes is declared once in the **`EVENT_CATALOG`**
+(`libs/contracts/src/lib/events/`), with its payload schema, its producer and its consumers —
+and the publish path is typed against it, so an un-catalogued name is a typecheck failure
+(`createOutboxRecord` only accepts a `BrokerEventName`). Adding an event here means adding its
+`*.event.ts` to the catalog in the same change.

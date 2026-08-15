@@ -565,6 +565,9 @@ importers:
       '@nestjs/platform-express':
         specifier: ^11.0.0
         version: 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)
+      '@sanad/audit':
+        specifier: workspace:^
+        version: link:../../libs/shared/audit
       '@sanad/auth':
         specifier: workspace:*
         version: link:../../libs/shared/auth
@@ -699,6 +702,55 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  libs/shared/audit:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^11.0.0
+        version: 11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core':
+        specifier: ^11.0.0
+        version: 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.27)(@nestjs/platform-express@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/microservices':
+        specifier: ^11.0.0
+        version: 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(amqp-connection-manager@4.1.15(amqplib@0.10.9))(amqplib@0.10.9)(ioredis@5.11.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@sanad/auth':
+        specifier: workspace:^
+        version: link:../auth
+      '@sanad/contracts':
+        specifier: workspace:^
+        version: link:../../contracts
+      '@sanad/database':
+        specifier: workspace:^
+        version: link:../database
+      '@sanad/messaging':
+        specifier: workspace:^
+        version: link:../messaging
+      drizzle-orm:
+        specifier: ^0.44.0
+        version: 0.44.7(@types/pg@8.20.0)(pg@8.22.0)
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
+      rxjs:
+        specifier: ^7.8.1
+        version: 7.8.2
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@nestjs/testing':
+        specifier: ^11.0.0
+        version: 11.2.1(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/microservices@11.1.27)(@nestjs/platform-express@11.1.27)
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.20.0
+      drizzle-kit:
+        specifier: ^0.31.0
+        version: 0.31.10
+      pg:
+        specifier: ^8.13.0
+        version: 8.22.0
+
   libs/shared/auth:
     dependencies:
       '@nestjs/common':
@@ -795,6 +847,9 @@ importers:
       '@nestjs/microservices':
         specifier: ^11.0.0
         version: 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(amqp-connection-manager@4.1.15(amqplib@0.10.9))(amqplib@0.10.9)(ioredis@5.11.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@sanad/contracts':
+        specifier: workspace:^
+        version: link:../../contracts
       '@sanad/database':
         specifier: workspace:^
         version: link:../database
@@ -807,9 +862,40 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
-      zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+
+  libs/shared/money:
+    dependencies:
+      '@sanad/contracts':
+        specifier: workspace:^
+        version: link:../../contracts
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+
+  libs/shared/sequence:
+    dependencies:
+      '@sanad/contracts':
+        specifier: workspace:^
+        version: link:../../contracts
+      '@sanad/database':
+        specifier: workspace:^
+        version: link:../database
+      drizzle-orm:
+        specifier: ^0.44.0
+        version: 0.44.7(@types/pg@8.20.0)(pg@8.22.0)
+      tslib:
+        specifier: ^2.3.0
+        version: 2.8.1
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.20.0
+      drizzle-kit:
+        specifier: ^0.31.0
+        version: 0.31.10
+      pg:
+        specifier: ^8.13.0
+        version: 8.22.0
 
   libs/shared/util:
     dependencies:
@@ -2729,6 +2815,19 @@ packages:
       sequelize:
         optional: true
       typeorm:
+        optional: true
+
+  '@nestjs/testing@11.2.1':
+    resolution: {integrity: sha512-3mdABjqFafW+ix6fGJMPHvnj/9Or6kAPiszN8zt9bHGPuHYdkkp+9zsBDDUVuP59BcbzBqNBa5fXHBaeMzVvog==}
+    peerDependencies:
+      '@nestjs/common': ^11.0.0
+      '@nestjs/core': ^11.0.0
+      '@nestjs/microservices': ^11.0.0
+      '@nestjs/platform-express': ^11.0.0
+    peerDependenciesMeta:
+      '@nestjs/microservices':
+        optional: true
+      '@nestjs/platform-express':
         optional: true
 
   '@next/env@15.5.19':
@@ -10741,6 +10840,15 @@ snapshots:
       rxjs: 7.8.2
     optionalDependencies:
       '@nestjs/microservices': 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(amqp-connection-manager@4.1.15(amqplib@0.10.9))(amqplib@0.10.9)(ioredis@5.11.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+
+  '@nestjs/testing@11.2.1(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(@nestjs/microservices@11.1.27)(@nestjs/platform-express@11.1.27)':
+    dependencies:
+      '@nestjs/common': 11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@11.1.27)(@nestjs/platform-express@11.1.27)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      tslib: 2.8.1
+    optionalDependencies:
+      '@nestjs/microservices': 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)(amqp-connection-manager@4.1.15(amqplib@0.10.9))(amqplib@0.10.9)(ioredis@5.11.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/platform-express': 11.1.27(@nestjs/common@11.1.27(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.27)
 
   '@next/env@15.5.19': {}
 

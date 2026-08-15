@@ -6,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { DateTimeService, DRIZZLE } from '@sanad/database';
 import { createOutboxRecord, DrizzleOutboxStore } from '@sanad/messaging';
+import {
+  USER_REGISTERED_EVENT,
+  type UserRegisteredEvent,
+} from '@sanad/contracts';
 import { IDENTITY_ENV, type IdentityEnv } from '../env.js';
 import {
   userRoleTable,
@@ -96,12 +100,13 @@ export class SeedService implements OnApplicationBootstrap {
         .values({ userId: user.id, roleId: adminRole.id });
 
       const outbox = new DrizzleOutboxStore(tx, this.clock);
+      const event: UserRegisteredEvent = {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+      };
       await outbox.enqueue(
-        createOutboxRecord(
-          'user.registered',
-          { userId: user.id, email: user.email },
-          this.clock.nowIso(),
-        ),
+        createOutboxRecord(USER_REGISTERED_EVENT, event, this.clock.nowIso()),
       );
     });
 
