@@ -125,11 +125,15 @@ let debounce = null;
 // host edit) never raises a native event here — polling re-stats and catches both.
 const isIgnored = (p) =>
   /(^|\/)node_modules(\/|$)/.test(p) || /(^|\/)src(\/|$)/.test(p);
+// OPS9: seven containers poll this tree at once, so the interval is a CPU tax paid continuously
+// on a 16 GB host shared with two other projects. 1000 ms + the restart debounce still reacts in
+// ~1.4 s — imperceptible in dev — for ~2.5x less polling than the original 400 ms.
+const POLL_MS = Number(process.env.DEV_WATCH_INTERVAL_MS ?? 1000);
 const watcher = chokidar.watch([`${appPath}/dist`, `${WORKSPACE}/libs`], {
   ignoreInitial: true,
   usePolling: true,
-  interval: 400,
-  binaryInterval: 400,
+  interval: POLL_MS,
+  binaryInterval: POLL_MS,
   ignored: isIgnored,
 });
 watcher.on('all', () => {

@@ -82,11 +82,14 @@ async function rebuild() {
 // VirtioFS bind mount, so only polling detects them.
 const isIgnored = (p) =>
   /(^|\/)node_modules(\/|$)/.test(p) || /(^|\/)dist(\/|$)/.test(p);
+// OPS9: see dev-serve.mjs — the poll interval is a continuous CPU tax across every watching
+// container, and this host is shared with two other projects. Tunable via DEV_WATCH_INTERVAL_MS.
+const POLL_MS = Number(process.env.DEV_WATCH_INTERVAL_MS ?? 1000);
 const watcher = chokidar.watch(`${WORKSPACE}/libs`, {
   ignoreInitial: true,
   usePolling: true,
-  interval: 400,
-  binaryInterval: 400,
+  interval: POLL_MS,
+  binaryInterval: POLL_MS,
   ignored: isIgnored,
 });
 watcher.on('all', () => {

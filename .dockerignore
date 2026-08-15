@@ -1,0 +1,33 @@
+# Build context excludes (OPS9). Every dev image builds with `context: ..` (the whole workspace),
+# and there are nine of them — without this file each `--build` re-sent node_modules, .nx and .git.
+# None of these are needed at image-build time: the dev containers bind-mount the repo and install
+# into their own named volumes (infra/scripts/dev-install.sh).
+node_modules
+**/node_modules
+.pnpm-store
+
+.git
+.github
+
+# build outputs — regenerated in-container
+dist
+**/dist
+out-tsc
+**/out-tsc
+.next
+**/.next
+*.tsbuildinfo
+
+# caches / reports
+.nx
+**/.vite
+coverage
+**/coverage
+test-output
+**/test-output
+
+# local-only
+.claude/settings.local.json
+.claude/worktrees
+**/.DS_Store
+*.log
