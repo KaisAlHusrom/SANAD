@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { DateTimeService } from '@sanad/database';
 import { AllExceptionsFilter, ResponseEnvelopeInterceptor } from '@sanad/util';
 import { AppModule } from './app.module.js';
+import { requestContextMiddleware } from './core/middlewares/index.js';
 import { loadGatewayEnv } from './env.js';
 
 /**
@@ -17,6 +18,10 @@ async function bootstrap(): Promise<void> {
 
   const clock = new DateTimeService();
   app.setGlobalPrefix('api');
+  // FIRST: opens the request-context scope (ip / user-agent / request id) that `forwardHeaders`
+  // reads, so every downstream RMQ call carries it (P8.8). Express middleware, not a Nest
+  // interceptor — an interceptor's `next.handle()` is subscribed after it returns, outside the scope.
+  app.use(requestContextMiddleware);
   app.useGlobalInterceptors(new ResponseEnvelopeInterceptor(clock));
   app.useGlobalFilters(new AllExceptionsFilter(clock));
   app.enableShutdownHooks();

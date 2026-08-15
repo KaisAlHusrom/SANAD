@@ -89,11 +89,31 @@ translate live in [`@sanad/util`](../../libs/shared/util/util.md).
 
 - **Resolve** — [`@RequestLocale()`](src/core/decorators/request-locale.decorator.ts) injects
   the caller's `Locale` into a handler (`x-sanad-locale` → `accept-language` → `ar`).
-- **Forward** — [`forwardHeaders(identity, locale)`](src/core/helpers/forward-headers.ts) is
-  the one place the RMQ headers are built: the validated identity (MS4) **plus** the locale,
-  so a service can localize text that lives inside its payload. It replaced
-  `identityToHeaders(identity)` at every `sendRequest` call site; a public route passes
-  `null` for the identity and forwards the locale alone.
+- **Forward** — [`forwardHeaders(identity, locale)`](src/core/helpers/forward-headers/forward-headers.ts)
+  is the one place the RMQ headers are built: the validated identity (MS4), the locale so a service
+  can localize text that lives inside its payload, **and (P8.8) the caller's circumstances** — ip,
+  user-agent, request id. It replaced `identityToHeaders(identity)` at every `sendRequest` call
+  site; a public route passes `null` for the identity and forwards locale + context alone.
+
+## Request context (P8.8) — how ip / user-agent / request id reach a service
+
+[`requestContextMiddleware`](src/core/middlewares/request-context/request-context.middleware.ts) is
+registered **first** in `main.ts` via `app.use(...)`. It runs the whole request inside an
+`AsyncLocalStorage` scope carrying `{ ip, userAgent, requestId }`, which `forwardHeaders` reads and
+serialises into `x-sanad-request-context`. Three decisions behind that shape:
+
+- **Express middleware, not a Nest interceptor.** An interceptor's `next.handle()` is _subscribed_
+  after `intercept()` returns, so the controller would execute outside any scope opened around it.
+  `app.use` wraps the entire downstream chain — guards, controller, and the RMQ send.
+- **Read from the scope, not from a parameter.** `forwardHeaders` has ~26 call sites; a third
+  argument would mean every future audited route had to remember to thread it. This way every
+  gateway→service call already carries the context and no later phase revisits a route.
+- **`x-forwarded-for`'s FIRST hop is the client.** Reading Express's `req.ip` alone behind our own
+  nginx would stamp the proxy's address on every audit row — the same as recording nothing.
+
+`requestId` honours an inbound `x-request-id` and is otherwise `null`; **P8.10** owns generating one,
+and needs no change here to do it.
+
 - **Map back** — [`toHttpException`](src/core/rpc-error.ts) carries an RMQ failure's
   `{ statusCode, messageKey, params }` through verbatim for the filter to render. An upstream
   that only sends a bare `message` string is treated as **un-keyed**: the prose is dropped
