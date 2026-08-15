@@ -12,14 +12,33 @@
   },
   "include": ["src/**/*.ts"],
   "references": [
-    { "path": "../../libs/contracts/tsconfig.lib.json" },
-    { "path": "../../libs/shared/auth/tsconfig.lib.json" },
-    { "path": "../../libs/shared/cache/tsconfig.lib.json" },
-    { "path": "../../libs/shared/config/tsconfig.lib.json" },
-    { "path": "../../libs/shared/database/tsconfig.lib.json" },
-    { "path": "../../libs/shared/i18n/tsconfig.lib.json" },
-    { "path": "../../libs/shared/messaging/tsconfig.lib.json" },
-    { "path": "../../libs/shared/util/tsconfig.lib.json" }
+    {
+      "path": "../../libs/shared/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/messaging/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/i18n/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/database/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/contracts/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/config/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/cache/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/auth/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/shared/audit/tsconfig.lib.json"
+    }
   ],
   "exclude": [
     "vite.config.ts",

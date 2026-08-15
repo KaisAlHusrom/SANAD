@@ -14,7 +14,7 @@ import {
 } from './branding.constants.js';
 import { flattenBrandingUpdate } from './branding-update.flatten.js';
 import { SettingsResolver } from './settings.resolver.js';
-import { SettingsWriter } from './settings.writer.js';
+import { SettingsWriter } from './settings/settings.writer.js';
 
 /**
  * Branding reads + writes (the settings-service's first concrete group). Reads resolve the

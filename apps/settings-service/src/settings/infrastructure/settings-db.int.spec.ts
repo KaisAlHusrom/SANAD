@@ -6,6 +6,12 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { sql } from 'drizzle-orm';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
+import {
+  AuditRecorder,
+  auditLogTable,
+  DrizzleAuditStore,
+  type AuditScope,
+} from '@sanad/audit';
 import { RedisCache, type RedisClient } from '@sanad/cache';
 import {
   DateTimeService,
@@ -24,7 +30,7 @@ import { SETTINGS_DEFAULTS } from '../application/branding-catalog.js';
 import { BrandingService } from '../application/branding.service.js';
 import { SettingsCatalogService } from '../application/settings-catalog.service.js';
 import { SettingsResolver } from '../application/settings.resolver.js';
-import { SettingsWriter } from '../application/settings.writer.js';
+import { SettingsWriter } from '../application/settings/settings.writer.js';
 import { SettingRepository } from './setting.repository.js';
 import { SettingValueRepository } from './setting-value.repository.js';
 import { SettingTranslationRepository } from './setting-translation.repository.js';
@@ -127,6 +133,18 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
     }
   }
 
+  const recorder = new AuditRecorder(new DrizzleAuditStore(), clock);
+
+  /** The actor the gateway would have forwarded in the RMQ headers (MS4 + P8.8). */
+  const auditScope: AuditScope = {
+    actor: {
+      userId: '11111111-1111-4111-8111-111111111111',
+      role: 'admin',
+      type: 'user',
+    },
+    context: { ip: '85.10.1.4', userAgent: 'Mozilla/5.0', requestId: 'req-77' },
+  };
+
   function writer(cache: RedisCache): SettingsWriter {
     return new SettingsWriter(
       settings,
@@ -135,6 +153,8 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
       cache,
       clock,
       txRunner,
+      resolver,
+      recorder,
     );
   }
 
@@ -146,7 +166,7 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
 
   beforeEach(async () => {
     await db.execute(
-      sql`truncate table "setting_translation", "setting_value", "setting", "outbox" restart identity cascade`,
+      sql`truncate table "setting_translation", "setting_value", "setting", "outbox", "audit_log" restart identity cascade`,
     );
   });
 
@@ -329,5 +349,56 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
     expect(mergedAr[0]?.value).toBe('مرحبا');
     const mergedEn = await trans.mergeTranslations([ar], 'en');
     expect(mergedEn[0]?.value).toBe('Hello');
+  });
+
+  // ── P8.8: the audited write path, end to end against the real DB ────────────────────
+  it('writes an IMMUTABLE audit row with actor + ip + before/after for a settings change', async () => {
+    await seedCatalog();
+    await recorder.runInScope(auditScope, async () => {
+      await writer(fakeCache()).setMany(
+        [{ key: 'branding.colors.primary', value: '#123456' }],
+        { scope: 'global' },
+      );
+    });
+
+    const rows = await db.select().from(auditLogTable);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      action: 'settings.updated',
+      entityType: 'setting',
+      entityId: 'branding.colors.primary',
+      actorUserId: auditScope.actor.userId,
+      actorRole: 'admin',
+      actorType: 'user',
+      ip: '85.10.1.4',
+      userAgent: 'Mozilla/5.0',
+      requestId: 'req-77',
+      outcome: 'succeeded',
+    });
+    // The BEFORE side is the previously-resolved value (here the coded default, U9), so the
+    // trail reads as a change and not as a create.
+    expect((rows[0]?.after as { value?: unknown })?.value).toBe('#123456');
+    expect((rows[0]?.before as { value?: unknown })?.value).not.toBe('#123456');
+
+    // Append-only is enforced by the trigger the --custom migration installed, in THIS
+    // service's database — not merely by the shared lib's own test DB.
+    await expect(
+      db.execute(sql`update "audit_log" set action = 'tampered'`),
+    ).rejects.toThrow();
+    const [unchanged] = await db.select().from(auditLogTable);
+    expect(unchanged?.action).toBe('settings.updated');
+  });
+
+  it('leaves NO audit row when the settings write is rejected', async () => {
+    await seedCatalog();
+    await recorder.runInScope(auditScope, async () => {
+      await expect(
+        writer(fakeCache()).setMany(
+          [{ key: 'branding.colors.primary', value: 42 }],
+          { scope: 'global' },
+        ),
+      ).rejects.toThrow();
+    });
+    expect(await db.select().from(auditLogTable)).toHaveLength(0);
   });
 });

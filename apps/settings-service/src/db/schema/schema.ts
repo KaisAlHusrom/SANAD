@@ -1,4 +1,5 @@
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { auditLogTable } from '@sanad/audit';
 import { outboxTable } from '@sanad/messaging';
 import { settingTable } from './setting.table.js';
 import { settingValueTable } from './setting-value.table.js';
@@ -7,7 +8,7 @@ import { integrationSecretTable } from './integration-secret.table.js';
 import { integrationConfigTable } from './integration-config.table.js';
 import { integrationActiveProviderTable } from './integration-active-provider.table.js';
 
-/** The settings service's full Drizzle schema (its own DB, MS5) — incl. the Outbox. */
+/** The settings service's full Drizzle schema (its own DB, MS5) — incl. the Outbox + audit trail. */
 export const schema = {
   settingTable,
   settingValueTable,
@@ -16,6 +17,7 @@ export const schema = {
   integrationConfigTable,
   integrationActiveProviderTable,
   outboxTable,
+  auditLogTable,
 };
 
 /** The typed Drizzle handle bound to this service's schema (injected via `DRIZZLE`). */

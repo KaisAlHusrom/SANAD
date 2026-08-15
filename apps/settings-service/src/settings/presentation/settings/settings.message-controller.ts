@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { Audited } from '@sanad/audit';
 import {
   resolveGroupRequestSchema,
   resolveRequestSchema,
@@ -16,10 +17,10 @@ import {
   type SettingsUpdateRequest,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
-import type { ResolvedValue } from '../application/resolved-value.js';
-import { SettingsCatalogService } from '../application/settings-catalog.service.js';
-import { SettingsResolver } from '../application/settings.resolver.js';
-import { SettingsWriter } from '../application/settings.writer.js';
+import type { ResolvedValue } from '../../application/resolved-value.js';
+import { SettingsCatalogService } from '../../application/settings-catalog.service.js';
+import { SettingsResolver } from '../../application/settings.resolver.js';
+import { SettingsWriter } from '../../application/settings/settings.writer.js';
 
 /**
  * RMQ entrypoints for generic settings resolution + the descriptor-driven admin catalog
@@ -41,6 +42,9 @@ export class SettingsMessageController {
     return this.catalog.getCatalog(ctx);
   }
 
+  // The audit interceptor opens the actor scope around this handler from the forwarded RMQ
+  // headers (MS4 + P8.8), so `SettingsWriter` records WHAT changed and never plumbs an actor.
+  @Audited({ action: 'settings.updated', entityType: 'setting' })
   @MessagePattern(SETTINGS_SET)
   async set(
     @Payload(new ZodValidationPipe(settingsUpdateRequestSchema))

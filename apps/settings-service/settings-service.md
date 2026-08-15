@@ -116,9 +116,16 @@ so settings-service never learns S3 or SMTP.
 
 ## Events emitted (MS3 — Outbox)
 
-| Event              | Payload            | Consumers                            |
-| ------------------ | ------------------ | ------------------------------------ |
-| `settings.changed` | `{ group, scope }` | (none yet — P8 website revalidation) |
+| Event              | Payload                                                    | Consumers                                           |
+| ------------------ | ---------------------------------------------------------- | --------------------------------------------------- |
+| `settings.changed` | `settingsChangedEventSchema` — `{ group, scope, scopeId }` | **none — declared orphan, P8.12 owns the consumer** |
+
+Since P8.7 the payload is a real `.strict()` Zod contract in `@sanad/contracts`
+(`settings/settings-event.zod.types.ts`), not an inline literal, and it carries **`scopeId`** —
+without it a consumer could only drop _every_ cached scope instead of the one that moved. The event
+is declared in the `EVENT_CATALOG` with an explicit `consumers: []` **plus a stated reason** (U27d):
+notifications-service (P8.12) caches the branding + template snapshot it renders mail from and must
+drop it on a `branding`/`notifications` change; the website ISR revalidation hook is P8.23.
 
 ## Gateway surface
 
@@ -188,6 +195,32 @@ inside a `@MessagePattern` handler — a plain Nest `HttpException` does **not**
 status across the broker, so a validation failure surfaced to the client as a **500** instead of
 a 400. As `RpcException`s carrying `{ statusCode, messageKey, params }`, `toHttpException` now
 maps the real status (MS2).
+
+## Audit trail (P8.8) — the first adopter of `@sanad/audit`
+
+The service mounts the shared **`audit_log`** fragment in its own database (MS5), at the same two
+points the Outbox uses: re-exported from `db/schema/index.ts` so `drizzle-kit generate` sees it
+(migration `0003_low_timeslip.sql`), and listed in the `schema` object in `db/schema/schema.ts`.
+Migration **`0004_audit_log_immutable.sql`** installs the append-only trigger — its body is
+`AUDIT_IMMUTABILITY_SQL` from `@sanad/audit` verbatim (U3), because drizzle-kit cannot generate a
+trigger and without it the table would be append-only only by convention.
+
+`AuditModule.forRoot()` is imported **after** `DrizzleModule.forRoot()` in `app.module.ts`; it binds
+the audit interceptor via `APP_INTERCEPTOR`, the one registration form that reaches this hybrid app's
+**RMQ** handlers as well as its HTTP ones.
+
+`SETTINGS_SET` carries `@Audited({ action: 'settings.updated', entityType: 'setting' })`, so the
+interceptor opens the actor scope from the forwarded RMQ headers (identity — MS4 — plus the new
+`x-sanad-request-context` carrying ip / user-agent / request id). `SettingsWriter` then:
+
+- resolves each key's **current** value before writing, so the row records what actually moved
+  rather than what was submitted (a value that was only ever a coded default reads as such);
+- calls `recorder.recordWithin(txExec, …)` **inside the existing transaction**, beside the
+  `settings.changed` Outbox enqueue — so the value, its event and its audit row commit or roll back
+  as one. A rejected write leaves no row claiming it happened (proven in `settings-db.int.spec.ts`).
+
+`SettingsWriter` gained two constructor dependencies for this: `SettingsResolver` (the before-read)
+and `AuditRecorder`. Both are seams, not a DB handle — N14 still holds.
 
 ## Settings used
 

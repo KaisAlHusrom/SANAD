@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule } from '@nestjs/microservices';
+import { AuditModule } from '@sanad/audit';
 import { CacheModule } from '@sanad/cache';
 import { DateTimeService, DrizzleModule } from '@sanad/database';
 import { createRmqClientOptions, eventsQueue } from '@sanad/messaging';
@@ -8,7 +9,7 @@ import { SETTINGS_ENV, loadSettingsEnv } from './env.js';
 import { HealthController } from './health/health.controller.js';
 import { BrandingService } from './settings/application/branding.service.js';
 import { SettingsResolver } from './settings/application/settings.resolver.js';
-import { SettingsWriter } from './settings/application/settings.writer.js';
+import { SettingsWriter } from './settings/application/settings/settings.writer.js';
 import { SettingsCatalogService } from './settings/application/settings-catalog.service.js';
 import { SecretCipherService } from './settings/application/crypto/secret-cipher.service.js';
 import { SettingRepository } from './settings/infrastructure/setting.repository.js';
@@ -18,7 +19,7 @@ import { IntegrationConfigRepository } from './settings/infrastructure/integrati
 import { IntegrationActiveProviderRepository } from './settings/infrastructure/integration-active-provider.repository.js';
 import { IntegrationsService } from './settings/application/integrations.service.js';
 import { BrandingMessageController } from './settings/presentation/branding.message-controller.js';
-import { SettingsMessageController } from './settings/presentation/settings.message-controller.js';
+import { SettingsMessageController } from './settings/presentation/settings/settings.message-controller.js';
 import { IntegrationMessageController } from './settings/presentation/integration.message-controller.js';
 import {
   OutboxRelayService,
@@ -37,6 +38,9 @@ const env = loadSettingsEnv();
 @Module({
   imports: [
     DrizzleModule.forRoot({ connectionString: env.DATABASE_URL, schema }),
+    // After DrizzleModule: the audit interceptor resolves the DRIZZLE handle to flush with,
+    // and `auditLogTable` is mounted in this service's own schema (P8.8, MS5).
+    AuditModule.forRoot(),
     CacheModule.forRoot({ url: env.REDIS_URL }),
     ClientsModule.register([
       {
