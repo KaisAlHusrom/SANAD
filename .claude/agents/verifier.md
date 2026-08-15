@@ -28,9 +28,11 @@ Run with the Docker stack **DOWN** (OPS5) and **`--parallel=2`** (OPS9 — the d
 
 Report exact failing output. Any red → **FAIL**.
 
-> If a `tsc` target reports **TS6305 "output file has not been built from source file"**, the Nx cache
-> has replayed a broken emit (a `.d.ts.map` with no `.d.ts`, N10). Fix it with
-> `rm -rf libs/<lib>/dist && pnpm nx build <lib> --skip-nx-cache` — do **not** report it as a source error.
+> If a `tsc` target reports **TS6305** ("output file has not been built from source file") or **TS2306**
+> ("is not a module"), the Nx cache has replayed a **corrupt emit** — a 0-byte `.d.ts`, or a `.d.ts.map`
+> with no `.d.ts` (N10). The source is fine; do **not** report it as a source error, and do **not** reach
+> for `--skip-nx-cache` (it skips the write too, so the bad entry survives and wins the next run).
+> Invalidate instead: `pnpm nx reset && rm -rf libs/<lib>/dist`, then re-run the gate normally.
 
 ### 2. Rule greps — only what lint does NOT already prove
 `nx lint` already hard-enforces **U26** (`tools/lint/u26-logic-unit-folder`), **MS3 bare-emit**
