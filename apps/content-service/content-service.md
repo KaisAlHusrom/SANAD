@@ -294,7 +294,7 @@ admin-editable, idempotent on slug), three **blog categories**
   body across all three categories to exercise the index filter), **eleven FAQs** (8.E-4 — 2–3 per
   `faq_category`: process/pricing/support/general, so the `/faq` accordion is substantial), and the
   **primary and footer menus** (from `nav.*`) from `seed/seed-data.ts` (authored
-  bilingual copy from `.claude/design/content-defaults.md`), so the site never renders blank. The
+  bilingual copy from `docs/design/content-defaults.md`), so the site never renders blank. The
   **footer menu is nested columns** (8.E-4 — `SeedMenuItem.children`; the seed loop creates each
   child with `parentId`): **Company** / **Services** / **Legal**, so Careers + the legal pages are
   reachable from the footer; the **primary menu is flat** (incl. FAQ).

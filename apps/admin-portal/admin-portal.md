@@ -54,7 +54,7 @@ src/
 
 ## Shared UI kit — feedback & modals (P7.C Phase 0, Wave 1)
 
-The reusable CRUD/UI kit (`.claude/plans/07-shared-ui-systems.md`) that the P7.C content pages build on. Wave 1 = three overlay systems, each mounted **once** in `app/app.tsx` (W1) and driven by a hook so call sites never mount one:
+The reusable CRUD/UI kit (`docs/plans/07-shared-ui-systems.md`) that the P7.C content pages build on. Wave 1 = three overlay systems, each mounted **once** in `app/app.tsx` (W1) and driven by a hook so call sites never mount one:
 
 - **Global modal registry** (`data/modal/*` + `components/modal/GlobalModalManager`). A Redux `modal` slice holds `{type, data}` (serializable only); a `modalRegistry` singleton maps a `type` → component; each module's `modals.config.ts` calls `registerModal(...)` at import, aggregated by `app/modals.config.ts` (mirrors `register-apis.ts`). Open with `useModalActions().open(type, data)`. The integrations **provider-configuration** and media **new-folder** form dialogs are registry modals.
 - **Toast** (`data/toast/*` + `components/feedback/toast/Toaster`). A module-level singleton store (mirrors `EventBus`) read via `useSyncExternalStore` — **not** Redux (toasts carry non-serializable action callbacks). Variants `success|error|warning|info|loading`; `toast.promise`; store-owned auto-dismiss (deterministic under fake timers); dedupe + visible-limit queue; `@radix-ui/react-toast` for a11y + swipe (RTL-aware `swipeDirection`); raise via the stable `toast` export (usable outside React) or `useToast()`.

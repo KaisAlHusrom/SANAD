@@ -1,6 +1,6 @@
 # @sanad/config
 
-**Purpose:** the design-token system — the U6 root that every surface resolves color/space/type/radius from, so no app hardcodes a literal. Values are **locked from the imported Claude designs** (`.claude/design/design-spec.md`). Also the home for shared tsconfig/eslint/prettier presets as they're added.
+**Purpose:** the design-token system — the U6 root that every surface resolves color/space/type/radius from, so no app hardcodes a literal. Values are **locked from the imported Claude designs** (`docs/design/design-spec.md`). Also the home for shared tsconfig/eslint/prettier presets as they're added.
 
 **Tags:** `scope:shared`, `type:util`. **Deps:** none (pure data).
 

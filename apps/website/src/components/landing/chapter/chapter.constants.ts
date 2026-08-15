@@ -1,7 +1,7 @@
 /**
  * Per-section "chapter" heights (vh) — how tall each sticky docking stage is, giving the reference's
  * travel feel (WEB10). Taller = the section lingers longer as the flight passes its world. Keyed by
- * section id; values tuned from `.claude/design/source/Sanad Landing.dc.html` (U18).
+ * section id; values tuned from `docs/design/source/Sanad Landing.dc.html` (U18).
  */
 export const CHAPTER_HEIGHTS = {
   trust: 260, // the constellation traces across the dock — give the figure room to draw

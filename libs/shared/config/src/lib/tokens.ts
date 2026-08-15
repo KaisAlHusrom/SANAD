@@ -1,7 +1,7 @@
 /**
  * Sanad design tokens — the single source of truth for color/space/type/radius
  * (U6). Values are locked from the imported Claude designs
- * (.claude/design/design-spec.md). No surface hardcodes a literal; everything
+ * (docs/design/design-spec.md). No surface hardcodes a literal; everything
  * resolves from here (and brand-configurable values later override at runtime).
  */
 
@@ -51,7 +51,7 @@ export type PageAccentKey = keyof typeof pageAccents;
 
 /**
  * The four-colour phase-accent cycle for the landing `process` moons + phase-briefing cards
- * (cyan → sky → indigo → teal, locked from `.claude/design/source/Sanad Landing.dc.html`). Indexed
+ * (cyan → sky → indigo → teal, locked from `docs/design/source/Sanad Landing.dc.html`). Indexed
  * `phase % 4`; drives the shared `@sanad/web-ui` process cards' `--web-phase` so the admin preview
  * shows the SAME per-phase colour as the live moons (preview===live). Single source (U6).
  */
@@ -67,7 +67,7 @@ export const processPhaseAccents = [
  * section's signature light (drives the world-veil, sun, and process moons); `fog` is the section's
  * deep-space tint (the scene fog + clear colour — distinct from the glow); `palette` are the three
  * shading shades of the planet surface; `type` selects its archetype; `radius`/`ring` size it.
- * Locked from `.claude/design/source/Sanad Landing.dc.html`. Scene-placement (3D offsets, particle
+ * Locked from `docs/design/source/Sanad Landing.dc.html`. Scene-placement (3D offsets, particle
  * spreads) is runtime presentation and lives with the website's cosmos, not here (U6 carve-out).
  */
 export const landingWorlds = {

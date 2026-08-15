@@ -38,7 +38,7 @@ wired but dormant in MVP — only `global` is populated until the client portal 
 
 The coded defaults compose from the locked design tokens (`@sanad/config`:
 `websiteTokens`, `pageAccents`, `fonts`) + the bilingual brand copy
-(`.claude/design/content-defaults.md`). `BRANDING_FIELDS` is the single source driving
+(`docs/design/content-defaults.md`). `BRANDING_FIELDS` is the single source driving
 seeding, default flattening, group assembly, and update flattening.
 
 ## Cache (MS2 / F7)

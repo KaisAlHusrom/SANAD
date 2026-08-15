@@ -2,7 +2,7 @@ import type { LocalizedText } from '@sanad/contracts';
 
 /**
  * Coded-default copy for the About page (U9/WEB1) — transcribed verbatim from
- * `.claude/design/content-defaults.md` §about. The CMS `team_member` entities supply the
+ * `docs/design/content-defaults.md` §about. The CMS `team_member` entities supply the
  * team grid (name/role/bio/avatar, WEB1); this file backs the rest of the page (hero, story,
  * values, section chrome, CTA) so the page is never blank.
  */

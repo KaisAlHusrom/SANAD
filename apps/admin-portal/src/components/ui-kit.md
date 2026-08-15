@@ -2,12 +2,12 @@
 
 > The reusable CRUD/UI systems every admin surface is built from. Extracted best-of from the
 > owner's React references and rebuilt on **our** stack — React 19 + Radix/shadcn-on-tokens
-> (`.claude/design/design-spec.md`) + RTK Query + react-hook-form + Zod + i18next (ar default,
+> (`docs/design/design-spec.md`) + RTK Query + react-hook-form + Zod + i18next (ar default,
 > RTL). Logic lives in `use-*` hooks (U5); components are presentation-only; tokens-only (U6);
 > full RTL via logical properties (U7); ar/en parity (U8/F13); strict types (U4).
 >
 > **Wave 1** (modal registry · toast · ConfirmationModal) shipped earlier. **Wave 2** (this doc)
-> adds the three big systems. Spec: `.claude/plans/07-shared-ui-systems.md` §4–6.
+> adds the three big systems. Spec: `docs/plans/07-shared-ui-systems.md` §4–6.
 
 ## Decoupling contract (W5)
 

@@ -9,7 +9,7 @@ export const BRANDING_GROUP = 'branding';
 /**
  * The authoritative coded default branding record (U9). Colors/fonts come from the
  * locked design tokens (`@sanad/config`); the brand copy is the professional default
- * from `.claude/design/content-defaults.md`. Every leaf is present, so a resolve never
+ * from `docs/design/content-defaults.md`. Every leaf is present, so a resolve never
  * renders blank (F7). Unset leaves (logo/social/contact) default to `null`.
  */
 export const BRANDING_DEFAULTS: BrandingRecord = {

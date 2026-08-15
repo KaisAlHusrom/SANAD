@@ -3,7 +3,7 @@ import { LANDING_COPY } from '../../landing/landing-copy';
 
 /**
  * Coded-default copy for the Services pages (U9/WEB1) — transcribed from
- * `.claude/design/content-defaults.md` §services + §service-detail. The CMS `service`
+ * `docs/design/content-defaults.md` §services + §service-detail. The CMS `service`
  * entities supply each card's title/summary/detailBody; this file backs the page chrome
  * (hero, section eyebrows, the supporting-capabilities set, the phased method, the tech
  * strip, CTAs) so the page is never blank. Per-service capability/tech fallbacks are REUSED

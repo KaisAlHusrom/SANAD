@@ -11,7 +11,7 @@ import type {
 /**
  * Coded content defaults (U9 / WEB1 / F7) — the bilingual landing-page tree + core services
  * the content-service seeds on first boot so the website never renders blank. Copy is the
- * authored professional voice from `.claude/design/content-defaults.md` (NOT the design
+ * authored professional voice from `docs/design/content-defaults.md` (NOT the design
  * placeholders). Brand/global strings (brand.name, tagline) stay in the settings-service
  * (P3) — not duplicated here (U3). Admins edit all of this per-locale from P7.
  */

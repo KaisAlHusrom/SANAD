@@ -4,7 +4,7 @@ import type { LocalizedText } from '@sanad/contracts';
  * Coded-default copy for the Blog pages (U9/WEB1) — the posts themselves are CMS `blog_post`
  * entities (title/excerpt/body + category/author/tags); this file backs the page chrome (hero,
  * list labels, filter, article meta labels, related, CTA) so the pages are never blank. Seeded
- * from `.claude/design/content-defaults.md` §blog (eyebrow/title/readMore) with the remaining
+ * from `docs/design/content-defaults.md` §blog (eyebrow/title/readMore) with the remaining
  * chrome authored here. Business-first wording (never theme narration).
  */
 

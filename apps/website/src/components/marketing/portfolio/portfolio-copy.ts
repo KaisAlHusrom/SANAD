@@ -4,7 +4,7 @@ import type { LocalizedText } from '@sanad/contracts';
  * Coded-default copy for the Portfolio pages (U9/WEB1) — the case studies themselves are CMS
  * `portfolio_project` entities (title/summary/challenge/solution/result + cover); this file backs
  * the page chrome (hero, the case-study section labels, meta, CTA) so the page is never blank.
- * The Challenge/Solution/Result labels are transcribed from `.claude/design/content-defaults.md`
+ * The Challenge/Solution/Result labels are transcribed from `docs/design/content-defaults.md`
  * §work. Business-first wording (never theme narration).
  */
 
