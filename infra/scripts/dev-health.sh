@@ -12,7 +12,9 @@ ENV_FILE="$ROOT/infra/.env.development"
 NGINX_PORT="${NGINX_PORT:-8190}"
 
 echo "== compose health =="
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE" ps
+# `--profile '*'` so profile-gated services (settings/media/content/notifications/admin/web)
+# appear here too — without it a running `dev-up.sh full` stack reads as half-empty.
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE" --profile '*' ps
 
 probe() { # name url
   local code

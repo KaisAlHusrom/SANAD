@@ -17,5 +17,8 @@ for a in "$@"; do
   esac
 done
 
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE" down "${args[@]}"
+# `--profile '*'` so `down` reaches profile-gated services too — without it, containers started
+# by `dev-up.sh full` would be left running. The `${args[@]+…}` guard is for macOS bash 3.2, which
+# under `set -u` treats an EMPTY array's "${arr[@]}" as unbound.
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE" --profile '*' down ${args[@]+"${args[@]}"}
 echo "✓ Dev stack stopped."
