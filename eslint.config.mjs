@@ -1,4 +1,24 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import nx from '@nx/eslint-plugin';
+import sanad from './tools/lint/index.mjs';
+import {
+  MS3_BARE_EMIT_ALLOWED_PATHS,
+  MS3_BARE_EMIT_SELECTORS,
+} from './tools/lint/ms3-bare-emit/index.mjs';
+
+// Derived from this file's own URL, so it is right whether eslint runs from the repo root
+// (lint-staged, CI) or from a project directory (`nx lint`).
+const workspaceRoot = fileURLToPath(new URL('.', import.meta.url));
+const u26Baseline = JSON.parse(
+  readFileSync(
+    new URL(
+      './tools/lint/u26-logic-unit-folder/baseline.json',
+      import.meta.url,
+    ),
+    'utf8',
+  ),
+).paths;
 
 export default [
   ...nx.configs['flat/base'],
@@ -130,6 +150,48 @@ export default [
           caughtErrors: 'none',
         },
       ],
+    },
+  },
+  {
+    // U26 — a logic unit is a FOLDER holding its source and its spec. Registered HERE, at the
+    // root, because lint-staged runs eslint from the repo root (flat config loads exactly one
+    // file) and the six backend services have no project-level config at all.
+    //
+    // The baseline is a RATCHET, not a debt plan: the pre-rule tree is grandfathered and
+    // counted, every NEW file must comply, and a listed file that a later phase touches is
+    // moved and struck from the list — which the rule enforces by erroring on a baselined
+    // path that now complies (owner directive, 2026-08-08).
+    files: ['**/*.ts', '**/*.tsx'],
+    ignores: [
+      '**/db/migrations/**',
+      '**/drizzle/**',
+      '**/test/**',
+      '**/fixtures/**',
+      '**/*.config.ts',
+      '**/*.config.mts',
+      '**/main.ts',
+      '**/main.tsx',
+      '**/*.d.ts',
+    ],
+    plugins: { sanad },
+    rules: {
+      'sanad/u26-logic-unit-folder': [
+        'error',
+        { workspaceRoot, baseline: u26Baseline },
+      ],
+    },
+  },
+  {
+    // MS3/U27 — a domain event is published from the transactional Outbox relay and nowhere
+    // else. The selectors live in `tools/lint/ms3-bare-emit/` so this config and the spec that
+    // probes them read the same source (U3): the FIRST draft here matched only
+    // `callee.object.name`, which is an Identifier — so `this.client.emit(...)`, the form every
+    // NestJS publisher actually uses, walked straight past it. A guard nobody probed is a guard
+    // that silently rots.
+    files: ['apps/**/*.ts', 'apps/**/*.tsx', 'libs/**/*.ts', 'libs/**/*.tsx'],
+    ignores: MS3_BARE_EMIT_ALLOWED_PATHS,
+    rules: {
+      'no-restricted-syntax': ['error', ...MS3_BARE_EMIT_SELECTORS],
     },
   },
   {

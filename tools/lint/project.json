@@ -1,0 +1,17 @@
+{
+  "name": "lint-rules",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "tools/lint",
+  "tags": ["scope:shared", "type:util"],
+  "targets": {
+    "baseline": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/lint/u26-logic-unit-folder/generate-baseline.mjs --write",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": false
+    }
+  }
+}
