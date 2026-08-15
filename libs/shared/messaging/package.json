@@ -24,10 +24,10 @@
   },
   "dependencies": {
     "@nestjs/microservices": "^11.0.0",
+    "@sanad/contracts": "workspace:^",
     "@sanad/database": "workspace:^",
     "drizzle-orm": "^0.44.0",
     "rxjs": "^7.8.1",
-    "tslib": "^2.3.0",
-    "zod": "^3.24.1"
+    "tslib": "^2.3.0"
   }
 }
