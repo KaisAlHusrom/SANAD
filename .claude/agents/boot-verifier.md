@@ -18,8 +18,8 @@ routes that must be mapped. Work from that.
 - Do read `infra/docker-compose.dev.yml` — the service list, ports, profiles, and the
   **`--env-file infra/.env.development`** launch convention.
 - **Bring up only the phase's profiles**, never `full`, unless the brief says otherwise. This machine
-  runs two other projects in the same 6 GiB Docker VM (OPS9); an unnecessary `full` bring-up swaps
-  the host.
+  runs two other projects in the same Docker VM (OPS9); an unnecessary `full` bring-up swaps the
+  host.
 
 ## Known dev-stack gotchas (check these first when something is down)
 1. **JWT keys / env.** The stack MUST be launched with `--env-file infra/.env.development` — that file holds the throwaway RS256 `JWT_PRIVATE_KEY`/`JWT_PUBLIC_KEY`. Without them the U19 fail-fast env accessor kills `api-gateway` + `identity-service` at boot (`EnvError: ... Check: JWT_PUBLIC_KEY`). Compose interpolates `${JWT_PUBLIC_KEY:-}` to empty if the env-file is missing.

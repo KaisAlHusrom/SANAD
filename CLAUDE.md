@@ -87,6 +87,6 @@ Ship **website + admin dashboard** (admin fully controls website content + sees 
 - **TDD always; DB tests use the `*_test` DB; every module has a synced doc; the `docs/postman` collection stays current with every endpoint.** (TDD1–TDD2, DOC1–DOC2)
 - **Plans before building; PROGRESS is the ledger; verify in two tiers; rules grow.** Mid-phase = `nx affected`; the phase-closing gate = full `run-many` + boot-verifier, and a phase is NEVER marked done on the affected tier alone. (U11–U13)
 - **Context is a budget.** Read the law, the ledger, and **only the current phase's** plan section; archives are never read at startup; sub-agents get a distilled brief, not the library; a PROGRESS entry is ≤15 lines. (U31)
-- **One 16 GB machine, three projects, one 6 GiB Docker VM.** Every container caps `mem_limit` + `NODE_OPTIONS`; bring up compose **profiles**, not `full`; host `nx` runs `--parallel=2`; the verifier spike and the running stack never overlap. (OPS9, OPS5)
+- **One 16 GB machine, three projects, one shared Docker VM.** Every container caps `mem_limit` + `NODE_OPTIONS`; bring up compose **profiles**, not `full`; host `nx` runs `--parallel=2`; the verifier spike and the running stack never overlap. The VM ceiling is deliberately left at its default — the caps are the mechanism, not the ceiling. (OPS9, OPS5)
 
 > Start here, then `docs/rules.md`, then `docs/PROGRESS.md`. When in doubt, the rules win.
