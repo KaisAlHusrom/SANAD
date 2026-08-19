@@ -270,6 +270,9 @@ importers:
       '@sanad/auth':
         specifier: workspace:^
         version: link:../../libs/shared/auth
+      '@sanad/cache':
+        specifier: workspace:^
+        version: link:../../libs/shared/cache
       '@sanad/contracts':
         specifier: workspace:*
         version: link:../../libs/contracts
@@ -291,6 +294,9 @@ importers:
       amqplib:
         specifier: ^0.10.4
         version: 0.10.9
+      helmet:
+        specifier: ^8.3.0
+        version: 8.3.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -725,6 +731,9 @@ importers:
       '@sanad/messaging':
         specifier: workspace:^
         version: link:../messaging
+      '@sanad/util':
+        specifier: workspace:^
+        version: link:../util
       drizzle-orm:
         specifier: ^0.44.0
         version: 0.44.7(@types/pg@8.20.0)(pg@8.22.0)
@@ -6274,6 +6283,10 @@ packages:
   he@1.2.0:
     resolution: {integrity: sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==}
     hasBin: true
+
+  helmet@8.3.0:
+    resolution: {integrity: sha512-Qgpiaws3Sm30Av8Eah6sjMCZZwjlBu+E68rhpCWBshY1lb09HtLwj5GviX0OyQIn+ulUS0iX0AxN5n3tLZzz1w==}
+    engines: {node: '>=18.0.0'}
 
   html-encoding-sniffer@3.0.0:
     resolution: {integrity: sha512-oWv4T4yJ52iKrufjnyZPkrN0CH3QnrUqdB6In1g5Fe1mia8GmF36gnfNySxoZtxD5+NmYw1EElVXiBk93UeskA==}
@@ -14988,6 +15001,8 @@ snapshots:
       function-bind: 1.1.2
 
   he@1.2.0: {}
+
+  helmet@8.3.0: {}
 
   html-encoding-sniffer@3.0.0:
     dependencies:
