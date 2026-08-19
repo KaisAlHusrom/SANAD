@@ -24,6 +24,7 @@ import { leadModelConfig } from '../model-configs/lead.model-config.js';
 export interface LeadInsertInput {
   name: string;
   email: string;
+  phone: string | null;
   company: string | null;
   budget: string | null;
   projectType: string | null;
@@ -37,7 +38,7 @@ export interface LeadInsertInput {
  * source. Never raw column passthrough.
  */
 const LEAD_FILTERS: FilterSpec = {
-  search: { kind: 'search', columns: ['name', 'email', 'company'] },
+  search: { kind: 'search', columns: ['name', 'email', 'phone', 'company'] },
   status: { kind: 'column', field: 'status', op: 'eq' },
   source: { kind: 'column', field: 'source', op: 'eq' },
 };
@@ -69,6 +70,7 @@ export class LeadRepository extends BaseRepository<typeof leadTable, LeadRow> {
       .values({
         name: input.name,
         email: input.email,
+        phone: input.phone,
         company: input.company,
         budget: input.budget,
         projectType: input.projectType,

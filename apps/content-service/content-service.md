@@ -17,6 +17,9 @@ services + the leads inbox. A contact submission persists a `lead` and emits `le
 same `content.lead.submit` path: the simple `/contact` form (`source: 'contact'`) and the
 multi-step `/request-a-project` form (`source: 'request-project'`, 8.E-5); the `source` column
 distinguishes them (no schema change was needed — both values pre-existed on `leadSourceSchema`).
+Since **P8.10.B1** a lead also carries a **required `phone`**, validated per-country by the shared
+`phoneSchema` (`@sanad/contracts`) and stored normalized as **E.164**; the column is nullable only
+because leads captured before it have none, and the inbox `search` filter covers it.
 It is the first consumer of `media.deleted`
 (MS6) — it nulls stale media references.
 
@@ -69,7 +72,7 @@ tables (one kind). Parent barrels re-export the subfolder barrels.
 | `menu`                           | `key` (`primary`/`footer`, unique machine key), `sort_order`; soft-delete. **NOT translatable** — a plain `BaseRepository` keyed container; items carry the labels                                                                                                           |
 | `menu_item`                      | `menu_id` (FK cascade), `parent_id` (self-FK cascade, one nesting level), `url`, `icon`, `sort_order`; soft-delete                                                                                                                                                           |
 | `menu_item_translation`          | per-locale `label` (N5); PK `(menu_item_id, locale)`                                                                                                                                                                                                                         |
-| `lead`                           | `name`/`email`/`company`/`budget`/`project_type`/`message`, `source` (`contact`/`request-project`), `locale`, `status` (`new`/`contacted`/`archived`); soft-delete. Not translatable                                                                                         |
+| `lead`                           | `name`/`email`/`phone`/`company`/`budget`/`project_type`/`message`, `source` (`contact`/`request-project`), `locale`, `status` (`new`/`contacted`/`archived`); soft-delete. Not translatable                                                                                 |
 | `processed_message`              | idempotency ledger (MS6); PK `(consumer_id, message_id)`                                                                                                                                                                                                                     |
 | `outbox`                         | transactional Outbox (MS3), shared table from `@sanad/messaging`                                                                                                                                                                                                             |
 

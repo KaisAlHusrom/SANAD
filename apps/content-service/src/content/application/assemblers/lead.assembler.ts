@@ -12,6 +12,7 @@ export function assembleLead(row: LeadRow): Lead {
     id: row.id,
     name: row.name,
     email: row.email,
+    phone: row.phone,
     company: row.company,
     budget: row.budget,
     projectType: row.projectType,

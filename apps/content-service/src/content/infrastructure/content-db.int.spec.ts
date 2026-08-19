@@ -8,6 +8,7 @@ import { eq, sql } from 'drizzle-orm';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
 import { DateTimeService, failIfDbTestsRequired } from '@sanad/database';
+import { leadCreatedEventSchema } from '@sanad/contracts';
 import {
   blockTable,
   schema,
@@ -1274,6 +1275,7 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
     const { id } = await leadService.submit({
       name: 'Layla',
       email: 'layla@example.com',
+      phone: '+966501234567',
       message: 'We need an LMS.',
       source: 'contact',
       locale: 'ar',
@@ -1284,13 +1286,36 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
       sql`select payload from "outbox" where event_name = 'lead.created'`,
     );
     expect(events.rowCount).toBe(1);
+    // The outbox stores the payload as `text` — parse it exactly as the relay's consumer would.
+    const raw: unknown = JSON.parse(String(events.rows[0]?.['payload']));
+    expect(leadCreatedEventSchema.parse(raw).phone).toBe('+966501234567');
 
     const listed = await leadService.list({
       page: 1,
       pageSize: 20,
       order: 'asc',
     });
-    expect(listed.items.some((lead) => lead.id === id)).toBe(true);
+    const persisted = listed.items.find((lead) => lead.id === id);
+    expect(persisted?.phone).toBe('+966501234567');
+  });
+
+  it('finds a lead by phone number from the inbox search bar (P8.10.B1)', async () => {
+    await leadService.submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'We need an LMS.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    const found = await leadService.list({
+      page: 1,
+      pageSize: 20,
+      order: 'asc',
+      search: '501234567',
+    });
+    expect(found.items).toHaveLength(1);
+    expect(found.items[0]?.phone).toBe('+966501234567');
   });
 
   it('reconciles media.deleted by nulling references, idempotently (MS6)', async () => {

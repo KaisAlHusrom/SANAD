@@ -7,6 +7,7 @@ export const leadModelConfig: ModelConfig<typeof leadTable> = {
   fillable: [
     'name',
     'email',
+    'phone',
     'company',
     'budget',
     'projectType',

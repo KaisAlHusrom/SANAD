@@ -50,6 +50,13 @@
       "when": 1783862225332,
       "tag": "0006_demonic_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787122962444,
+      "tag": "0007_bizarre_medusa",
+      "breakpoints": true
     }
   ]
 }

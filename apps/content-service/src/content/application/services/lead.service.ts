@@ -41,6 +41,7 @@ export class LeadService {
       const row = await this.leads.insert(tx, {
         name: req.name,
         email: req.email,
+        phone: req.phone,
         company: req.company ?? null,
         budget: req.budget ?? null,
         projectType: req.projectType ?? null,
@@ -53,6 +54,7 @@ export class LeadService {
         id: row.id,
         name: row.name,
         email: row.email,
+        phone: row.phone,
         company: row.company,
         projectType: row.projectType,
         message: row.message,

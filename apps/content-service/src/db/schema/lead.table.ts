@@ -14,6 +14,9 @@ export const leadTable = pgTable(
     id: pk(),
     name: text('name').notNull(),
     email: text('email').notNull(),
+    // E.164, required by the contract since P8.10.B1 — nullable in the DB only because leads
+    // captured before it have none.
+    phone: text('phone'),
     company: text('company'),
     budget: text('budget'),
     projectType: text('project_type'),
