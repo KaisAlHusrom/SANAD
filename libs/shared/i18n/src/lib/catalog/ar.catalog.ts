@@ -129,6 +129,12 @@ export const AR_CATALOG = {
   'settings.value.expected.number': 'الإعداد «{key}» يتطلّب رقماً.',
   'settings.value.expected.string':
     'الإعداد «{key}» يتطلّب نصاً، أو قيمة فارغة.',
+  'settings.value.outOfRange':
+    'الإعداد «{key}» يتطلّب رقماً صحيحاً بين {min} و {max}.',
+
+  // ── security — the gateway edge (P8.10.A) ─────────────────────────────────────────
+  'security.rateLimited':
+    'عدد الطلبات تجاوز الحد المسموح. حاول مرة أخرى بعد {seconds} ثانية.',
 } as const;
 
 /** Every message key the backend may emit — derived from the Arabic catalog (U3). */
