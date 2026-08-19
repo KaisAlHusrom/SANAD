@@ -15,6 +15,22 @@ The **descriptor-driven settings page** — a generic editor over the settings-s
 
 **Deliberately NOT exposed** (they would be dead controls): `colors.pageAccents.*` (per-page website color lives in the **CMS pages settings**), `colors.surface.*`/`colors.text.*` (the website's fixed art direction), `fonts.*` (a font can't be swapped by name at runtime without shipping its files), `brand.shortDesc` (nothing renders it). They stay in the `BrandingRecord` so the website's `GET /branding` is unchanged. **Per-page SEO title/description stays in the pages builder** — these are the site-wide defaults. The live portal theming lives in `providers/branding/` (see below) — this module just edits the values.
 
+## The `security` group (P8.10.A)
+
+The first group added after `branding`, and it required **no code in this module** — only labels in
+`i18n/{ar,en}.json` (`group.security`, `section.security.rateLimit`, `field.security.rateLimit.*`).
+That is the descriptor-driven design paying off: `SettingFieldControl` already had a `boolean →
+Switch` and `number → Input` branch, so a Switch plus six numeric inputs appeared from the catalog
+alone.
+
+It renders the gateway's edge **rate limits** — live-tunable, which is the point: a limit can be
+tightened during an ad campaign and the gateway picks it up within ~60 s with no redeploy. See
+`apps/api-gateway/src/security/security.md`.
+
+⚠️ `lib/section-layout.ts` still branches on the literal section id `'colors'`. Naming this section
+`rateLimit` sidesteps it, but the coupling is a latent trap for the **next** group — it should be
+keyed on `group + section`.
+
 ## Files
 
 - `api/settings.api.ts` — RTK Query api (`reducerPath: 'settingsApi'`). `getSettings` (`GET /settings` → `SettingsCatalog`), `updateSettings` (`PUT /settings`, batch `{ values: [{key,value}] }` → refreshed `SettingsCatalog`). The `Settings` tag refetch re-baselines every section form; the mutation publishes `settings.updated` (W4).

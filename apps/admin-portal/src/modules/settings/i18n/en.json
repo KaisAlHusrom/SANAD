@@ -1,13 +1,14 @@
 {
   "title": "Settings",
-  "subtitle": "Your brand identity and company details — applied across the portals and the website.",
+  "subtitle": "Your brand identity, company details, and platform protection — applied across the portals and the website.",
   "actions": {
     "save": "Save changes",
     "reset": "Reset",
     "saved": "Settings saved."
   },
   "group": {
-    "branding": "Visual identity"
+    "branding": "Visual identity",
+    "security": "Security"
   },
   "section": {
     "branding": {
@@ -17,6 +18,9 @@
       "social": "Social links",
       "legal": "Legal",
       "seo": "SEO"
+    },
+    "security": {
+      "rateLimit": "Request limits"
     }
   },
   "colorGroups": {
@@ -52,6 +56,23 @@
       "seo": {
         "siteUrl": "Site address",
         "shareImageUrl": "Share image"
+      }
+    },
+    "security": {
+      "rateLimit": {
+        "enabled": "Rate limiting enabled",
+        "auth": {
+          "limit": "Sign-in — requests allowed",
+          "windowSeconds": "Sign-in — window (seconds)"
+        },
+        "lead": {
+          "limit": "Contact & project requests — requests allowed",
+          "windowSeconds": "Contact & project requests — window (seconds)"
+        },
+        "default": {
+          "limit": "Everything else — requests allowed",
+          "windowSeconds": "Everything else — window (seconds)"
+        }
       }
     }
   },

@@ -136,6 +136,10 @@ export function SettingFieldControl({ field, form }: SettingFieldControlProps) {
     <Input
       id={id}
       type={inputType}
+      // A descriptor-declared range: the backend rejects out-of-range with a named message, so
+      // the control shows the same bounds rather than letting the admin discover them on Save.
+      min={field.type === 'number' ? field.min : undefined}
+      max={field.type === 'number' ? field.max : undefined}
       placeholder={field.type === 'url' ? t('placeholder.url') : undefined}
       {...form.register(
         id,
