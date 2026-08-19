@@ -174,15 +174,45 @@
 ## P8.10 — Gateway hardening + public-form protection
 
 **Scope:** the day ads go live, `POST /api/leads` is the most attacked surface in the product.
-**Tasks:**
 
-- Redis-backed `ThrottlerModule` with per-route policies (aggressive on `/auth/login`, `/leads`, and every future public signing route); `helmet`; explicit `APP_ENV`-driven CORS allow-list; body-size limits; request-id propagated into the audit log.
-- Layered bot defence: honeypot field + time-to-submit floor + **Cloudflare Turnstile** behind the existing capability→provider→active integration seam — configurable from the admin, and **degrades open with a logged warning** when unconfigured (never blocks a real lead).
-- Lead spam scoring + duplicate detection (same email/phone in a window → **an activity on the existing lead**, not a second row).
-- **`lead` gains `phone`** — contract + schema + migration + website form + admin column. A Gulf agency loses most inbound without a callable number.
-- Every new limit/key is a setting with a coded default (U9); every new message is a catalog key (U24).
-  **Done when:** a scripted flood is throttled and logged **without** dropping a legitimate submission; a honeypot/Turnstile failure is recorded and visible in the admin; a duplicate lands as an activity; boot-verifier UP.
-  **Applies:** U0, U9, U24, U27, OPS1, N7.
+> **Split into A/B/C on 2026-08-19 (U0).** The original single phase implied a first-in-repo global guard,
+> a `lead.phone` change touching ~20 files across five projects, and a new integration provider — far past
+> the ~6–8-file sizing bar. Same scope, same bar, three sessions. **C is deliberately sequenced into P8.23**:
+> honeypot/time-floor/Turnstile only earn their keep once paid traffic starts, and all three degrade open,
+> so they belong beside the consent + pixel layer rather than ahead of the deploy.
+
+### P8.10.A — Gateway edge hardening
+
+**Tasks:** Redis-backed rate limiting with per-route policies (aggressive on `/auth/login` and `/leads`), fed
+**live from settings** with coded defaults and a 60 s TTL so limits are tunable from the admin mid-campaign
+without a redeploy; `helmet`; explicit `APP_ENV`-driven CORS allow-list (deny-by-default — the admin is
+same-origin and the website is SSR, so nothing needs CORS today); body-size limits; `trust proxy` so `req.ip`
+is the real client; request-id generated when absent and propagated into the audit log. The guard **fails
+open** on every path (Redis down, Redis hung, settings unreachable, ip unknown).
+**Done when:** a scripted flood of `POST /api/leads` is throttled with a localized 429 **without** dropping a
+legitimate submission from another ip; stopping Redis makes every request succeed again; a forged
+`X-Forwarded-For` does not move the bucket; helmet headers + `X-Request-Id` on every response; an unlisted
+`Origin` gets no `Access-Control-Allow-Origin`; verifier PASS + boot-verifier UP.
+**Applies:** U0, U3, U9, U19, U24, U26, OPS1, N7, N12.
+
+### P8.10.B — `lead.phone` + duplicate detection
+
+**Tasks:** **`lead` gains `phone`** — contract + schema + migration + both website forms + the admin column +
+the lead email template. A Gulf agency loses most inbound without a callable number. Lead spam scoring, and
+duplicate detection (same email/phone in a window) landing as **`submissionCount` + `lastSubmittedAt` on the
+existing lead plus an `audit_log` row** — _not_ a second lead row, and _not_ a new `lead_activity` table:
+the activity timeline belongs to `crm-service` (P8.15, `08-client-intake.md` §5.1), so building one here
+would create a concept that phase then has to own or migrate (decision 2026-08-19).
+**Done when:** a phone number submitted from either website form reaches the admin column and the team email;
+a repeat submission from the same email within the window increments the counter and writes an audit row
+instead of creating a second lead; verifier PASS + boot-verifier UP.
+**Applies:** U0, U3, U24, U27, N7, TDD1, TDD2, DOC1, DOC2.
+
+### P8.10.C — Layered bot defence → **folded into P8.23 (2026-08-19)**
+
+Honeypot field + time-to-submit floor + **Cloudflare Turnstile** behind the existing capability→provider→
+active integration seam — configurable from the admin, **degrading open with a logged warning** when
+unconfigured (never blocks a real lead), with failures recorded and visible in the admin. Tracked in P8.23.
 
 ## P8.11 — Identity completion
 
