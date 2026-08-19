@@ -201,13 +201,18 @@ maps the real status (MS2).
 The service mounts the shared **`audit_log`** fragment in its own database (MS5), at the same two
 points the Outbox uses: re-exported from `db/schema/index.ts` so `drizzle-kit generate` sees it
 (migration `0003_low_timeslip.sql`), and listed in the `schema` object in `db/schema/schema.ts`.
-Migration **`0004_audit_log_immutable.sql`** installs the append-only trigger — its body is
+Migration **`0004_audit_log_immutable.sql`** installs the append-only row trigger and
+**`0005_audit_log_no_truncate.sql`** adds the statement-level TRUNCATE guard — both bodies are
 `AUDIT_IMMUTABILITY_SQL` from `@sanad/audit` verbatim (U3), because drizzle-kit cannot generate a
-trigger and without it the table would be append-only only by convention.
+trigger and without them the table would be append-only only by convention. `0005` exists because a
+row trigger does not fire for TRUNCATE, so `0004` alone left the trail erasable by one statement.
 
-`AuditModule.forRoot()` is imported **after** `DrizzleModule.forRoot()` in `app.module.ts`; it binds
-the audit interceptor via `APP_INTERCEPTOR`, the one registration form that reaches this hybrid app's
-**RMQ** handlers as well as its HTTP ones.
+`AuditModule.forRoot()` is imported **after** `DrizzleModule.forRoot()` in `app.module.ts`; it makes
+the audit interceptor resolvable, and `@Audited()` binds it per handler. It is deliberately **not**
+registered globally: this is a hybrid app, and `connectMicroservice` gives the microservice its own
+`ApplicationConfig`, so an `APP_INTERCEPTOR` would silently never run on the RMQ side — which is
+where every write here arrives. P8.8 shipped that way once and logged a `system` actor on real
+admin writes.
 
 `SETTINGS_SET` carries `@Audited({ action: 'settings.updated', entityType: 'setting' })`, so the
 interceptor opens the actor scope from the forwarded RMQ headers (identity — MS4 — plus the new

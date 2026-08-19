@@ -9,6 +9,7 @@ import pg from 'pg';
 import {
   AuditRecorder,
   auditLogTable,
+  auditTestResetSql,
   DrizzleAuditStore,
   type AuditScope,
 } from '@sanad/audit';
@@ -167,8 +168,11 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
   }
 
   beforeEach(async () => {
+    // `audit_log` is truncate-guarded, so it resets through the audit lib's sanctioned path
+    // (TDD2, `settings_test` only) rather than in the bulk statement with the mutable tables.
+    await db.execute(sql.raw(auditTestResetSql()));
     await db.execute(
-      sql`truncate table "setting_translation", "setting_value", "setting", "outbox", "audit_log" restart identity cascade`,
+      sql`truncate table "setting_translation", "setting_value", "setting", "outbox" restart identity cascade`,
     );
   });
 
