@@ -18,13 +18,16 @@
       "path": "../../libs/shared/messaging/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/shared/i18n/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/shared/database/tsconfig.lib.json"
     },
     {
       "path": "../../libs/contracts/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/shared/i18n/tsconfig.lib.json"
+      "path": "../../libs/shared/cache/tsconfig.lib.json"
     },
     {
       "path": "../../libs/shared/auth/tsconfig.lib.json"

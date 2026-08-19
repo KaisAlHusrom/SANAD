@@ -40,7 +40,11 @@ describe('forwardHeaders (MS4 + U24)', () => {
         ip: '85.10.1.4',
         headers: { 'user-agent': 'Mozilla/5.0', [REQUEST_ID_HEADER]: 'req-9' },
       } as unknown as Parameters<typeof requestContextMiddleware>[0],
-      {} as Parameters<typeof requestContextMiddleware>[1],
+      // The middleware echoes the request id on the response (P8.10.A), so a bare `{}` no
+      // longer satisfies it.
+      {
+        setHeader: () => undefined,
+      } as Parameters<typeof requestContextMiddleware>[1],
       () => {
         const headers = forwardHeaders(identity, 'ar');
         expect(JSON.parse(headers[REQUEST_CONTEXT_HEADER] ?? '')).toEqual({

@@ -40,6 +40,7 @@ import { RequestLocale } from '../core/decorators/index.js';
 import { forwardHeaders } from '../core/helpers/index.js';
 import { CONTENT_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
+import { RateLimit } from '../security/decorators/index.js';
 
 /**
  * The leads surface (MS4). `POST /api/leads` is **public** (the website contact / request
@@ -50,6 +51,9 @@ import { toHttpException } from '../core/rpc-error.js';
 export class LeadsController {
   constructor(@Inject(CONTENT_CLIENT) private readonly client: ClientProxy) {}
 
+  // Only the PUBLIC submit. The guarded inbox routes stay on `default` — an authenticated
+  // admin paging through leads must not spend the anti-spam budget.
+  @RateLimit('lead')
   @Post()
   async submit(
     @RequestLocale() locale: Locale,

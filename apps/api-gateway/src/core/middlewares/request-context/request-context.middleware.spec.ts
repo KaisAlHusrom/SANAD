@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EMPTY_REQUEST_CONTEXT, REQUEST_ID_HEADER } from '@sanad/contracts';
 import {
   currentRequestContext,
@@ -11,12 +11,19 @@ interface FakeRequest {
   headers: Record<string, string | string[] | undefined>;
 }
 
-function run(request: FakeRequest, work: () => void): void {
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+function run(
+  request: FakeRequest,
+  work: () => void,
+): { setHeader: ReturnType<typeof vi.fn> } {
+  const response = { setHeader: vi.fn() };
   requestContextMiddleware(
     request as unknown as Parameters<typeof requestContextMiddleware>[0],
-    {} as Parameters<typeof requestContextMiddleware>[1],
+    response as unknown as Parameters<typeof requestContextMiddleware>[1],
     work,
   );
+  return response;
 }
 
 describe('requestContextMiddleware', () => {
@@ -42,11 +49,17 @@ describe('requestContextMiddleware', () => {
     });
   });
 
-  it('prefers the FIRST x-forwarded-for hop — the client, not our own nginx', () => {
+  /**
+   * P8.10.A inverted this. nginx APPENDS to x-forwarded-for, so the first hop is whatever the
+   * caller sent — the previous "prefer the first hop" rule handed an attacker a fresh rate-limit
+   * bucket per request. Under `trust proxy` Express resolves `req.ip` to the rightmost entry the
+   * chain did not add, which is the value that cannot be forged.
+   */
+  it('prefers the proxy-computed req.ip over a caller-supplied x-forwarded-for hop', () => {
     run(
       {
-        ip: '172.18.0.5',
-        headers: { 'x-forwarded-for': '85.10.1.4, 172.18.0.5' },
+        ip: '85.10.1.4',
+        headers: { 'x-forwarded-for': '9.9.9.9, 85.10.1.4' },
       },
       () => {
         expect(currentRequestContext().ip).toBe('85.10.1.4');
@@ -54,9 +67,46 @@ describe('requestContextMiddleware', () => {
     );
   });
 
-  it('nulls a missing field instead of inventing one — P8.10 fills the request id', () => {
+  it('still reads the forwarded chain when Express computed no ip at all', () => {
+    run({ headers: { 'x-forwarded-for': '85.10.1.4, 172.18.0.5' } }, () => {
+      expect(currentRequestContext().ip).toBe('85.10.1.4');
+    });
+  });
+
+  it('generates a request id when none arrives, rather than leaving the trail unlinkable', () => {
     run({ headers: {} }, () => {
-      expect(currentRequestContext()).toEqual(EMPTY_REQUEST_CONTEXT);
+      const context = currentRequestContext();
+      expect(context.requestId).toMatch(UUID);
+      expect({ ...context, requestId: null }).toEqual(EMPTY_REQUEST_CONTEXT);
+    });
+  });
+
+  // How the audit interceptor's HTTP branch — which reads the REQUEST, not the ALS — sees the
+  // id we just minted.
+  it('stamps the id back onto the request headers', () => {
+    const request: FakeRequest = { headers: {} };
+    run(request, () => {
+      expect(request.headers[REQUEST_ID_HEADER]).toBe(
+        currentRequestContext().requestId,
+      );
+    });
+  });
+
+  it('echoes the id on the response so a caller can quote it in a bug report', () => {
+    let seen: string | null = null;
+    const response = run({ headers: {} }, () => {
+      seen = currentRequestContext().requestId;
+    });
+    expect(response.setHeader).toHaveBeenCalledWith(REQUEST_ID_HEADER, seen);
+  });
+
+  // The id reaches DB rows and log lines, so a caller-supplied one is sanitised, not trusted.
+  it('replaces an inbound id that is too long or oddly shaped', () => {
+    run({ headers: { [REQUEST_ID_HEADER]: 'a'.repeat(129) } }, () => {
+      expect(currentRequestContext().requestId).toMatch(UUID);
+    });
+    run({ headers: { [REQUEST_ID_HEADER]: '<script>' } }, () => {
+      expect(currentRequestContext().requestId).toMatch(UUID);
     });
   });
 

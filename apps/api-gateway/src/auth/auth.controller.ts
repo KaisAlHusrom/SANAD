@@ -29,12 +29,16 @@ import { RequestLocale } from '../core/decorators/index.js';
 import { forwardHeaders } from '../core/helpers/index.js';
 import { IDENTITY_CLIENT } from '../core/injection-tokens.js';
 import { toHttpException } from '../core/rpc-error.js';
+import { RateLimit } from '../security/decorators/index.js';
 
 /**
  * Public auth surface (MS4). Thin: validates input, forwards to the identity service
  * over RMQ request/reply (MS2), and maps RMQ errors to HTTP. `/me` is the sample
  * authenticated route returning the token's identity.
  */
+// Class-level: login, refresh AND logout share the aggressive bucket. Credential stuffing
+// does not care which of the three it hammers.
+@RateLimit('auth')
 @Controller('auth')
 export class AuthController {
   constructor(@Inject(IDENTITY_CLIENT) private readonly client: ClientProxy) {}

@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ClientsModule } from '@nestjs/microservices';
 import { JwtTokenVerifier, TokenVerifier } from '@sanad/auth';
+import { DateTimeService } from '@sanad/database';
 import { commandsQueue, createRmqClientOptions } from '@sanad/messaging';
 import { loadGatewayEnv } from '../env.js';
 import {
@@ -65,7 +66,10 @@ const env = loadGatewayEnv();
       provide: TokenVerifier,
       useFactory: () => new JwtTokenVerifier({ publicKey: env.JWT_PUBLIC_KEY }),
     },
+    // `DateTimeService` carries no `@Injectable()`, so Nest cannot construct it by class
+    // alone — the factory form is required, not stylistic (N3).
+    { provide: DateTimeService, useFactory: () => new DateTimeService() },
   ],
-  exports: [TokenVerifier, ClientsModule],
+  exports: [TokenVerifier, DateTimeService, ClientsModule],
 })
 export class CoreModule {}

@@ -108,11 +108,20 @@ serialises into `x-sanad-request-context`. Three decisions behind that shape:
 - **Read from the scope, not from a parameter.** `forwardHeaders` has ~26 call sites; a third
   argument would mean every future audited route had to remember to thread it. This way every
   gateway→service call already carries the context and no later phase revisits a route.
-- **`x-forwarded-for`'s FIRST hop is the client.** Reading Express's `req.ip` alone behind our own
-  nginx would stamp the proxy's address on every audit row — the same as recording nothing.
+- **`req.ip` is the client — NOT the first `x-forwarded-for` hop** (corrected in P8.10.A). The
+  original reading had it backwards: nginx **appends** (`$proxy_add_x_forwarded_for`), so a caller
+  sending `X-Forwarded-For: 1.2.3.4` produces `1.2.3.4, <real ip>` and the leftmost entry is
+  attacker-controlled. With `app.set('trust proxy', TRUST_PROXY_HOPS)` Express resolves `req.ip` to
+  the rightmost entry the chain did not add — the value that cannot be forged, and the one the rate
+  limiter keys on. The forwarded chain survives only as a fallback for a request Express never
+  touched. The derivation itself is `requestContextFromHttp` in `@sanad/util`, shared with the audit
+  interceptor's HTTP branch so the two can never disagree (U3).
 
-`requestId` honours an inbound `x-request-id` and is otherwise `null`; **P8.10** owns generating one,
-and needs no change here to do it.
+`requestId` honours an inbound `x-request-id` (sanitised: ≤128 chars, `[A-Za-z0-9._:-]`, because it
+reaches DB rows and log lines) and is **generated when absent** (P8.10.A). It is stamped back onto
+`request.headers` — which is how the audit interceptor's HTTP branch, which reads the request rather
+than the scope, sees it — and echoed on the response as `X-Request-Id`. In the dev stack nginx mints
+it, so an access-log line and an audit row share one id.
 
 - **Map back** — [`toHttpException`](src/core/rpc-error.ts) carries an RMQ failure's
   `{ statusCode, messageKey, params }` through verbatim for the filter to render. An upstream
@@ -140,7 +149,29 @@ None in P1.
 
 - `src/env.ts` is the app's single typed env accessor (U19) — the only reader of
   `process.env`. Schema: `APP_ENV` (required), `PORT` (default 3000), `HOST` (default
-  `0.0.0.0`). Validated once at startup, fails fast (OPS1).
+  `0.0.0.0`), `RABBITMQ_URL`, `JWT_PUBLIC_KEY`, plus the P8.10.A edge keys:
+  - `REDIS_URL` (required) — backs the rate-limit counter. Injected into the container since P3;
+    the schema simply ignored it until now.
+  - `CORS_ALLOWED_ORIGINS` — comma-separated, trimmed + de-duplicated. **Empty outside
+    development**: the admin calls a relative `/api` (same origin, Bearer not cookies) and the
+    website fetches server-side, so nothing needs CORS today.
+  - `TRUST_PROXY_HOPS` (default `1`) — a **security parameter**, see `src/security/security.md`.
+
+  `APP_ENV` is read first because it decides the CORS default; a `z.preprocess` cannot see a
+  sibling key. Validated once at startup, fails fast (OPS1).
+
+## Edge hardening (P8.10.A)
+
+Rate limiting, helmet, CORS, body limits and `trust proxy` — all documented in
+[`src/security/security.md`](src/security/security.md). Two things worth knowing from here:
+
+- **Every route now passes a global `APP_GUARD`** (`RateLimitGuard`), the platform's first. Routes
+  opt out with `@RateLimit('none')` (health) or into a tighter bucket with `@RateLimit('auth')`
+  (the whole `AuthController`) / `@RateLimit('lead')` (the public `POST /leads` only — the guarded
+  inbox routes stay on `default`, so an admin paging leads never spends the anti-spam budget).
+- **Every response carries `X-Request-Id`** and, on a counted route, `X-RateLimit-Limit` /
+  `-Remaining` / `-Reset`; a rejected one carries `Retry-After` and a localized 429
+  (`security.rateLimited`).
 
 ## Internal seams
 
