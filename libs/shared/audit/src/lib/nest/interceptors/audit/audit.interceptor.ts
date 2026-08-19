@@ -14,6 +14,7 @@ import {
   readMessageHeaders,
   requestContextFromHeaders,
 } from '@sanad/messaging';
+import { requestContextFromHttp, type HttpRequestLike } from '@sanad/util';
 import { Observable } from 'rxjs';
 import type { RmqContext } from '@nestjs/microservices';
 import { AUDITED_METADATA_KEY } from '../../../audit.constants.js';
@@ -26,10 +27,8 @@ import { AuditRecorder } from '../../audit-recorder/audit-recorder.js';
 import type { AuditedOptions } from '../../decorators/audited.decorator.js';
 
 /** The subset of an Express request the HTTP path reads. */
-interface AuditableHttpRequest {
+interface AuditableHttpRequest extends HttpRequestLike {
   identity?: IdentityContext;
-  ip?: string;
-  headers?: Record<string, string | string[] | undefined>;
 }
 
 function actorFrom(identity: IdentityContext | null): AuditActor {
@@ -174,16 +173,13 @@ export class AuditInterceptor implements NestInterceptor {
       };
     }
     const request = context.switchToHttp().getRequest<AuditableHttpRequest>();
-    const userAgent = request?.headers?.['user-agent'];
     return {
       actor: actorFrom(request?.identity ?? null),
-      context: {
-        ...EMPTY_REQUEST_CONTEXT,
-        ip: request?.ip ?? null,
-        userAgent: Array.isArray(userAgent)
-          ? (userAgent[0] ?? null)
-          : (userAgent ?? null),
-      },
+      // The SAME derivation the gateway's edge middleware uses (U3) — so an HTTP-originated row
+      // records the forwarded client address and the request id, not nginx and a null.
+      context: request
+        ? requestContextFromHttp(request)
+        : EMPTY_REQUEST_CONTEXT,
     };
   }
 }

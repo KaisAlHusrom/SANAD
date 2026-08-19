@@ -281,6 +281,48 @@ describe('AuditInterceptor', () => {
     });
   });
 
+  // Before P8.10.A the HTTP branch read `request.ip` raw. Behind our own nginx that is the
+  // PROXY's address on every row — which is the same as recording nothing.
+  it('records the forwarded client address, not the proxy, on an HTTP call', async () => {
+    const { store, written } = fakeStore();
+    const interceptor = new AuditInterceptor(
+      reflector(audited),
+      new AuditRecorder(store, clock),
+      db,
+    );
+    await firstValueFrom(
+      interceptor.intercept(
+        httpContext({
+          identity: { userId: 'u-9', roles: ['staff'], permissions: [] },
+          headers: { 'x-forwarded-for': '85.10.1.4, 172.18.0.5' },
+        }),
+        handlerReturning('ok'),
+      ),
+    );
+    expect(written[0]).toMatchObject({ ip: '85.10.1.4' });
+  });
+
+  // …and `requestId` was hardcoded null, so an HTTP-originated row could never be correlated
+  // with the edge log line that produced it.
+  it('records the request id on an HTTP call', async () => {
+    const { store, written } = fakeStore();
+    const interceptor = new AuditInterceptor(
+      reflector(audited),
+      new AuditRecorder(store, clock),
+      db,
+    );
+    await firstValueFrom(
+      interceptor.intercept(
+        httpContext({
+          identity: { userId: 'u-9', roles: ['staff'], permissions: [] },
+          headers: { 'x-request-id': 'req-7' },
+        }),
+        handlerReturning('ok'),
+      ),
+    );
+    expect(written[0]).toMatchObject({ requestId: 'req-7' });
+  });
+
   it('attributes an unauthenticated call to `anonymous`, never to nobody', async () => {
     const { store, written } = fakeStore();
     const interceptor = new AuditInterceptor(

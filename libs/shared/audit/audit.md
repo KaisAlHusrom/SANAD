@@ -52,6 +52,16 @@ identity's new flows (P8.11).
   `audited-rpc.spec.ts` drives a real handler over a real microservice transport and fails if the
   binding is dropped.
 
+- **Both transports derive the caller's circumstances the SAME way (P8.10.A).** The RPC branch reads
+  `requestContextFromHeaders` off the forwarded `x-sanad-request-context`; the HTTP branch calls
+  `requestContextFromHttp` from `@sanad/util` — the identical function the gateway's edge middleware
+  uses, so a rate-limit rejection and the audit row it produces can never disagree about who was
+  calling. Until then the HTTP branch read `request.ip` raw (behind our own nginx that is the
+  _proxy's_ address on every row — the same as recording nothing) and hardcoded `requestId: null`,
+  so an HTTP-originated row could not be correlated with the edge log line that produced it. A pure
+  function of the request rather than a shared ALS read: a service that never installs the gateway's
+  middleware degrades honestly instead of silently recording the empty context.
+
 - **Immutability is enforced by the DATABASE, and it takes TWO triggers.** A `before update or
 delete … for each row` trigger raises `restrict_violation`, so the rule holds for a `psql` session
   and a future migration too — and the store's surface has no update or delete, so the mutation
