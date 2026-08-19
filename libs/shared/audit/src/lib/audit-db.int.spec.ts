@@ -13,6 +13,7 @@ import {
 import {
   AUDIT_IMMUTABILITY_ERROR_CODE,
   AUDIT_IMMUTABILITY_SQL,
+  auditTestResetSql,
 } from './audit-immutability.constants.js';
 import { auditLogTable } from './audit-log.table.js';
 import type { AuditDb, AuditScope } from './audit-entry.types.js';
@@ -109,9 +110,9 @@ describeDb('audit trail (audit_test, TDD2)', () => {
   const recorder = new AuditRecorder(store, clock);
 
   beforeEach(async () => {
-    // TRUNCATE is DDL-level, not a row DELETE, so the immutability trigger does not fire —
-    // which is what lets a test suite reset a table it is otherwise forbidden to erase.
-    await db.execute(sql`truncate table "audit_log"`);
+    // The ONE sanctioned reset, and only against `audit_test` (TDD2): disarm the truncate guard,
+    // truncate, re-arm. Plain TRUNCATE used to work here — that was the bug, not the feature.
+    await db.execute(sql.raw(auditTestResetSql()));
   });
 
   it('writes a complete row with actor, ip, user-agent and before/after', async () => {
@@ -154,6 +155,21 @@ describeDb('audit trail (audit_test, TDD2)', () => {
     expect(refusal.code).toBe(AUDIT_IMMUTABILITY_ERROR_CODE);
     const [row] = await db.select().from(auditLogTable);
     expect(row?.action).toBe('a.b');
+  });
+
+  // TRUNCATE bypasses row-level triggers entirely, so `before update or delete` alone left the
+  // whole trail erasable by one statement — which is not what "append-only" means to anyone
+  // relying on it as evidence. Found by noticing a row had vanished from the real settings DB.
+  it('REFUSES a TRUNCATE at the database level', async () => {
+    await recorder.runInScope(scope, async () => {
+      await recorder.recordWithin(exec, { action: 'a.b', entityType: 't' });
+    });
+    const refusal = await refusalOf(
+      db.execute(sql`truncate table "audit_log"`),
+    );
+    expect(refusal.message).toMatch(/append-only/i);
+    expect(refusal.code).toBe(AUDIT_IMMUTABILITY_ERROR_CODE);
+    expect(await db.select().from(auditLogTable)).toHaveLength(1);
   });
 
   it('REFUSES a DELETE at the database level', async () => {

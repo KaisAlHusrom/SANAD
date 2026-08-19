@@ -155,6 +155,85 @@ describe('AuditInterceptor', () => {
     expect(touched?.ip).toBe('85.10.1.4');
   });
 
+  // The guarantee row exists so a handler that records nothing still leaves a trace. When the
+  // handler DOES record, emitting it anyway produced a phantom twin — same action, null entityId,
+  // null before/after — doubling the trail and making per-entity queries return rows for entities
+  // that were never touched. Caught by the P8.8 runtime gate: one PUT, two rows.
+  it('does NOT add a bare guarantee row when the handler recorded its own', async () => {
+    const { store, written } = fakeStore();
+    const recorder = new AuditRecorder(store, clock);
+    const interceptor = new AuditInterceptor(reflector(audited), recorder, db);
+    const handler: CallHandler = {
+      handle: () => {
+        recorder.record({
+          action: 'settings.updated',
+          entityType: 'setting',
+          entityId: 'branding.brand.name',
+          before: { value: 'a' },
+          after: { value: 'b' },
+        });
+        return of('ok');
+      },
+    };
+    await firstValueFrom(
+      interceptor.intercept(rpcContext(identityHeaders), handler),
+    );
+    expect(written).toHaveLength(1);
+    expect(written[0]?.entityId).toBe('branding.brand.name');
+  });
+
+  it('does NOT add one when the handler wrote inside its own transaction either', async () => {
+    const { store, written } = fakeStore();
+    const recorder = new AuditRecorder(store, clock);
+    const interceptor = new AuditInterceptor(reflector(audited), recorder, db);
+    const handler: CallHandler = {
+      handle: () => {
+        // `recordWithin` persists immediately, inside the caller's tx — it never reaches the
+        // buffer, so the interceptor cannot see it by looking at pending entries alone.
+        void recorder.recordWithin(db, {
+          action: 'settings.updated',
+          entityType: 'setting',
+          entityId: 'branding.brand.name',
+        });
+        return of('ok');
+      },
+    };
+    await firstValueFrom(
+      interceptor.intercept(rpcContext(identityHeaders), handler),
+    );
+    expect(written).toHaveLength(1);
+  });
+
+  // The mirror image of the two above: suppressing the guarantee row on failure would lose the
+  // event entirely, because whatever the handler wrote with `recordWithin` died with its rolled-back
+  // transaction. A refused write is evidence too, so failure always leaves a row.
+  it('DOES add one on failure, even though the handler recorded', async () => {
+    const { store, written } = fakeStore();
+    const recorder = new AuditRecorder(store, clock);
+    const interceptor = new AuditInterceptor(reflector(audited), recorder, db);
+    const failing: CallHandler = {
+      handle: () => {
+        void recorder.recordWithin(db, {
+          action: 'settings.updated',
+          entityType: 'setting',
+          entityId: 'branding.brand.name',
+        });
+        return throwError(() => ({ messageKey: 'auth.forbidden' }));
+      },
+    };
+    await expect(
+      firstValueFrom(
+        interceptor.intercept(rpcContext(identityHeaders), failing),
+      ),
+    ).rejects.toBeDefined();
+    expect(
+      written.some(
+        (row) =>
+          row.outcome === 'failed' && row.failureKey === 'auth.forbidden',
+      ),
+    ).toBe(true);
+  });
+
   it('records a FAILED outcome with the error’s message key, then rethrows', async () => {
     const { store, written } = fakeStore();
     const interceptor = new AuditInterceptor(

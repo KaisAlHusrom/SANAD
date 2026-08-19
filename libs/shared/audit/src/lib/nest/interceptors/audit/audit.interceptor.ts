@@ -58,10 +58,11 @@ function failureKeyOf(error: unknown): string | null {
 /**
  * Turns `@Audited()` into a row (P8.8).
  *
- * Registered through `APP_INTERCEPTOR` by `AuditModule` — the ONE registration form that reaches
- * both the HTTP and the RMQ context of a hybrid app. `app.useGlobalInterceptors` binds to the
- * HTTP server only, which is why every service's `main.ts` already notes that the envelope
- * interceptor is not inherited by its microservice.
+ * Bound per handler by `@Audited()`, NOT registered globally. Neither global form reaches a hybrid
+ * app's RMQ handlers: `app.useGlobalInterceptors` binds to the HTTP server only, and
+ * `APP_INTERCEPTOR` lands in an `ApplicationConfig` that `connectMicroservice` does not share
+ * unless `inheritAppConfig` is passed — which would also apply the HTTP response envelope to every
+ * RMQ reply. See `audited-rpc.spec.ts`.
  *
  * Two rules it will not break:
  * - **The scope wraps the SUBSCRIPTION, not the call to `intercept`.** `next.handle()` only
@@ -96,15 +97,10 @@ export class AuditInterceptor implements NestInterceptor {
         scope,
         () =>
           new Promise<void>((settle) => {
-            // The handler must produce at least this row even if it records nothing itself.
-            this.recorder.record({
-              action: audited.action,
-              entityType: audited.entityType,
-            });
             subscription = next.handle().subscribe({
               next: (value) => subscriber.next(value),
               error: (error: unknown) => {
-                void this.flush({
+                void this.flush(audited, {
                   outcome: 'failed',
                   failureKey: failureKeyOf(error),
                 }).finally(() => {
@@ -113,7 +109,7 @@ export class AuditInterceptor implements NestInterceptor {
                 });
               },
               complete: () => {
-                void this.flush().finally(() => {
+                void this.flush(audited).finally(() => {
                   subscriber.complete();
                   settle();
                 });
@@ -125,11 +121,41 @@ export class AuditInterceptor implements NestInterceptor {
     });
   }
 
+  /**
+   * The RMQ headers, or none. `readMessageHeaders` reaches for `context.getMessage()`, which only
+   * an `RmqContext` has — on any other transport it throws, and because the scope is built before
+   * the handler is subscribed, that throw would surface to the caller as a failed request. Audit
+   * must never be a reason the product refuses to work, so an unreadable context degrades to an
+   * anonymous actor instead.
+   */
+  private rpcHeaders(context: ExecutionContext): Record<string, unknown> {
+    const rpcContext = context.switchToRpc().getContext<RmqContext>();
+    if (typeof rpcContext?.getMessage !== 'function') {
+      return {};
+    }
+    try {
+      return readMessageHeaders(rpcContext);
+    } catch (error) {
+      this.logger.warn(
+        `audit could not read the message headers: ${String(error instanceof Error ? error.message : error)}`,
+      );
+      return {};
+    }
+  }
+
   private async flush(
+    audited: AuditedOptions,
     options: { outcome?: 'failed'; failureKey?: string | null } = {},
   ): Promise<void> {
     try {
-      await this.recorder.flush(this.db, options);
+      // The guarantee row is a FALLBACK, not an addition: the recorder writes it only when the
+      // handler recorded nothing of its own (or when the call failed, since anything it wrote
+      // inside the transaction rolled back with it). Emitting it unconditionally gave every
+      // audited write a phantom twin with a null entityId and no diff.
+      await this.recorder.flush(this.db, {
+        ...options,
+        fallback: { action: audited.action, entityType: audited.entityType },
+      });
     } catch (error) {
       // Surfaced, never swallowed (U23b) — but not turned into a client-facing failure.
       this.logger.error(
@@ -141,9 +167,7 @@ export class AuditInterceptor implements NestInterceptor {
   /** Where the actor comes from depends on how the call arrived. */
   private scopeFor(context: ExecutionContext): AuditScope {
     if (context.getType() === 'rpc') {
-      const headers = readMessageHeaders(
-        context.switchToRpc().getContext<RmqContext>(),
-      );
+      const headers = this.rpcHeaders(context);
       return {
         actor: actorFrom(identityFromHeaders(headers)),
         context: requestContextFromHeaders(headers),

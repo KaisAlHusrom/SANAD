@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { Module } from '@nestjs/common';
-import { ApplicationConfig } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { DateTimeService, DrizzleModule } from '@sanad/database';
 import { AuditStore } from '../../audit-entry.types.js';
@@ -46,19 +45,19 @@ describe('AuditModule.forRoot (the container actually compiles)', () => {
     await moduleRef.close();
   });
 
-  it('registers the interceptor GLOBALLY — the only form that reaches RMQ handlers', async () => {
-    // Asserted against the initialised application's own config, not the provider token: what
-    // matters is that Nest ended up with it in its GLOBAL interceptor list, which is the
-    // property `app.useGlobalInterceptors` would fail to give a hybrid app's RMQ side.
+  it('makes the interceptor RESOLVABLE, so `@Audited()` can bind it per handler', async () => {
+    // Deliberately NOT `ApplicationConfig.getGlobalInterceptors()`. That assertion passed for the
+    // whole of P8.8 and proved nothing: a global interceptor does not reach a hybrid app's RMQ
+    // handlers, so the trail recorded a `system` actor on every real write. What the module owes
+    // is a resolvable provider; `audited-rpc.spec.ts` proves the binding actually fires.
     const moduleRef = await Test.createTestingModule({
       imports: [HostModule],
     }).compile();
-    const app = moduleRef.createNestApplication();
-    await app.init();
 
-    const globals = app.get(ApplicationConfig).getGlobalInterceptors();
-    expect(globals.some((one) => one instanceof AuditInterceptor)).toBe(true);
-    await app.close();
+    expect(moduleRef.get(AuditInterceptor, { strict: false })).toBeInstanceOf(
+      AuditInterceptor,
+    );
+    await moduleRef.close();
   });
 
   it('exports the clock from the global DrizzleModule, so an imported module can inject it', async () => {

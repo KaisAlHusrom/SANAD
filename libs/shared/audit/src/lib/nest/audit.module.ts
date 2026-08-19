@@ -4,7 +4,6 @@ import {
   type DynamicModule,
   type Provider,
 } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { DateTimeService } from '@sanad/database';
 import { AuditStore } from '../audit-entry.types.js';
 import { DrizzleAuditStore } from '../drizzle-audit-store/drizzle-audit-store.js';
@@ -16,11 +15,13 @@ import { AuditInterceptor } from './interceptors/audit/audit.interceptor.js';
  * `AppModule`, after `DrizzleModule.forRoot()` — the interceptor resolves the `DRIZZLE` handle
  * to flush with, and the service must have mounted `auditLogTable` in its own schema (MS5).
  *
- * `APP_INTERCEPTOR` rather than `app.useGlobalInterceptors(...)` in `main.ts`: only the
- * module-provided form is bound to the whole application container, so it covers a hybrid app's
- * **RMQ** handlers as well as its HTTP ones — and every write in this platform arrives over RMQ.
+ * The interceptor is **not** registered globally. `APP_INTERCEPTOR` looked like the right form and
+ * is not: `connectMicroservice` builds the microservice with a fresh `ApplicationConfig` unless
+ * `inheritAppConfig` is passed, so a global interceptor never reaches a hybrid app's RMQ handlers —
+ * which is where every write in this platform arrives. `@Audited()` binds it per handler instead
+ * (see the decorator); this module only has to make it *resolvable*, which `@Global()` does.
  *
- * `@Global()` so `AuditRecorder` can be injected by any application service without each module
+ * `@Global()` also lets `AuditRecorder` be injected by any application service without each module
  * re-importing this one; the recorder is the only symbol services touch.
  */
 @Global()
@@ -35,12 +36,12 @@ export class AuditModule {
         useFactory: (store: AuditStore, clock: DateTimeService) =>
           new AuditRecorder(store, clock),
       },
-      { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+      AuditInterceptor,
     ];
     return {
       module: AuditModule,
       providers,
-      exports: [AuditStore, AuditRecorder],
+      exports: [AuditStore, AuditRecorder, AuditInterceptor],
     };
   }
 }

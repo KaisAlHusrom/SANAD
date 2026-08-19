@@ -17,12 +17,24 @@ import { ACTION_PATTERN, SYSTEM_ACTOR } from '../../audit.constants.js';
 interface RecorderState {
   scope: AuditScope;
   pending: AuditRecord[];
+  /**
+   * Whether ANYTHING was recorded in this scope, buffered or written straight through. `pending`
+   * cannot answer that: `recordWithin` persists immediately and never enters the buffer, so a
+   * handler doing the right thing looks identical to one that recorded nothing.
+   */
+  recorded: boolean;
 }
 
 /** How a flush should mark the entries it writes. */
 export interface FlushOptions {
   outcome?: AuditOutcome;
   failureKey?: string | null;
+  /**
+   * The row to write if the scope produced none of its own — `@Audited()`'s guarantee that a
+   * handler always leaves a trace. Written on failure regardless, because anything the handler
+   * recorded with `recordWithin` rolled back with its transaction.
+   */
+  fallback?: AuditEntryInput;
 }
 
 /**
@@ -50,7 +62,7 @@ export class AuditRecorder {
 
   /** Run `work` with a known actor + context; every record inside is stamped from it. */
   runInScope<T>(scope: AuditScope, work: () => Promise<T>): Promise<T> {
-    return this.storage.run({ scope, pending: [] }, work);
+    return this.storage.run({ scope, pending: [], recorded: false }, work);
   }
 
   /** Buffer an entry for the interceptor to flush after the handler. */
@@ -63,18 +75,28 @@ export class AuditRecorder {
       this.orphaned.push(record);
       return;
     }
+    state.recorded = true;
     state.pending.push(record);
   }
 
   /** Write an entry NOW, inside the caller's transaction. Not buffered, never double-written. */
   async recordWithin(exec: AuditDb, entry: AuditEntryInput): Promise<void> {
-    await this.store.append(exec, [this.toRecord(entry)]);
+    const record = this.toRecord(entry);
+    const state = this.storage.getStore();
+    if (state) {
+      state.recorded = true;
+    }
+    await this.store.append(exec, [record]);
   }
 
   /** Persist everything buffered in this scope and empty it. */
   async flush(exec: AuditDb, options: FlushOptions = {}): Promise<void> {
     const state = this.storage.getStore();
     const buffered = state ? state.pending : this.orphaned;
+    const failed = options.outcome === 'failed';
+    if (options.fallback && (failed || !state?.recorded)) {
+      buffered.push(this.toRecord(options.fallback));
+    }
     if (buffered.length === 0) {
       return;
     }
