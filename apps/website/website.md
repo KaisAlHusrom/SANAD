@@ -461,6 +461,20 @@ is managed via its collection module (not the page tree). Each degrades to `FALL
   to `FALLBACK_CONTACT_SECTIONS`. `CONTACT_COPY` (in `contact/contact-copy.ts`) is the single hero-copy
   source for both the seed + the fallback; the form's field labels stay in `dict.contact.*`. Idles in
   the **contact "Beacon"** star system.
+- **`PhoneField`** (`components/phone-field/`, P8.10.B1) — the **required** phone input both lead forms
+  mount through an RHF `Controller`: a searchable **dial-code picker** (countries + calling codes from
+  `libphonenumber-js`'s own metadata, names from a cached `Intl.DisplayNames` in the reader's locale,
+  flags derived from the ISO-2 code — no dataset to maintain, default `SA`) beside the national number.
+  RHF holds ONE `phone` field containing the **E.164** string, so `zodResolver(leadCreateRequestSchema)`
+  keeps validating both forms unchanged; the field never decides validity itself — the shared
+  `phoneSchema` does, on the client AND at the gateway (U3/N7), and its rejection is a catalog key the
+  edge renders in the caller's locale (U24). **Direction (U7/WEB6):** the input group is `dir="ltr"` in
+  BOTH locales because a phone number is, and so are the dial codes — but the popover's CONTENT (search
+  box + localized country names) takes the page direction back, since that is prose the visitor types.
+  The popover BOX stays in the LTR flow so `inset-inline-start` still anchors it under the trigger.
+  Copy lives in `dict.contact.{phone,phoneHint,phonePlaceholder,phoneCountry,phoneCountrySearch,
+phoneNoCountry,invalidPhone}`; styles in `.lead-phone*` / `.lead-hint` (`site-chrome.css`, `--web-*`
+  tokens + logical properties, own scroller on the list).
 - **Request-a-project** (`request/request-form.tsx`, `/request-a-project`, 8.E-5): the **flagship
   conversion surface** — a **3-step form** (Project: project-type + budget as styled **choice cards**,
   U21(b) — never a `<select>`; → Brief: the message; → You: name/email/company + a **review summary**)

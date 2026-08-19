@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   leadCreateRequestSchema,
@@ -10,6 +10,7 @@ import {
   type Locale,
 } from '@sanad/contracts';
 import type { Dictionary } from '../i18n/get-dictionary';
+import { PhoneField } from './phone-field';
 
 type Status = 'idle' | 'success' | 'error';
 
@@ -33,6 +34,7 @@ export function LeadForm({
 }) {
   const [status, setStatus] = useState<Status>('idle');
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -42,6 +44,7 @@ export function LeadForm({
     defaultValues: {
       name: '',
       email: '',
+      phone: '',
       company: '',
       budget: '',
       projectType: '',
@@ -72,6 +75,7 @@ export function LeadForm({
   });
 
   const emailError = errors.email ? dict.contact.invalidEmail : null;
+  const phoneError = errors.phone ? dict.contact.invalidPhone : null;
 
   return (
     <form className="lead-form" onSubmit={submit} noValidate>
@@ -108,6 +112,24 @@ export function LeadForm({
         />
         {emailError ? <span className="lead-error">{emailError}</span> : null}
       </div>
+
+      <Controller
+        control={control}
+        name="phone"
+        render={({ field }) => (
+          <PhoneField
+            id="lead-phone"
+            locale={locale}
+            label={dict.contact.phone}
+            copy={dict.contact}
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            error={phoneError}
+            disabled={isSubmitting}
+          />
+        )}
+      />
 
       <div className="lead-field">
         <label className="lead-label" htmlFor="lead-company">

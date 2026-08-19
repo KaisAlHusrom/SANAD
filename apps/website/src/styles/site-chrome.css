@@ -452,6 +452,149 @@
   font-size: 12px;
 }
 
+.lead-hint {
+  color: var(--web-faint);
+  font-size: 12px;
+}
+
+/* ---- phone field (P8.10.B1) — dial-code picker + national number ---- */
+
+/* The group is LTR in BOTH locales (a phone number reads left-to-right everywhere, WEB6);
+   only the label, hint and error above/below it follow the page direction. */
+.lead-phone {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.lead-phone__country {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding-block: 12px;
+  padding-inline: 12px;
+  border-radius: var(--web-radius-md);
+  background: var(--web-s1);
+  border: 1px solid var(--web-hairline);
+  color: var(--web-text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.lead-phone__country:hover:not(:disabled),
+.lead-phone__country:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--web-accent) 60%, transparent);
+}
+
+.lead-phone__country:disabled,
+.lead-phone__number:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lead-phone__caret {
+  inline-size: 0;
+  block-size: 0;
+  border-inline: 4px solid transparent;
+  border-block-start: 5px solid var(--web-faint);
+}
+
+.lead-phone__number {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.lead-phone__popover {
+  position: absolute;
+  inset-block-start: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: 20;
+  inline-size: min(320px, 100%);
+  padding: 10px;
+  border-radius: var(--web-radius-md);
+  background: var(--web-s2);
+  border: 1px solid var(--web-hairline);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--web-bg) 70%, transparent);
+}
+
+.lead-phone__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lead-phone__search {
+  font-size: 14px;
+}
+
+.lead-phone__list {
+  /* The list carries the site's own scroller, never the raw platform default (U0). */
+  max-block-size: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--web-hairline) transparent;
+}
+
+.lead-phone__option {
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 8px;
+  padding-inline: 8px;
+  border: 0;
+  border-radius: var(--web-radius-md);
+  background: transparent;
+  color: var(--web-text);
+  font: inherit;
+  font-size: 14px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.lead-phone__option--active {
+  background: color-mix(in srgb, var(--web-accent) 16%, transparent);
+}
+
+.lead-phone__name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lead-phone__dial {
+  color: var(--web-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.lead-phone__empty {
+  margin: 0;
+  padding-block: 12px;
+  text-align: center;
+  color: var(--web-faint);
+  font-size: 13px;
+}
+
+@media (max-width: 420px) {
+  .lead-phone {
+    flex-wrap: wrap;
+  }
+
+  .lead-phone__number {
+    flex-basis: 100%;
+  }
+}
+
 .lead-alert {
   padding-block: 12px;
   padding-inline: 14px;

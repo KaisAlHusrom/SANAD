@@ -130,6 +130,7 @@ describe('RequestForm (P8.E-5 multi-step → lead)', () => {
       screen.getByLabelText(ar.contact.email),
       'sara@example.com',
     );
+    await userEvent.type(screen.getByLabelText(ar.contact.phone), '501234567');
     await userEvent.click(
       screen.getByRole('button', { name: ar.contact.submit }),
     );
@@ -138,6 +139,7 @@ describe('RequestForm (P8.E-5 multi-step → lead)', () => {
     expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
       name: 'سارة',
       email: 'sara@example.com',
+      phone: '+966501234567',
       message: 'أريد بناء منصة تعليمية',
       projectType: TYPE.value,
       budget: BUDGET.value,
@@ -164,6 +166,7 @@ describe('RequestForm (P8.E-5 multi-step → lead)', () => {
       screen.getByLabelText(ar.contact.email),
       'sara@example.com',
     );
+    await userEvent.type(screen.getByLabelText(ar.contact.phone), '501234567');
     await userEvent.click(
       screen.getByRole('button', { name: ar.contact.submit }),
     );

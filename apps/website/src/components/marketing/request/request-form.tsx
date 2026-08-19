@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   leadCreateRequestSchema,
@@ -12,6 +12,7 @@ import type { Dictionary } from '../../../i18n/get-dictionary';
 import { TravelLink } from '../../../motion/universe';
 import { RevealOnScroll } from '../reveal-on-scroll';
 import { copy } from '../services/services-copy';
+import { PhoneField } from '../../phone-field';
 import { REQUEST_COPY } from './request-copy';
 import {
   BUDGET_BANDS,
@@ -91,6 +92,7 @@ export function RequestForm({
   const [needsType, setNeedsType] = useState(false);
 
   const {
+    control,
     register,
     handleSubmit,
     trigger,
@@ -103,6 +105,7 @@ export function RequestForm({
     defaultValues: {
       name: '',
       email: '',
+      phone: '',
       company: '',
       budget: '',
       projectType: '',
@@ -316,6 +319,23 @@ export function RequestForm({
                       </span>
                     ) : null}
                   </div>
+                  <Controller
+                    control={control}
+                    name="phone"
+                    render={({ field }) => (
+                      <PhoneField
+                        id="request-phone"
+                        locale={locale}
+                        label={dict.contact.phone}
+                        copy={dict.contact}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        error={errors.phone ? dict.contact.invalidPhone : null}
+                        disabled={isSubmitting}
+                      />
+                    )}
+                  />
                   <div className="lead-field">
                     <label className="lead-label" htmlFor="request-company">
                       {dict.contact.company}

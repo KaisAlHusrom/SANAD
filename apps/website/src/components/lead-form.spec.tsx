@@ -50,6 +50,7 @@ describe('LeadForm (F6)', () => {
       screen.getByLabelText(ar.contact.email),
       'sara@example.com',
     );
+    await userEvent.type(screen.getByLabelText(ar.contact.phone), '501234567');
     await userEvent.type(
       screen.getByLabelText(ar.contact.message),
       'أريد بناء منصة',
@@ -61,6 +62,7 @@ describe('LeadForm (F6)', () => {
     expect(onSubmit.mock.calls[0]?.[0]).toMatchObject({
       name: 'سارة',
       email: 'sara@example.com',
+      phone: '+966501234567',
       message: 'أريد بناء منصة',
       source: 'contact',
       locale: 'ar',
@@ -78,6 +80,7 @@ describe('LeadForm (F6)', () => {
       screen.getByLabelText(ar.contact.email),
       'sara@example.com',
     );
+    await userEvent.type(screen.getByLabelText(ar.contact.phone), '501234567');
     await userEvent.type(screen.getByLabelText(ar.contact.message), 'مرحبا');
     await userEvent.click(
       screen.getByRole('button', { name: ar.contact.submit }),
