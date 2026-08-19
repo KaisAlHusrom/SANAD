@@ -197,16 +197,39 @@ legitimate submission from another ip; stopping Redis makes every request succee
 
 ### P8.10.B — `lead.phone` + duplicate detection
 
+> **Split into B1/B2 on 2026-08-19 (U0).** B's own tasks named three things — the phone field, duplicate
+> detection, and spam scoring — and the P8.10 split note above had already measured the phone change alone
+> at ~20 files across five projects. The two lettered halves map exactly onto B's two "Done when" clauses,
+> so no criterion is orphaned. B1 also carries a net-new **dependency** (`libphonenumber-js`) and B2 a
+> net-new **audit mounting** in content-service (which has none today: schema export, `AuditModule.forRoot()`
+> and two immutability-trigger migrations), which is the honest reason they are separate sessions.
+
+#### P8.10.B1 — `lead` gains `phone`
+
 **Tasks:** **`lead` gains `phone`** — contract + schema + migration + both website forms + the admin column +
-the lead email template. A Gulf agency loses most inbound without a callable number. Lead spam scoring, and
-duplicate detection (same email/phone in a window) landing as **`submissionCount` + `lastSubmittedAt` on the
-existing lead plus an `audit_log` row** — _not_ a second lead row, and _not_ a new `lead_activity` table:
-the activity timeline belongs to `crm-service` (P8.15, `08-client-intake.md` §5.1), so building one here
-would create a concept that phase then has to own or migrate (decision 2026-08-19).
-**Done when:** a phone number submitted from either website form reaches the admin column and the team email;
-a repeat submission from the same email within the window increments the counter and writes an audit row
-instead of creating a second lead; verifier PASS + boot-verifier UP.
-**Applies:** U0, U3, U24, U27, N7, TDD1, TDD2, DOC1, DOC2.
+the lead email template. A Gulf agency loses most inbound without a callable number. The number is validated
+**per-country** (`libphonenumber-js`, the repo's first phone validator) and stored normalized as **E.164**;
+the website field is a real dial-code picker (default `SA`, localized country names from a cached
+`Intl.DisplayNames`, flags derived from the ISO-2 code — no hand-maintained dataset), **not** a bare text
+box (U21b). Phone is **required** on both forms; the DB column is nullable because existing rows have none.
+An invalid number is rejected server-side by the same schema the form uses (N7), carrying the catalog key
+`validation.invalidPhone` that `ZodValidationPipe` already renders into the caller's locale (U24).
+**Done when:** a phone number submitted from **either** website form reaches the admin column and the team
+email; an invalid number is rejected with a localized ar+en message on the `phone` field; verifier PASS +
+boot-verifier UP.
+**Applies:** U0, U3, U15, U16, U17, U21, U23, U24, U26, N7, N12, F8, F9, WEB6, TDD1, TDD2, DOC1, DOC2.
+
+#### P8.10.B2 — duplicate detection + lead spam scoring
+
+**Tasks:** Lead spam scoring, and duplicate detection (same email/phone in a window) landing as
+**`submissionCount` + `lastSubmittedAt` on the existing lead plus an `audit_log` row** — _not_ a second lead
+row, and _not_ a new `lead_activity` table: the activity timeline belongs to `crm-service` (P8.15,
+`08-client-intake.md` §5.1), so building one here would create a concept that phase then has to own or
+migrate (decision 2026-08-19). Mounting `@sanad/audit` in content-service is part of this half.
+**Done when:** a repeat submission from the same email within the window increments the counter and writes
+an audit row instead of creating a second lead; the spam signal is visible in the inbox; verifier PASS +
+boot-verifier UP.
+**Applies:** U0, U3, U24, U27, N7, N14, TDD1, TDD2, DOC1, DOC2.
 
 ### P8.10.C — Layered bot defence → **folded into P8.23 (2026-08-19)**
 
@@ -332,7 +355,8 @@ unconfigured (never blocks a real lead), with failures recorded and visible in t
 ## P8.23 — Website go-live pack
 
 **Scope:** the last things between the site and a paid ad click.
-**Tasks:** phone field + a configurable **WhatsApp CTA** on contact and request-a-project; thank-you states that fire **conversion events**; a GA4/GTM + Meta/Snap/TikTok pixel layer driven **entirely from settings** (no hardcoded IDs — the platform is sellable) with **consent-mode gating**; a real cookie/consent banner and genuine **privacy notice, terms, and data-processing** pages rendered from the CMS (required before running ads that collect personal data); per-page SEO/OG re-verified; sitemap + robots re-checked against the new routes; a client-portal entry point in the site chrome.
+**Tasks:** a configurable **WhatsApp CTA** on contact and request-a-project (the `phone` field itself lands
+in P8.10.B1 — this phase acts on the number); thank-you states that fire **conversion events**; a GA4/GTM + Meta/Snap/TikTok pixel layer driven **entirely from settings** (no hardcoded IDs — the platform is sellable) with **consent-mode gating**; a real cookie/consent banner and genuine **privacy notice, terms, and data-processing** pages rendered from the CMS (required before running ads that collect personal data); per-page SEO/OG re-verified; sitemap + robots re-checked against the new routes; a client-portal entry point in the site chrome.
 **Done when:** a lead submission from an ad click produces a **tracked conversion with consent respected**, and every legal page renders from the CMS in ar + en.
 **Applies:** U0, U9, WEB1–WEB6, F7, U8.
 

@@ -2333,7 +2333,7 @@
     },
     {
       "name": "Leads",
-      "description": "The website contact / request-a-project capture (P5). `POST /leads` is **public** — it persists a lead and emits `lead.created` (Outbox, MS3) for the notifications service. The inbox (list + status) is **guarded** by `content.manage`.\n\n**Rate limit:** the public `POST /leads` uses the `lead` bucket (coded default 20 / hour per ip — generous because Gulf carriers use CGNAT, so real visitors share addresses). The guarded inbox routes (list / update status) stay on `default`, so an admin paging leads never spends the anti-spam budget.",
+      "description": "The website contact / request-a-project capture (P5). `POST /leads` is **public** — it persists a lead and emits `lead.created` (Outbox, MS3) for the notifications service. The inbox (list + status) is **guarded** by `content.manage`.\n\n**Rate limit:** the public `POST /leads` uses the `lead` bucket (coded default 20 / hour per ip — generous because Gulf carriers use CGNAT, so real visitors share addresses). The guarded inbox routes (list / update status) stay on `default`, so an admin paging leads never spends the anti-spam budget.\n\n**Phone (P8.10.B1):** a lead carries a required, per-country-validated `phone` stored as E.164. `GET /leads`'s `search` filter covers it alongside name/email/company, and every `Lead` response exposes `phone` (null only for leads captured before the field existed).",
       "item": [
         {
           "name": "Submit lead (public)",
@@ -2362,7 +2362,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Layla\",\n  \"email\": \"layla@example.com\",\n  \"company\": \"Acme\",\n  \"budget\": \"10k-25k\",\n  \"projectType\": \"SaaS\",\n  \"message\": \"We need a multi-tenant LMS.\",\n  \"source\": \"contact\",\n  \"locale\": \"ar\"\n}",
+              "raw": "{\n  \"name\": \"Layla\",\n  \"email\": \"layla@example.com\",\n  \"phone\": \"+966 50 123 4567\",\n  \"company\": \"Acme\",\n  \"budget\": \"10k-25k\",\n  \"projectType\": \"SaaS\",\n  \"message\": \"We need a multi-tenant LMS.\",\n  \"source\": \"contact\",\n  \"locale\": \"ar\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2374,7 +2374,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["leads"]
             },
-            "description": "**Purpose:** submit a contact / request-a-project lead.\n\n**Auth:** none (public).\n\n**Body** (`.strict()`): `name`, `email`, optional `company`/`budget`/`projectType`, `message`, `source` (`contact`/`request-project`, default `contact`), `locale` (default `ar`).\n\n**Returns** `data`: `{ id }` (never echoes the row). Emits `lead.created`. Captures `leadId`."
+            "description": "**Purpose:** submit a contact / request-a-project lead.\n\n**Auth:** none (public).\n\n**Body** (`.strict()`): `name`, `email`, **`phone`** (REQUIRED since P8.10.B1 — validated per-country and normalized to E.164 on the way in, so `+966 50 123 4567` is stored as `+966501234567`; a bare national number is rejected, and an invalid one returns 400 with the localized `validation.invalidPhone` message on the `phone` field), optional `company`/`budget`/`projectType`, `message`, `source` (`contact`/`request-project`, default `contact`), `locale` (default `ar`).\n\n**Returns** `data`: `{ id }` (never echoes the row). Emits `lead.created`. Captures `leadId`."
           },
           "response": []
         },
