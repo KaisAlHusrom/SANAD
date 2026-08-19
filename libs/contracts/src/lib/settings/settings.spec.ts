@@ -13,6 +13,16 @@ import {
   SETTINGS_RESOLVE,
 } from './message-pattern.js';
 import { settingsChangedEventSchema } from './settings-event.zod.types.js';
+import {
+  RATE_LIMIT_DEFAULTS,
+  RATE_LIMIT_ENABLED_DEFAULT,
+  RATE_LIMIT_LIMIT_BOUNDS,
+  RATE_LIMIT_WINDOW_BOUNDS,
+  SECURITY_GROUP,
+  SECURITY_SECTION_RATE_LIMIT,
+  SECURITY_SETTING_KEYS,
+  rateLimitPolicyIdSchema,
+} from './security-settings.js';
 
 describe('settings contracts', () => {
   it('enumerates setting types and scopes', () => {
@@ -109,5 +119,60 @@ describe('settings contracts', () => {
         scopeId: null,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('security settings contracts (P8.10.A)', () => {
+  it('names the group and its rate-limit policies', () => {
+    expect(SECURITY_GROUP).toBe('security');
+    expect(SECURITY_SECTION_RATE_LIMIT).toBe('rateLimit');
+    expect(rateLimitPolicyIdSchema.options).toEqual([
+      'auth',
+      'lead',
+      'default',
+      'none',
+    ]);
+    expect(rateLimitPolicyIdSchema.safeParse('admin').success).toBe(false);
+  });
+
+  it('keys every setting under the group and never repeats one', () => {
+    const keys = Object.values(SECURITY_SETTING_KEYS);
+    expect(keys.length).toBeGreaterThan(0);
+    for (const key of keys) {
+      expect(key.startsWith('security.rateLimit.')).toBe(true);
+    }
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it('carries the coded defaults the gateway falls back to (U9)', () => {
+    expect(RATE_LIMIT_DEFAULTS.auth).toEqual({ limit: 10, windowSeconds: 300 });
+    expect(RATE_LIMIT_DEFAULTS.lead).toEqual({
+      limit: 20,
+      windowSeconds: 3600,
+    });
+    expect(RATE_LIMIT_DEFAULTS.default).toEqual({
+      limit: 300,
+      windowSeconds: 60,
+    });
+    expect(RATE_LIMIT_ENABLED_DEFAULT).toBe(true);
+  });
+
+  // `none` is the exemption marker, not a bucket — it must never carry numbers a
+  // resolver could try to clamp.
+  it('has no policy numbers for the exemption marker', () => {
+    expect('none' in RATE_LIMIT_DEFAULTS).toBe(false);
+  });
+
+  it('keeps every coded default inside the bounds the gateway clamps to', () => {
+    for (const policy of Object.values(RATE_LIMIT_DEFAULTS)) {
+      expect(policy.limit).toBeGreaterThanOrEqual(RATE_LIMIT_LIMIT_BOUNDS.min);
+      expect(policy.limit).toBeLessThanOrEqual(RATE_LIMIT_LIMIT_BOUNDS.max);
+      expect(policy.windowSeconds).toBeGreaterThanOrEqual(
+        RATE_LIMIT_WINDOW_BOUNDS.min,
+      );
+      expect(policy.windowSeconds).toBeLessThanOrEqual(
+        RATE_LIMIT_WINDOW_BOUNDS.max,
+      );
+    }
   });
 });

@@ -34,6 +34,25 @@
   - `branding-update.zod.types.ts` — `brandingUpdateRequestSchema` (deep-partial, `.strict()`, hex/url-validated), `BrandingUpdateRequest`.
   - `permission.ts` — `SETTINGS_PERMISSIONS` (`read`/`manage`); `message-pattern.ts` — `settings.branding.{get,update}`, `settings.resolve`, `settings.group.resolve`, `settings.changed`.
 
+## P8.10.A additions — the `security` settings group
+
+- `lib/settings/security-settings.ts` — the gateway's edge rate limits as a settings group.
+  - `SECURITY_GROUP` (`'security'`), `SECURITY_SECTION_RATE_LIMIT` (`'rateLimit'`).
+  - `rateLimitPolicyIdSchema` — `auth | lead | default | none`. `none` is the **exemption marker**
+    (health checks), not a bucket, so `CountedRateLimitPolicyId` excludes it and
+    `RATE_LIMIT_DEFAULTS` carries no entry for it.
+  - `RateLimitPolicy` (`{ limit, windowSeconds }`), `SECURITY_SETTING_KEYS`, `rateLimitSettingKeys()`,
+    `COUNTED_RATE_LIMIT_POLICIES`.
+  - `RATE_LIMIT_DEFAULTS` + `RATE_LIMIT_ENABLED_DEFAULT` — the U9 coded defaults; `RATE_LIMIT_LIMIT_BOUNDS`
+    / `RATE_LIMIT_WINDOW_BOUNDS` — the range the settings writer rejects outside of and the gateway
+    clamps to.
+- **Why the numbers live in contracts and not in settings-service.** Both sides need the _same_ ones:
+  settings-service as the U9 coded default an operator edits, the gateway as its fail-open floor when
+  the broker is unreachable. Two copies would drift, and the copy that drifts is the one nobody sees
+  (U3). Same reasoning as `integration-catalog.ts`.
+- `lib/settings/setting-catalog.types.ts` — `SettingField` gained `min?`/`max?`, alongside the existing
+  `options?`: a descriptor-declared range, enforced on write and rendered on the control.
+
 ## P8.8 additions — money + sequence shapes
 
 - `lib/money/*` — the shapes every priced document shares; the **arithmetic and formatting live in

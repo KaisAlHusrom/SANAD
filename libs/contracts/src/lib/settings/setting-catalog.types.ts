@@ -18,6 +18,9 @@ export interface SettingField {
   requirement: SettingRequirement;
   /** Allowed values for `select`-typed fields. */
   options?: readonly string[];
+  /** Inclusive range for `number`-typed fields — enforced on write, and on the control. */
+  min?: number;
+  max?: number;
   /** The current resolved value (never blank — coded default when unset, F7). */
   value: SettingValue;
 }
