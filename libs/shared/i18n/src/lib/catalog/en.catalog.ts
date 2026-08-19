@@ -35,6 +35,8 @@ export const EN_CATALOG: Record<MessageKey, string> = {
   'validation.slug':
     'Use lowercase letters, numbers and hyphens only (e.g. about-us).',
   'validation.hexColor': 'Enter a hex colour such as #1A2B3C.',
+  'validation.invalidPhone':
+    'Enter a valid number with its country code, e.g. +966 50 123 4567.',
   'validation.unknownField': 'Unknown field.',
 
   // ── auth ──────────────────────────────────────────────────────────────────────────
@@ -109,6 +111,7 @@ export const EN_CATALOG: Record<MessageKey, string> = {
   'notifications.leadAlert.heading': 'New lead — {name}',
   'notifications.leadAlert.name': 'Name',
   'notifications.leadAlert.email': 'Email',
+  'notifications.leadAlert.phone': 'Phone',
   'notifications.leadAlert.company': 'Company',
   'notifications.leadAlert.projectType': 'Project type',
   'notifications.leadAlert.source': 'Source',

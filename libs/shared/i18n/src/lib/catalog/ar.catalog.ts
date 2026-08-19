@@ -35,6 +35,8 @@ export const AR_CATALOG = {
   'validation.slug':
     'استخدم أحرفاً إنجليزية صغيرة وأرقاماً وشرطات فقط (مثل: about-us).',
   'validation.hexColor': 'أدخل لوناً بصيغة سداسية عشرية مثل ‎#1A2B3C.',
+  'validation.invalidPhone':
+    'أدخل رقماً صحيحاً مع رمز الدولة، مثل ‎+966 50 123 4567.',
   'validation.unknownField': 'حقل غير معروف.',
 
   // ── auth — the gateway guards + the forwarded identity (MS4) ───────────────────────
@@ -105,6 +107,7 @@ export const AR_CATALOG = {
   'notifications.leadAlert.heading': 'طلب جديد — {name}',
   'notifications.leadAlert.name': 'الاسم',
   'notifications.leadAlert.email': 'البريد الإلكتروني',
+  'notifications.leadAlert.phone': 'رقم الجوال',
   'notifications.leadAlert.company': 'الجهة',
   'notifications.leadAlert.projectType': 'نوع المشروع',
   'notifications.leadAlert.source': 'المصدر',
