@@ -6,6 +6,7 @@ const lead: LeadNotificationPayload = {
   leadId: 'lead-1',
   name: 'سارة',
   email: 'sara@example.com',
+  phone: '+966501234567',
   company: 'شركة',
   projectType: 'saas',
   source: 'contact',
@@ -41,11 +42,26 @@ describe('teamAlertEmail (U24d — the team reads its alerts in ITS language)', 
 
   it('shows an em-dash for the fields the visitor left blank', () => {
     const body = teamAlertEmail(
-      { ...lead, company: null, projectType: null },
+      { ...lead, company: null, projectType: null, phone: null },
       'ar',
     );
     expect(body.text).toContain('الجهة: —');
     expect(body.text).toContain('نوع المشروع: —');
+    expect(body.text).toContain('رقم الجوال: —');
+  });
+
+  it('renders the phone readable and one tap from a call (P8.10.B1)', () => {
+    const body = teamAlertEmail(lead, 'ar');
+    expect(body.text).toContain('رقم الجوال: +966 50 123 4567');
+    expect(body.html).toContain('href="tel:+966501234567"');
+    // Numbers are LTR in both locales.
+    expect(body.html).toContain('dir="ltr"');
+  });
+
+  it('does not offer a call link when the lead predates the phone field', () => {
+    expect(teamAlertEmail({ ...lead, phone: null }, 'ar').html).not.toContain(
+      'tel:',
+    );
   });
 
   it('escapes interpolated visitor content in the HTML part', () => {

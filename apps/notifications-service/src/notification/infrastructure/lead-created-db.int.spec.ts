@@ -68,6 +68,7 @@ function leadEvent(
     id: '33333333-3333-3333-3333-333333333333',
     name: 'Layla',
     email: 'layla@example.com',
+    phone: '+966501234567',
     company: 'Acme',
     projectType: 'saas',
     message: 'We need an LMS.',

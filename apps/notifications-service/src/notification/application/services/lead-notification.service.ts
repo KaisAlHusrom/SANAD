@@ -49,6 +49,7 @@ export class LeadNotificationService {
       leadId: event.id,
       name: event.name,
       email: event.email,
+      phone: event.phone,
       company: event.company,
       projectType: event.projectType,
       message: event.message,

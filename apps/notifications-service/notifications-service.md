@@ -115,7 +115,9 @@ Email bodies are payload text the gateway's renderer never sees, so they are com
   with its subject, heading and field labels coming from the `notifications.leadAlert.*` catalog
   keys and `dir` derived from the locale. It was English-only prose until the U24 sweep — staff
   are Arabic-first too. The lead's own values (name, message, source) are **data** and pass
-  through untranslated.
+  through untranslated. Since **P8.10.B1** it carries the lead's **phone** row — formatted by the
+  shared `formatPhoneInternational` and wrapped in a `tel:` link so the team calls from the alert,
+  `dir="ltr"` in both locales, an em-dash when the lead predates the field.
 
 ## Event catalog (U27)
 

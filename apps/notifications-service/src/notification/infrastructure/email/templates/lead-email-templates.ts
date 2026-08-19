@@ -1,9 +1,22 @@
-import type { LeadNotificationPayload, Locale } from '@sanad/contracts';
+import {
+  formatPhoneInternational,
+  type LeadNotificationPayload,
+  type Locale,
+} from '@sanad/contracts';
 import { translate } from '@sanad/i18n';
 import type { EmailMessage } from '../email.provider.js';
 
 /** The composed parts of an email (the recipient `to` is added by the caller). */
 type EmailBody = Omit<EmailMessage, 'to'>;
+
+/** One labelled line of the alert. `href` turns the HTML value into a link (never the text). */
+interface AlertRow {
+  label: string;
+  value: string;
+  href?: string;
+  /** Forces LTR on a value that is LTR in every locale — a phone number. */
+  ltr?: boolean;
+}
 
 const SITE = 'سند التقنية — Sanad Tech';
 
@@ -20,13 +33,24 @@ export function teamAlertEmail(
   locale: Locale,
 ): EmailBody {
   const label = (key: string): string => translate(key, locale);
-  const rows: Array<[string, string]> = [
-    [label('notifications.leadAlert.name'), lead.name],
-    [label('notifications.leadAlert.email'), lead.email],
-    [label('notifications.leadAlert.company'), lead.company ?? EMPTY],
-    [label('notifications.leadAlert.projectType'), lead.projectType ?? EMPTY],
-    [label('notifications.leadAlert.source'), lead.source],
-    [label('notifications.leadAlert.locale'), lead.locale],
+  const rows: AlertRow[] = [
+    { label: label('notifications.leadAlert.name'), value: lead.name },
+    { label: label('notifications.leadAlert.email'), value: lead.email },
+    {
+      label: label('notifications.leadAlert.phone'),
+      value: lead.phone ? formatPhoneInternational(lead.phone) : EMPTY,
+      ...(lead.phone ? { href: `tel:${lead.phone}`, ltr: true } : {}),
+    },
+    {
+      label: label('notifications.leadAlert.company'),
+      value: lead.company ?? EMPTY,
+    },
+    {
+      label: label('notifications.leadAlert.projectType'),
+      value: lead.projectType ?? EMPTY,
+    },
+    { label: label('notifications.leadAlert.source'), value: lead.source },
+    { label: label('notifications.leadAlert.locale'), value: lead.locale },
   ];
   const subject = lead.projectType
     ? translate('notifications.leadAlert.subjectTyped', locale, {
@@ -38,7 +62,7 @@ export function teamAlertEmail(
   return {
     subject,
     text: [
-      ...rows.map(([key, value]) => `${key}: ${value}`),
+      ...rows.map((row) => `${row.label}: ${row.value}`),
       '',
       `${label('notifications.leadAlert.message')}:`,
       lead.message,
@@ -51,8 +75,8 @@ export function teamAlertEmail(
       )}</h2><ul>` +
       rows
         .map(
-          ([key, value]) =>
-            `<li><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</li>`,
+          (row) =>
+            `<li><strong>${escapeHtml(row.label)}:</strong> ${renderValue(row)}</li>`,
         )
         .join('') +
       `</ul><p>${escapeHtml(lead.message)}</p></div>`,
@@ -76,6 +100,15 @@ export function visitorAckEmail(lead: LeadNotificationPayload): EmailBody {
     text: `مرحباً ${lead.name}،\n\nشكراً لتواصلك مع سند التقنية. لقد استلمنا طلبك وسيتواصل معك أحد أعضاء فريقنا قريباً.\n\n— ${SITE}`,
     html: `<div dir="rtl"><p>مرحباً ${escapeHtml(lead.name)}،</p><p>شكراً لتواصلك مع <strong>سند التقنية</strong>. لقد استلمنا طلبك وسيتواصل معك أحد أعضاء فريقنا قريباً.</p><p>— ${SITE}</p></div>`,
   };
+}
+
+/** The HTML half of one alert row — a link when the value is actionable (a phone number). */
+function renderValue(row: AlertRow): string {
+  const text = escapeHtml(row.value);
+  const dir = row.ltr === true ? ' dir="ltr"' : '';
+  return row.href === undefined
+    ? `<span${dir}>${text}</span>`
+    : `<a href="${escapeHtml(row.href)}"${dir}>${text}</a>`;
 }
 
 /** Minimal HTML-escape for interpolated user content (defense against broken markup). */
