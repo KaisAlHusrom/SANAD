@@ -104,6 +104,12 @@ cramped modal (U21). All tokens-only, RTL-correct, exported from the `ui/` barre
   scroll) and takes a `size` (sm/md/lg). Compose `DialogHeader` + `DialogBody` (the only scroll
   region) + `DialogFooter` for a fixed header/footer around a scrollable body; flat children stay
   backward-compatible (the simple set-secret/new-folder/confirmation modals are unchanged).
+- **`PhoneLink`** (`phone-link/`, P8.10.B1) — a stored **E.164** number rendered readable and one tap
+  from a call: `formatPhoneInternational` from `@sanad/contracts` (the SAME helper the team-alert
+  email uses, so the inbox and the email can never disagree — F8/U3) inside a `tel:` anchor,
+  `dir="ltr"` in both locales, a caller-supplied fallback (`—`) when the value is null, and an
+  unparseable stored value rendered as itself rather than vanishing (U23). Used by the leads inbox
+  column and the dashboard's recent-lead row.
 - **Token-styled scrollbars** — `global.css` styles scrollbars (WebKit + Firefox) from the surface
   tokens (track/thumb), so every scroll region (DialogBody, the editor page, long tables) reads as
   part of the design language instead of the raw OS chrome. Tokens-only; dark+light.

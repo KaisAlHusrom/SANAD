@@ -1,5 +1,6 @@
 import type { Lead, LeadStatus } from '@sanad/contracts';
 import { useTranslation } from 'react-i18next';
+import { PhoneLink } from '../../../components/phone-link';
 import { Badge, type BadgeProps } from '../../../components/ui/badge';
 import { useFormatDateTime } from '../../../lib/format';
 
@@ -28,6 +29,13 @@ export function RecentLeadRow({ lead }: RecentLeadRowProps) {
         <span className="truncate text-xs text-faint" dir="ltr">
           {lead.email}
         </span>
+        {lead.phone ? (
+          <PhoneLink
+            value={lead.phone}
+            fallback={t('noPhone')}
+            className="truncate text-xs text-faint"
+          />
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <Badge tone={STATUS_TONE[lead.status]} dot>

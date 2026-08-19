@@ -2,9 +2,11 @@
   "title": "Leads inbox",
   "subtitle": "Requests that arrived from the website.",
   "noCompany": "—",
+  "noPhone": "—",
   "changeStatus": "Change status",
   "columns": {
     "client": "Client",
+    "phone": "Phone",
     "company": "Company",
     "source": "Source",
     "status": "Status",

@@ -38,6 +38,7 @@ const lead: Lead = {
   id: 'l1',
   name: 'Layla Hassan',
   email: 'layla@example.com',
+  phone: '+966501234567',
   company: 'Acme',
   budget: null,
   projectType: 'SaaS',
@@ -105,6 +106,24 @@ describe('LeadsPage', () => {
     renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
     expect(await screen.findByText('Layla Hassan')).toBeInTheDocument();
     expect(screen.getByText('layla@example.com')).toBeInTheDocument();
+  });
+
+  it('renders the phone as a readable, one-tap call link (P8.10.B1)', async () => {
+    stub([lead]);
+    renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
+    const call = await screen.findByRole('link', { name: '+966 50 123 4567' });
+    expect(call).toHaveAttribute('href', 'tel:+966501234567');
+    expect(call).toHaveAttribute('dir', 'ltr');
+  });
+
+  it('shows a placeholder for a lead captured before the phone field existed', async () => {
+    stub([{ ...lead, phone: null }]);
+    renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
+    await screen.findByText('Layla Hassan');
+    expect(
+      screen.queryByRole('link', { name: /\+966/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 
   it('changes a lead status via the inline select (manager)', async () => {

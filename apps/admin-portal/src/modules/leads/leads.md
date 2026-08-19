@@ -7,9 +7,14 @@ inline (P7.D, S2). Read + status update are `content.manage`-guarded.
 ## Surface
 
 - `LeadsPage` (`/leads`) — a kit `DataTable` with **status** + **source** filters, columns
-  client (name + email), company, source (Badge), status (inline control), received date
-  (sortable, defaults newest-first). No create (leads come from the public site), no delete
-  (they archive).
+  client (name + email), **phone**, company, source (Badge), status (inline control), received
+  date (sortable, defaults newest-first). No create (leads come from the public site), no delete
+  (they archive). The DataTable's free-text search covers the phone too (the backend's
+  `LEAD_FILTERS.search` whitelist, N7), so a number pasted from a missed call finds its lead.
+- `PhoneLink` (`src/components/phone-link/`, shared — the dashboard's recent-lead row uses it
+  too, F9) — renders the stored E.164 number through the shared `formatPhoneInternational`
+  (F8/U3: the same helper the team alert email uses) inside a `tel:` link, `dir="ltr"` in both
+  locales, falling back to `—` for a lead captured before P8.10.B1.
 - `LeadStatusCell` — the inline status control (W6): managers get a styled `Select` wired to
   the update mutation; read-only users see a tinted `Badge` (new = accent, contacted = good,
   archived = neutral).
@@ -26,8 +31,10 @@ inline (P7.D, S2). Read + status update are `content.manage`-guarded.
 
 ## Contracts (`@sanad/contracts`, U3)
 
-`Lead`, `LeadListQuery` (`status`/`source` whitelisted filters), `LeadStatus`
-(`new|contacted|archived`), `LeadSource` (`contact|request-project`). No new contract.
+`Lead` (now carrying `phone: string | null`), `LeadListQuery` (`status`/`source` whitelisted
+filters), `LeadStatus` (`new|contacted|archived`), `LeadSource` (`contact|request-project`),
+and `formatPhoneInternational` from `common/phone`. No new contract file here — P8.10.B1 added
+the phone unit to `@sanad/contracts`, this module only consumes it.
 
 ## Events
 

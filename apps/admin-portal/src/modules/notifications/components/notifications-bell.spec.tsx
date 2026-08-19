@@ -30,6 +30,7 @@ const notification: Notification = {
     leadId: 'l1',
     name: 'Layla',
     email: 'layla@example.com',
+    phone: '+966501234567',
     company: null,
     projectType: null,
     message: 'Need a platform',

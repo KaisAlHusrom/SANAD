@@ -2,9 +2,11 @@
   "title": "صندوق العملاء المحتملين",
   "subtitle": "الطلبات الواردة من الموقع.",
   "noCompany": "—",
+  "noPhone": "—",
   "changeStatus": "تغيير الحالة",
   "columns": {
     "client": "العميل",
+    "phone": "الجوال",
     "company": "الجهة",
     "source": "المصدر",
     "status": "الحالة",

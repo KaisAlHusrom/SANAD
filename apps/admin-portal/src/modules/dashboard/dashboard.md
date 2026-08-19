@@ -11,7 +11,9 @@ data (WEB1/U9 spirit).
   services, blog posts, unread notifications) + two panels: recent leads + recent activity.
   Render-gated skeleton → error → data (F2).
 - `StatCard` — a bordered metric card (label, tinted icon, value).
-- `RecentLeadRow` — a display-only lead row (name, status Badge, date).
+- `RecentLeadRow` — a display-only lead row (name, email, phone, status Badge, date). The phone
+  renders through the shared `PhoneLink` (F9) so it is callable straight from the dashboard;
+  it is omitted entirely for a lead captured before P8.10.B1.
 - Recent activity reuses `NotificationItem` from the notifications module (display-only, no
   `onMarkRead`).
 

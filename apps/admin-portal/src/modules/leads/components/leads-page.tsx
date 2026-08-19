@@ -6,6 +6,7 @@ import {
   type DataTableColumn,
   type FilterDef,
 } from '../../../components/data-table';
+import { PhoneLink } from '../../../components/phone-link';
 import { Badge } from '../../../components/ui/badge';
 import { useFormatDateTime } from '../../../lib/format';
 import { useLeadsList } from '../hooks/use-leads-list';
@@ -29,6 +30,17 @@ export function LeadsPage() {
             {row.email}
           </span>
         </div>
+      ),
+    },
+    {
+      id: 'phone',
+      header: t('columns.phone'),
+      cell: (row) => (
+        <PhoneLink
+          value={row.phone}
+          fallback={t('noPhone')}
+          className="text-dim"
+        />
       ),
     },
     {
