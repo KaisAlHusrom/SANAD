@@ -11,6 +11,8 @@ export interface LeadNotificationPayload {
   leadId: string;
   name: string;
   email: string;
+  /** E.164, or null for a lead captured before P8.10.B1. */
+  phone: string | null;
   company: string | null;
   projectType: string | null;
   message: string;

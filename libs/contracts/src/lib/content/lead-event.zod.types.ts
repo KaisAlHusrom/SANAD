@@ -15,6 +15,9 @@ export const leadCreatedEventSchema = z
     id: z.string().uuid(),
     name: z.string().min(1),
     email: z.string().email(),
+    // Nullable, not required: a message queued across the P8.10.B1 deploy predates the field,
+    // and a consumer that cannot parse it would dead-letter a real lead.
+    phone: z.string().nullable(),
     company: z.string().nullable(),
     projectType: z.string().nullable(),
     message: z.string().min(1),

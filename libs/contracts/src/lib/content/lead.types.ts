@@ -11,6 +11,8 @@ export interface Lead {
   id: string;
   name: string;
   email: string;
+  /** E.164. Nullable only because leads captured before P8.10.B1 have none. */
+  phone: string | null;
   company: string | null;
   budget: string | null;
   projectType: string | null;

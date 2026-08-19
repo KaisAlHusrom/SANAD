@@ -11,6 +11,7 @@ export * from './lib/common/pagination.js';
 export * from './lib/common/paginated.types.js';
 export * from './lib/common/list-query.js';
 export * from './lib/common/boolean-param.js';
+export * from './lib/common/phone/index.js';
 export * from './lib/money/index.js';
 export * from './lib/sequence/index.js';
 export * from './lib/identity/index.js';

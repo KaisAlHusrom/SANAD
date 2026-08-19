@@ -31,6 +31,8 @@ import { menuKeySchema } from './menu-key.zod.types.js';
 import { menuCreateSchema } from './menu-upsert.zod.types.js';
 import { menuItemCreateSchema } from './menu-item-upsert.zod.types.js';
 import { leadCreateRequestSchema } from './lead-create.zod.types.js';
+import { leadCreatedEventSchema } from './lead-event.zod.types.js';
+import { PHONE_INVALID_MESSAGE_KEY } from '../common/phone/index.js';
 import { slugSchema } from './content-slug.zod.types.js';
 import {
   CONTENT_PAGE_TREE_GET,
@@ -420,17 +422,21 @@ describe('content contracts', () => {
     const parsed = leadCreateRequestSchema.safeParse({
       name: 'Layla',
       email: 'layla@example.com',
+      phone: '+966 50 123 4567',
       message: 'We need an LMS.',
     });
     expect(parsed.success).toBe(true);
     if (parsed.success) {
       expect(parsed.data.source).toBe('contact');
       expect(parsed.data.locale).toBe('ar');
+      // Stored normalized, whatever the visitor typed (P8.10.B1).
+      expect(parsed.data.phone).toBe('+966501234567');
     }
     expect(
       leadCreateRequestSchema.safeParse({
         name: 'x',
         email: 'not-an-email',
+        phone: '+966501234567',
         message: 'hi',
       }).success,
     ).toBe(false);
@@ -438,10 +444,46 @@ describe('content contracts', () => {
       leadCreateRequestSchema.safeParse({
         name: 'x',
         email: 'a@b.co',
+        phone: '+966501234567',
         message: 'hi',
         spam: true,
       }).success,
     ).toBe(false);
+  });
+
+  it('requires a callable phone number on every submission (P8.10.B1)', () => {
+    const base = { name: 'Layla', email: 'layla@example.com', message: 'Hi.' };
+    expect(leadCreateRequestSchema.safeParse(base).success).toBe(false);
+    expect(
+      leadCreateRequestSchema.safeParse({ ...base, phone: '0501234567' })
+        .success,
+    ).toBe(false);
+    const bad = leadCreateRequestSchema.safeParse({ ...base, phone: 'nope' });
+    expect(bad.success).toBe(false);
+    if (!bad.success) {
+      expect(bad.error.issues[0]?.path).toEqual(['phone']);
+      expect(bad.error.issues[0]?.message).toBe(PHONE_INVALID_MESSAGE_KEY);
+    }
+  });
+
+  it('carries the phone on lead.created so the team email can render it', () => {
+    const event = {
+      id: '11111111-1111-4111-8111-111111111111',
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      company: null,
+      projectType: null,
+      message: 'Hi.',
+      source: 'contact',
+      locale: 'ar',
+      occurredAt: '2026-08-19T00:00:00.000Z',
+    };
+    expect(leadCreatedEventSchema.safeParse(event).success).toBe(true);
+    // Nullable, so an event queued across the deploy still parses (U15).
+    expect(
+      leadCreatedEventSchema.safeParse({ ...event, phone: null }).success,
+    ).toBe(true);
   });
 
   it('exposes stable permissions, patterns, and the lead.created event name', () => {

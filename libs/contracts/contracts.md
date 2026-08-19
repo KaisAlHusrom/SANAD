@@ -6,14 +6,21 @@
 
 ## Concepts (`src/lib/common/`)
 
-| File                | Exports                                                                                    |
-| ------------------- | ------------------------------------------------------------------------------------------ |
-| `locale.ts`         | `localeSchema`, `Locale`, `DEFAULT_LOCALE` (=`ar`), `LOCALES`, `LOCALE_ENDONYMS`           |
-| `direction.ts`      | `directionSchema`, `Direction`, `directionForLocale()` (ar→rtl)                            |
-| `localized-text.ts` | `localizedTextSchema` (`.strict()`), `LocalizedText`, `pickLocalized()`                    |
-| `envelope.ts`       | `envelopeSchema(data)`, `ResponseEnvelope<T>` — the `{success,message,data}` contract (F1) |
-| `pagination.ts`     | `paginationMetaSchema`, `PaginationMeta`, `buildPaginationMeta()`                          |
-| `list-query.ts`     | `listQuerySchema` (`.strict()`), `ListQuery`, `DEFAULT_PAGE_SIZE`, `MAX_PAGE_SIZE`         |
+| File                | Exports                                                                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `locale.ts`         | `localeSchema`, `Locale`, `DEFAULT_LOCALE` (=`ar`), `LOCALES`, `LOCALE_ENDONYMS`                                              |
+| `direction.ts`      | `directionSchema`, `Direction`, `directionForLocale()` (ar→rtl)                                                               |
+| `localized-text.ts` | `localizedTextSchema` (`.strict()`), `LocalizedText`, `pickLocalized()`                                                       |
+| `envelope.ts`       | `envelopeSchema(data)`, `ResponseEnvelope<T>` — the `{success,message,data}` contract (F1)                                    |
+| `pagination.ts`     | `paginationMetaSchema`, `PaginationMeta`, `buildPaginationMeta()`                                                             |
+| `list-query.ts`     | `listQuerySchema` (`.strict()`), `ListQuery`, `DEFAULT_PAGE_SIZE`, `MAX_PAGE_SIZE`                                            |
+| `phone/phone.ts`    | `phoneSchema` (E.164 out), `parsePhone()`, `formatPhoneInternational()`, `DEFAULT_PHONE_COUNTRY`, `PHONE_INVALID_MESSAGE_KEY` |
+
+> `phone/` is the one place the platform decides what a real phone number is (P8.10.B1). It wraps
+> **`libphonenumber-js`** — this lib's only runtime dependency besides `zod` — so the website form,
+> the gateway that re-validates it (N7) and the admin/email display all agree (U3). A rejected number
+> carries the catalog KEY `validation.invalidPhone`, which `ZodValidationPipe` renders in the
+> caller's locale (U24).
 
 **Events emitted/consumed:** none (pure contracts).
 **Settings used:** none.
