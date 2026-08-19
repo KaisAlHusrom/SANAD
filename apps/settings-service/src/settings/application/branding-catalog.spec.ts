@@ -3,7 +3,7 @@ import { fonts, pageAccents, websiteTokens } from '@sanad/config';
 import {
   BRANDING_DEFAULTS,
   BRANDING_FIELDS,
-  SETTINGS_DEFAULTS,
+  BRANDING_SETTING_DEFAULTS,
 } from './branding-catalog.js';
 
 describe('branding catalog defaults', () => {
@@ -27,20 +27,20 @@ describe('branding catalog defaults', () => {
     expect(BRANDING_DEFAULTS.social.twitter).toBeNull();
   });
 
-  it('projects every catalog field into the flat SETTINGS_DEFAULTS map', () => {
-    expect(SETTINGS_DEFAULTS['branding.brand.name']).toEqual({
+  it('projects every catalog field into the flat BRANDING_SETTING_DEFAULTS map', () => {
+    expect(BRANDING_SETTING_DEFAULTS['branding.brand.name']).toEqual({
       ar: 'سَنَد التقنية',
       en: 'Sanad Tech',
     });
-    expect(SETTINGS_DEFAULTS['branding.colors.primary']).toBe(
+    expect(BRANDING_SETTING_DEFAULTS['branding.colors.primary']).toBe(
       pageAccents.landing.accent,
     );
-    expect(SETTINGS_DEFAULTS['branding.logoUrl']).toBeNull();
+    expect(BRANDING_SETTING_DEFAULTS['branding.logoUrl']).toBeNull();
   });
 
   it('has a BRANDING_FIELDS entry for EVERY leaf of the record (nothing unsettable)', () => {
-    // NOT `keys(SETTINGS_DEFAULTS).length === BRANDING_FIELDS.length` — that is tautological
-    // (SETTINGS_DEFAULTS is built BY mapping BRANDING_FIELDS, so it can never disagree). This
+    // NOT `keys(BRANDING_SETTING_DEFAULTS).length === BRANDING_FIELDS.length` — that is tautological
+    // (BRANDING_SETTING_DEFAULTS is built BY mapping BRANDING_FIELDS, so it can never disagree). This
     // walks the RECORD instead, so adding a leaf to `BRANDING_DEFAULTS` without a matching
     // field — which would make it permanently unsettable, the exact class of bug behind
     // "I changed the setting and nothing happened" — fails here.

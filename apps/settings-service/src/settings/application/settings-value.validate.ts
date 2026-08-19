@@ -3,6 +3,12 @@ import type { SettingType, SettingValue } from '@sanad/contracts';
 import { rpcError, type MessageKey } from '@sanad/i18n';
 import { isLocalizedText } from './resolved-value.js';
 
+/** The inclusive range a `number` descriptor accepts. */
+export interface SettingNumberBounds {
+  min: number;
+  max: number;
+}
+
 /**
  * Validate a value against its setting descriptor `type` before persisting (N7). Throws a keyed
  * 400 the gateway maps + localizes (N9, U24) on a type mismatch. Nullable leaves accept `null`, which clears the value back to the coded default
@@ -14,6 +20,7 @@ export function assertValidSettingValue(
   key: string,
   type: SettingType,
   value: SettingValue,
+  bounds?: SettingNumberBounds,
 ): void {
   const reject = (expected: MessageKey): never => {
     throw rpcError(HttpStatus.BAD_REQUEST, expected, { key });
@@ -32,6 +39,21 @@ export function assertValidSettingValue(
     case 'number':
       if (typeof value !== 'number') {
         reject('settings.value.expected.number');
+      }
+      // A descriptor that declares bounds enforces them HERE, not only wherever the value is
+      // consumed. A consumer that silently clamps is a necessary backstop, but on its own it
+      // means the admin is told "saved" for a value that never applies (U0).
+      if (
+        bounds !== undefined &&
+        (!Number.isInteger(value) ||
+          (value as number) < bounds.min ||
+          (value as number) > bounds.max)
+      ) {
+        throw rpcError(HttpStatus.BAD_REQUEST, 'settings.value.outOfRange', {
+          key,
+          min: bounds.min,
+          max: bounds.max,
+        });
       }
       return;
     case 'text':

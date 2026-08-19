@@ -30,7 +30,9 @@ in `src/db/migrations` (generate → migrate, never push). Redis cache via `@san
 ## Resolution (U9 / F7)
 
 `SettingsResolver` resolves a key (or whole group) with precedence **client override →
-global → coded default** (`SETTINGS_DEFAULTS` in code). `localized_text` values assemble
+global → coded default** (`SETTINGS_DEFAULTS`, `application/settings-defaults/` — the merge of
+every group's coded defaults; it lived inside `branding-catalog.ts` while branding was the only
+group, and moved out in P8.10.A so one group's catalog is not quietly authoritative for all). `localized_text` values assemble
 `{ar, en}` with **per-locale** fallback to the coded default, so a partial translation
 never renders a blank locale. The **branding assembler** deep-merges resolved values over
 `BRANDING_DEFAULTS`, guaranteeing every leaf is present. Override scope (`client`) is
@@ -137,8 +139,8 @@ defaults when unset) and `PUT /api/branding` (guarded `settings.manage`, MS4).
 The descriptor catalog is now surfaced generically for the admin settings page:
 
 - **`SETTING_DESCRIPTORS`** (`application/settings-catalog.descriptors.ts`) — the UI catalog
-  (group → section → key → type/requirement/options), derived from `BRANDING_FIELDS` + a
-  section map (today only `branding`; future groups append here). Structure source of truth.
+  (group → section → key → type/requirement/options), derived from each group's field list + a
+  section map. Structure source of truth.
   **Filtered to `EDITABLE_SETTING_KEYS`** (2026-07-19): the catalog exposes only settings that
   **actually take effect somewhere**, in six sections — `identity` (`brand.name`, `brand.tagline`,
   `logoUrl`, `faviconUrl`), `colors` (`primary`/`secondary` → the **portal** accent, live),
@@ -226,6 +228,24 @@ interceptor opens the actor scope from the forwarded RMQ headers (identity — M
 
 `SettingsWriter` gained two constructor dependencies for this: `SettingsResolver` (the before-read)
 and `AuditRecorder`. Both are seams, not a DB handle — N14 still holds.
+
+### The `security` group (P8.10.A)
+
+The second group, and the proof the catalog is genuinely generic: it needed **zero admin component
+changes** — `SettingFieldControl` already renders `boolean → Switch` and `number → Input`, and
+`SettingsWriter`/`assertValidSettingValue` already type-check both. Only labels were added
+(`group.security`, `section.security.rateLimit`, `field.security.rateLimit.*`).
+
+`SECURITY_FIELDS` (`application/security-catalog/`) declares seven flat keys — a kill switch plus a
+`limit`/`windowSeconds` pair for each of the gateway's `auth`, `lead` and `default` buckets. Unlike
+`BrandingField` they carry no `path`: there is no record tree behind them, so the key IS the address.
+
+**The coded defaults are imported from `@sanad/contracts`, not restated here.** The gateway uses the
+same constants as its fail-open floor when the broker is unreachable, so a second copy would mean the
+limit an operator sees is not the limit that applies (U3). Seeded by the existing idempotent
+`SeedService` — catalog rows, not schema, so **no migration**.
+
+`security` is also the first caller of `settings.group.resolve` from another service.
 
 ## Settings used
 

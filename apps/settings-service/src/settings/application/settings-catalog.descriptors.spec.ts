@@ -1,9 +1,16 @@
+import { SECURITY_GROUP } from '@sanad/contracts';
 import { describe, expect, it } from 'vitest';
-import { BRANDING_FIELDS } from './branding-catalog.js';
+import { BRANDING_FIELDS, BRANDING_GROUP } from './branding-catalog.js';
+import { SECURITY_FIELDS } from './security-catalog/security-catalog.js';
 import {
+  EDITABLE_BRANDING_KEYS,
+  EDITABLE_SECURITY_KEYS,
   EDITABLE_SETTING_KEYS,
   SETTING_DESCRIPTORS,
 } from './settings-catalog.descriptors.js';
+
+const keysIn = (group: string): string[] =>
+  SETTING_DESCRIPTORS.filter((d) => d.group === group).map((d) => d.key);
 
 describe('settings catalog descriptors', () => {
   it('exposes exactly the editable keys — nothing dead, nothing hidden', () => {
@@ -11,22 +18,48 @@ describe('settings catalog descriptors', () => {
     expect(new Set(shown)).toEqual(new Set(EDITABLE_SETTING_KEYS));
   });
 
-  it('every shown key is a real branding field (no invented keys, U15)', () => {
+  it('every shown branding key is a real branding field (no invented keys, U15)', () => {
     const known = new Set(BRANDING_FIELDS.map((f) => f.key));
-    for (const key of EDITABLE_SETTING_KEYS) {
+    for (const key of EDITABLE_BRANDING_KEYS) {
       expect(known.has(key)).toBe(true);
     }
   });
 
-  it('groups the keys into the six admin sections', () => {
-    const sections = new Set(SETTING_DESCRIPTORS.map((d) => d.section));
+  it('every shown security key is a real security field (no invented keys, U15)', () => {
+    const known = new Set(SECURITY_FIELDS.map((f) => f.key));
+    for (const key of EDITABLE_SECURITY_KEYS) {
+      expect(known.has(key)).toBe(true);
+    }
+  });
+
+  it('carries exactly the two groups, branding first', () => {
+    const groups = [...new Set(SETTING_DESCRIPTORS.map((d) => d.group))];
+    expect(groups).toEqual([BRANDING_GROUP, SECURITY_GROUP]);
+  });
+
+  it('groups the branding keys into the six admin sections', () => {
+    const sections = new Set(
+      SETTING_DESCRIPTORS.filter((d) => d.group === BRANDING_GROUP).map(
+        (d) => d.section,
+      ),
+    );
     expect(sections).toEqual(
       new Set(['identity', 'colors', 'contact', 'social', 'legal', 'seo']),
     );
   });
 
+  it('puts every security key in the one rate-limit section', () => {
+    const sections = new Set(
+      SETTING_DESCRIPTORS.filter((d) => d.group === SECURITY_GROUP).map(
+        (d) => d.section,
+      ),
+    );
+    expect(sections).toEqual(new Set(['rateLimit']));
+    expect(keysIn(SECURITY_GROUP).length).toBe(EDITABLE_SECURITY_KEYS.length);
+  });
+
   it('hides the website art-direction / CMS-owned leaves (they would be dead controls)', () => {
-    const shown = new Set(SETTING_DESCRIPTORS.map((d) => d.key));
+    const shown = new Set(keysIn(BRANDING_GROUP));
     // Per-page color lives in the CMS pages settings; surfaces/text are the website's fixed
     // theme; fonts can't be runtime-swapped by name; nothing renders shortDesc.
     expect(shown.has('branding.colors.pageAccents.landing.accent')).toBe(false);

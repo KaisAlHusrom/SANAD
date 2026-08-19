@@ -55,3 +55,55 @@ describe('assertValidSettingValue (N7)', () => {
     expect(() => assertValidSettingValue('k', 'number', 3)).not.toThrow();
   });
 });
+
+describe('numeric bounds (P8.10.A)', () => {
+  const bounds = { min: 1, max: 86_400 };
+
+  it('accepts a value inside the declared range', () => {
+    expect(() =>
+      assertValidSettingValue(
+        'security.rateLimit.lead.limit',
+        'number',
+        20,
+        bounds,
+      ),
+    ).not.toThrow();
+  });
+
+  /**
+   * The gateway clamps an out-of-range limit back to its coded default — a necessary backstop,
+   * but on its own it means an admin types `0`, is told "Settings saved", and the value silently
+   * never applies. A mutation must surface success or a NAMED cause, never success for a no-op.
+   */
+  it.each([
+    ['zero', 0],
+    ['negative', -5],
+    ['above the maximum', 999_999],
+  ])('rejects %s with a catalogued key', (_label, value) => {
+    expect(() =>
+      assertValidSettingValue(
+        'security.rateLimit.lead.limit',
+        'number',
+        value,
+        bounds,
+      ),
+    ).toThrow();
+  });
+
+  it('rejects a non-integer — a fractional request budget is meaningless', () => {
+    expect(() =>
+      assertValidSettingValue(
+        'security.rateLimit.lead.limit',
+        'number',
+        2.5,
+        bounds,
+      ),
+    ).toThrow();
+  });
+
+  it('leaves a bound-less number setting alone', () => {
+    expect(() =>
+      assertValidSettingValue('some.other.number', 'number', -999),
+    ).not.toThrow();
+  });
+});

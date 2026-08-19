@@ -4,7 +4,7 @@ import type { SettingValueRow } from '../../db/schema/index.js';
 import { SettingRepository } from '../infrastructure/setting.repository.js';
 import { SettingValueRepository } from '../infrastructure/setting-value.repository.js';
 import { SettingTranslationRepository } from '../infrastructure/setting-translation.repository.js';
-import { SETTINGS_DEFAULTS } from './branding-catalog.js';
+import { SETTINGS_DEFAULTS } from './settings-defaults/index.js';
 import { isLocalizedText, type ResolvedValue } from './resolved-value.js';
 
 /**

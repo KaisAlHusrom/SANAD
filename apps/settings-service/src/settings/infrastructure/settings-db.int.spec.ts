@@ -15,6 +15,11 @@ import {
 } from '@sanad/audit';
 import { RedisCache, type RedisClient } from '@sanad/cache';
 import {
+  RATE_LIMIT_DEFAULTS,
+  SECURITY_GROUP,
+  SECURITY_SETTING_KEYS,
+} from '@sanad/contracts';
+import {
   DateTimeService,
   DrizzleTransactionRunner,
   TranslatableRepository,
@@ -28,7 +33,7 @@ import {
   type SettingValueRow,
 } from '../../db/schema/index.js';
 import { SETTINGS_CATALOG } from '../../seed/seed-data.js';
-import { SETTINGS_DEFAULTS } from '../application/branding-catalog.js';
+import { BRANDING_SETTING_DEFAULTS } from '../application/branding-catalog.js';
 import { BrandingService } from '../application/branding.service.js';
 import { SettingsCatalogService } from '../application/settings-catalog.service.js';
 import { SettingsResolver } from '../application/settings.resolver.js';
@@ -179,10 +184,27 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
   it('seeds the catalog idempotently (ensureSetting upserts by key)', async () => {
     await seedCatalog();
     await seedCatalog();
-    const rows = await settings.findByGroup('branding');
-    expect(rows.length).toBe(SETTINGS_CATALOG.length);
+    // Per GROUP, not against the whole catalog — P8.10.A added `security`, so comparing a
+    // branding query to `SETTINGS_CATALOG.length` silently became an off-by-seven.
+    const branding = await settings.findByGroup('branding');
+    expect(branding.length).toBe(
+      SETTINGS_CATALOG.filter((row) => row.group === 'branding').length,
+    );
     const primary = await settings.findByKey('branding.colors.primary');
     expect(primary?.type).toBe('color');
+  });
+
+  it('seeds the security group alongside branding, with its coded defaults', async () => {
+    await seedCatalog();
+    const security = await settings.findByGroup(SECURITY_GROUP);
+    expect(security.length).toBe(
+      SETTINGS_CATALOG.filter((row) => row.group === SECURITY_GROUP).length,
+    );
+    const leadLimit = await settings.findByKey(SECURITY_SETTING_KEYS.leadLimit);
+    expect(leadLimit?.type).toBe('number');
+    expect(Number(leadLimit?.defaultValue)).toBe(
+      RATE_LIMIT_DEFAULTS.lead.limit,
+    );
   });
 
   it('upserts one global value per setting (partial-unique, no duplicate)', async () => {
@@ -318,7 +340,9 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
     const name = catalog.groups[0]?.sections
       .find((s) => s.section === 'identity')
       ?.fields.find((f) => f.key === 'branding.brand.name');
-    expect(name?.value).toEqual(SETTINGS_DEFAULTS['branding.brand.name']);
+    expect(name?.value).toEqual(
+      BRANDING_SETTING_DEFAULTS['branding.brand.name'],
+    );
     expect(name?.value).not.toEqual({ ar: 'مؤقّت', en: 'Temporary' });
   });
 

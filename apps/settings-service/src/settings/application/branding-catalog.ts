@@ -188,13 +188,14 @@ export const BRANDING_FIELDS: readonly BrandingField[] = [
 ];
 
 /**
- * The flat-key projection of the coded defaults (`key → ResolvedValue`) — the
- * resolver's terminal fallback and the per-locale fallback source (U9).
+ * The flat-key projection of BRANDING's coded defaults (`key → ResolvedValue`). Merged with
+ * every other group's into `settings-defaults/` — which is what the resolver reads (U9).
  */
-export const SETTINGS_DEFAULTS: Readonly<Record<string, ResolvedValue>> =
-  Object.fromEntries(
-    BRANDING_FIELDS.map((field) => [
-      field.key,
-      getAtPath(asTree(BRANDING_DEFAULTS), field.path),
-    ]),
-  );
+export const BRANDING_SETTING_DEFAULTS: Readonly<
+  Record<string, ResolvedValue>
+> = Object.fromEntries(
+  BRANDING_FIELDS.map((field) => [
+    field.key,
+    getAtPath(asTree(BRANDING_DEFAULTS), field.path),
+  ]),
+);

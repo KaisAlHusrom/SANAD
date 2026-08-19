@@ -15,6 +15,7 @@ import { SettingValueRepository } from '../../infrastructure/setting-value.repos
 import { SettingTranslationRepository } from '../../infrastructure/setting-translation.repository.js';
 import { settingsVersionKey } from '../branding.constants.js';
 import { isLocalizedText, type ResolvedValue } from '../resolved-value.js';
+import { descriptorFor } from '../settings-catalog.descriptors.js';
 import { assertValidSettingValue } from '../settings-value.validate.js';
 import { SettingsResolver } from '../settings.resolver.js';
 
@@ -53,7 +54,15 @@ export class SettingsWriter {
       if (!setting) {
         continue; // unknown catalog key — ignore (mirrors branding's tolerant flatten)
       }
-      assertValidSettingValue(write.key, setting.type, write.value);
+      const descriptor = descriptorFor(write.key);
+      assertValidSettingValue(
+        write.key,
+        setting.type,
+        write.value,
+        descriptor?.min !== undefined && descriptor.max !== undefined
+          ? { min: descriptor.min, max: descriptor.max }
+          : undefined,
+      );
       planned.push({ setting, value: write.value });
     }
     if (planned.length === 0) {

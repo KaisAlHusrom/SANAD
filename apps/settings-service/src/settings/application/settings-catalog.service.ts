@@ -6,7 +6,7 @@ import type {
   SettingSection,
   SettingsCatalog,
 } from '@sanad/contracts';
-import { SETTINGS_DEFAULTS } from './branding-catalog.js';
+import { SETTINGS_DEFAULTS } from './settings-defaults/index.js';
 import type { ResolvedValue } from './resolved-value.js';
 import {
   SETTING_DESCRIPTORS,
@@ -53,6 +53,8 @@ export class SettingsCatalogService {
         type: descriptor.type,
         requirement: descriptor.requirement,
         ...(descriptor.options ? { options: descriptor.options } : {}),
+        ...(descriptor.min !== undefined ? { min: descriptor.min } : {}),
+        ...(descriptor.max !== undefined ? { max: descriptor.max } : {}),
         value:
           resolved[descriptor.key] ?? SETTINGS_DEFAULTS[descriptor.key] ?? null,
       });
