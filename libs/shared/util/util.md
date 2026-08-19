@@ -22,6 +22,26 @@
 - **filters/** — `AllExceptionsFilter` (standard error envelope + Postgres code mapping).
 - Envelope: `toHttpEnvelope`/`failHttp` + the contract's `httpEnvelopeSchema`/`HttpResponseEnvelope`.
 
+## P8.10.A additions — the shared HTTP request-context derivation
+
+- **request-context/** — `requestContextFromHttp(request)` → the contract's `RequestContext`
+  (`{ ip, userAgent, requestId }`), plus `clientIpOf`, `normalizeIp`, `sanitizeRequestId`,
+  `firstHeader` and the structural `HttpRequestLike`.
+
+Consumed by **both** the gateway's edge middleware and `@sanad/audit`'s HTTP branch, so a rate-limit
+rejection and the audit row it produces can never disagree about who was calling (U3). Three decisions:
+
+- **`request.ip` wins over the first `x-forwarded-for` hop.** nginx _appends_
+  (`$proxy_add_x_forwarded_for`), so the leftmost entry is whatever the caller typed — keying a rate
+  limiter on it hands an attacker a fresh bucket per request. Under `trust proxy` Express resolves
+  `req.ip` to the rightmost entry the chain did not add. The forwarded chain survives only as a
+  fallback for a request object Express never touched.
+- **A pure function, not a shared ALS read.** Services that never install the gateway's middleware
+  would silently get the empty context from a shared `currentRequestContext()`; a function of the
+  request degrades honestly instead.
+- **The inbound request id is sanitised, not trusted** (≤128 chars, `[A-Za-z0-9._:-]`) — it reaches
+  DB rows and log lines, and the header is caller-controlled on a public edge.
+
 ## Localization — this lib is the rendering EDGE (U24)
 
 `@sanad/util` is where a backend message stops being a key and becomes text. Both places resolve
