@@ -1,5 +1,6 @@
 import type { Locale } from '../common/locale.js';
 import type { LeadSource } from './lead-source.zod.types.js';
+import type { LeadSpamSignal } from './lead-spam-signal.zod.types.js';
 import type { LeadStatus } from './lead-status.zod.types.js';
 
 /**
@@ -24,6 +25,13 @@ export interface Lead {
   submissionCount: number;
   /** When they last submitted. Equals `createdAt` until a repeat is folded in. */
   lastSubmittedAt: string;
+  /**
+   * 0..100 (P8.10.B3). Advisory — it ranks the inbox, it never rejected the submission. Leads
+   * captured before B3 read 0, which every surface treats exactly like a genuinely clean one.
+   */
+  spamScore: number;
+  /** Why it scored — the fired signals with their weights. Empty when nothing fired. */
+  spamSignals: LeadSpamSignal[];
   createdAt: string;
   updatedAt: string;
 }
