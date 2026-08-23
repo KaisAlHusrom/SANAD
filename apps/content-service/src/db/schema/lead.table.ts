@@ -1,6 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 import { pk, softDelete, timestamps } from '@sanad/database';
+import type { LeadSpamSignal } from '@sanad/contracts';
 import { leadSourceEnum, leadStatusEnum } from './enums.js';
 
 /**
@@ -35,6 +43,16 @@ export const leadTable = pgTable(
     lastSubmittedAt: timestamp('last_submitted_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
+    /**
+     * 0..100 (P8.10.B3). Advisory — it ranks the inbox and NEVER rejected the submission. Rows
+     * captured before B3 keep the 0 default, which reads exactly like a genuinely clean lead.
+     */
+    spamScore: integer('spam_score').notNull().default(0),
+    /** The signals that produced the score, with their weights — the inbox breakdown. */
+    spamSignals: jsonb('spam_signals')
+      .$type<LeadSpamSignal[]>()
+      .notNull()
+      .default([]),
     ...timestamps(),
     ...softDelete(),
   },
@@ -45,6 +63,8 @@ export const leadTable = pgTable(
     // `lower(email)` so the index is actually usable by that predicate.
     index('lead_email_lower_idx').on(sql`lower(${table.email})`),
     index('lead_phone_idx').on(table.phone),
+    // The inbox filters and sorts by score to triage a flood — both scan this.
+    index('lead_spam_score_idx').on(table.spamScore),
   ],
 );
 

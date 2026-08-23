@@ -20,8 +20,10 @@ import {
 } from '@sanad/audit';
 import {
   LEAD_DEDUP_DEFAULTS,
+  LEAD_SPAM_BANDS,
   leadCreatedEventSchema,
   leadResubmittedEventSchema,
+  type Lead,
   type LeadDedupSettings,
 } from '@sanad/contracts';
 import { LeadDedupSettingsResolver } from '../application/resolvers/lead-dedup-settings/index.js';
@@ -1555,6 +1557,154 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
       locale: 'ar',
     });
     expect(second.id).not.toBe(first.id);
+  });
+
+  // ── P8.10.B3 — spam scoring ────────────────────────────────────────────────────────────
+  // Everything here must stay ADVISORY: a score changes what the inbox shows, never whether a
+  // lead exists. Each case asserts the row is still there.
+
+  const spamBlast = {
+    name: 'seo-master https://cheap.example',
+    email: 'bot@example.com',
+    phone: '+966500000001',
+    message:
+      'CHEAP SEO BACKLINKS AND GUEST POST!!!! BUY NOW https://a.example https://b.example https://c.example',
+    source: 'contact',
+    locale: 'en',
+  } as const;
+
+  const genuine = {
+    name: 'ريما القحطاني',
+    email: 'reema@example.com',
+    phone: '+966500000002',
+    message:
+      'السلام عليكم، نبحث عن شريك تقني لبناء منصة حجوزات لفروعنا في الرياض. هل يمكننا ترتيب اجتماع الأسبوع القادم؟',
+    source: 'contact',
+    locale: 'ar',
+  } as const;
+
+  async function leadById(id: string): Promise<Lead | undefined> {
+    const listed = await leadService.list({
+      page: 1,
+      pageSize: 50,
+      order: 'asc',
+    });
+    return listed.items.find((lead) => lead.id === id);
+  }
+
+  it('scores a spam blast and stores the signals that produced it (P8.10.B3)', async () => {
+    const { id } = await submit(spamBlast);
+
+    const persisted = await leadById(id);
+    expect(persisted?.spamScore).toBeGreaterThanOrEqual(
+      LEAD_SPAM_BANDS.likelySpam.min,
+    );
+    expect(persisted?.spamSignals.map((signal) => signal.id)).toContain(
+      'keywords',
+    );
+    // Advisory, always: the lead was still captured in full.
+    expect(persisted?.message).toBe(spamBlast.message);
+    const rows = await db.execute(sql`select id from "lead"`);
+    expect(rows.rowCount).toBe(1);
+  });
+
+  it('leaves a genuine Arabic enquiry at zero, with no signals at all', async () => {
+    const { id } = await submit(genuine);
+    const persisted = await leadById(id);
+    expect(persisted?.spamScore).toBe(0);
+    expect(persisted?.spamSignals).toEqual([]);
+  });
+
+  it('records the score on the create audit row — the forensic trail (P8.8)', async () => {
+    await submit(spamBlast);
+    const rows = await db.execute(
+      sql`select "after" from "audit_log" where action = 'lead.submitted'`,
+    );
+    const after = rows.rows[0]?.['after'] as Record<string, unknown>;
+    expect(after['spamScore']).toBeGreaterThan(0);
+  });
+
+  it('takes the HIGHER score when a repeat is folded in, and keeps its signals', async () => {
+    const first = await submit({
+      ...genuine,
+      message: 'نحتاج منصة حجوزات لفروعنا الخمسة.',
+    });
+    expect((await leadById(first.id))?.spamScore).toBe(0);
+
+    const second = await submit({ ...genuine, message: spamBlast.message });
+    expect(second.id).toBe(first.id);
+
+    const folded = await leadById(first.id);
+    expect(folded?.submissionCount).toBe(2);
+    expect(folded?.spamScore).toBeGreaterThanOrEqual(
+      LEAD_SPAM_BANDS.likelySpam.min,
+    );
+    expect(folded?.spamSignals.map((signal) => signal.id)).toContain(
+      'keywords',
+    );
+  });
+
+  it('never LOWERS a score when a clean repeat follows a spammy first message', async () => {
+    const first = await submit({ ...spamBlast, name: 'Bot' });
+    const scored = (await leadById(first.id))?.spamScore ?? 0;
+
+    const second = await submit({
+      ...spamBlast,
+      name: 'Bot',
+      message:
+        'Apologies for the earlier message. We would like to discuss a booking platform for our stores.',
+    });
+    expect(second.id).toBe(first.id);
+    expect((await leadById(first.id))?.spamScore).toBe(scored);
+  });
+
+  it('filters the inbox by verdict, translating the band into a score range (N7)', async () => {
+    const spam = await submit(spamBlast);
+    const clean = await submit(genuine);
+
+    const flagged = await leadService.list({
+      page: 1,
+      pageSize: 20,
+      order: 'asc',
+      spam: 'likelySpam',
+    });
+    expect(flagged.items.map((lead) => lead.id)).toEqual([spam.id]);
+
+    const quiet = await leadService.list({
+      page: 1,
+      pageSize: 20,
+      order: 'asc',
+      spam: 'clean',
+    });
+    expect(quiet.items.map((lead) => lead.id)).toEqual([clean.id]);
+  });
+
+  it('reads a lead captured before B3 as clean, so no old row is stranded by the filter', async () => {
+    const { id } = await submit(genuine);
+    // Exactly what the migration left behind on an existing row.
+    await db.execute(
+      sql`update "lead" set "spam_score" = default, "spam_signals" = default where id = ${id}`,
+    );
+    const quiet = await leadService.list({
+      page: 1,
+      pageSize: 20,
+      order: 'asc',
+      spam: 'clean',
+    });
+    expect(quiet.items.map((lead) => lead.id)).toContain(id);
+  });
+
+  it('sorts the inbox by spam score so a flood can be triaged from the top', async () => {
+    const clean = await submit(genuine);
+    const spam = await submit(spamBlast);
+
+    const sorted = await leadService.list({
+      page: 1,
+      pageSize: 20,
+      sort: 'spamScore',
+      order: 'desc',
+    });
+    expect(sorted.items.map((lead) => lead.id)).toEqual([spam.id, clean.id]);
   });
 
   it('keeps the audit trail append-only, even against a direct statement (P8.8)', async () => {

@@ -22,6 +22,8 @@ export function assembleLead(row: LeadRow): Lead {
     status: row.status,
     submissionCount: row.submissionCount,
     lastSubmittedAt: row.lastSubmittedAt.toISOString(),
+    spamScore: row.spamScore,
+    spamSignals: row.spamSignals,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };

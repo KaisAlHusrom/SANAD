@@ -7,10 +7,12 @@ import {
   paginateArgsFromListQuery,
   type FilterSpec,
 } from '@sanad/database';
+import { LEAD_SPAM_BANDS } from '@sanad/contracts';
 import type {
   Locale,
   LeadListQuery,
   LeadSource,
+  LeadSpamSignal,
   Paginated,
 } from '@sanad/contracts';
 import type { DbExecutor } from '../../../../db/executor.js';
@@ -27,8 +29,14 @@ export interface LeadIdentity {
   phone: string | null;
 }
 
+/** The spam verdict as it was assessed, ready to persist (P8.10.B3). */
+export interface LeadSpamAssessed {
+  spamScore: number;
+  spamSignals: LeadSpamSignal[];
+}
+
 /** A new lead to persist (the public submission, before the Outbox event). */
-export interface LeadInsertInput {
+export interface LeadInsertInput extends LeadSpamAssessed {
   name: string;
   email: string;
   phone: string | null;
@@ -42,12 +50,18 @@ export interface LeadInsertInput {
 
 /**
  * Whitelisted lead-inbox filters (N7): free-text over name/email/company + exact status +
- * source. Never raw column passthrough.
+ * source + a spam-score range. Never raw column passthrough.
+ *
+ * The score range is two entries on ONE column rather than a range filter kind: `applyFilters`
+ * walks the spec, so both conditions apply and neither can be requested directly — the caller
+ * asks for a verdict and `list` resolves the numbers.
  */
 const LEAD_FILTERS: FilterSpec = {
   search: { kind: 'search', columns: ['name', 'email', 'phone', 'company'] },
   status: { kind: 'column', field: 'status', op: 'eq' },
   source: { kind: 'column', field: 'source', op: 'eq' },
+  minSpamScore: { kind: 'column', field: 'spamScore', op: 'gte' },
+  maxSpamScore: { kind: 'column', field: 'spamScore', op: 'lte' },
 };
 
 /**
@@ -61,10 +75,22 @@ export class LeadRepository extends BaseRepository<typeof leadTable, LeadRow> {
     super(db, dateTime, leadModelConfig);
   }
 
-  /** A paginated, searchable, status/source-filterable list of live leads. */
+  /**
+   * A paginated, searchable, status/source/spam-filterable list of live leads.
+   *
+   * `spam` arrives as a verdict and leaves as the band's inclusive score range, so the caller
+   * never carries the thresholds and a change to them reclassifies every lead at once (U3).
+   */
   list(query: LeadListQuery): Promise<Paginated<LeadRow>> {
+    const band = query.spam ? LEAD_SPAM_BANDS[query.spam] : undefined;
     return this.paginateFiltered(
-      { search: query.search, status: query.status, source: query.source },
+      {
+        search: query.search,
+        status: query.status,
+        source: query.source,
+        minSpamScore: band?.min,
+        maxSpamScore: band?.max,
+      },
       LEAD_FILTERS,
       paginateArgsFromListQuery(query),
     );
@@ -151,17 +177,23 @@ export class LeadRepository extends BaseRepository<typeof leadTable, LeadRow> {
     return rows[0] ?? null;
   }
 
-  /** Fold a repeat into an existing lead: bump the counter, move the clock (P8.10.B2). */
+  /**
+   * Fold a repeat into an existing lead: bump the counter, move the clock (P8.10.B2), and take
+   * the spam assessment the caller resolved for the thread (P8.10.B3).
+   */
   async recordResubmission(
     exec: DbExecutor,
     id: string,
     at: Date,
+    spam: LeadSpamAssessed,
   ): Promise<LeadRow> {
     const rows = await exec
       .update(leadTable)
       .set({
         submissionCount: sql`${leadTable.submissionCount} + 1`,
         lastSubmittedAt: at,
+        spamScore: spam.spamScore,
+        spamSignals: spam.spamSignals,
         updatedAt: at,
       })
       .where(eq(leadTable.id, id))
@@ -187,6 +219,8 @@ export class LeadRepository extends BaseRepository<typeof leadTable, LeadRow> {
         message: input.message,
         source: input.source,
         locale: input.locale,
+        spamScore: input.spamScore,
+        spamSignals: input.spamSignals,
       })
       .returning();
     const row = rows[0];

@@ -71,6 +71,13 @@
       "when": 1787137202003,
       "tag": "0009_audit_log_immutable",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787482681388,
+      "tag": "0010_public_onslaught",
+      "breakpoints": true
     }
   ]
 }

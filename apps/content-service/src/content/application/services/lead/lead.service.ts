@@ -20,6 +20,7 @@ import {
   type Paginated,
 } from '@sanad/contracts';
 import type { LeadRow } from '../../../../db/schema/index.js';
+import { scoreLeadForSpam } from '../../../domain/scorers/lead-spam/index.js';
 import { LeadRepository } from '../../../infrastructure/persistence/repositories/lead.repository.js';
 import { assembleLead } from '../../assemblers/lead.assembler.js';
 import { contentNotFound } from '../../errors/content-errors.js';
@@ -99,6 +100,11 @@ export class LeadService {
     txExec: RepoDb,
     req: LeadCreateRequest,
   ): Promise<LeadId> {
+    const spam = scoreLeadForSpam({
+      name: req.name,
+      company: req.company ?? null,
+      message: req.message,
+    });
     const row = await this.leads.insert(txExec, {
       name: req.name,
       email: req.email,
@@ -109,6 +115,8 @@ export class LeadService {
       message: req.message,
       source: req.source,
       locale: req.locale,
+      spamScore: spam.score,
+      spamSignals: spam.signals,
     });
 
     // Recorded explicitly rather than left to the interceptor's fallback: the fallback exists
@@ -119,7 +127,12 @@ export class LeadService {
       action: 'lead.submitted',
       entityType: AUDIT_ENTITY,
       entityId: row.id,
-      after: { email: row.email, phone: row.phone, source: row.source },
+      after: {
+        email: row.email,
+        phone: row.phone,
+        source: row.source,
+        spamScore: row.spamScore,
+      },
     });
 
     const event: LeadCreatedEvent = {
@@ -150,10 +163,29 @@ export class LeadService {
     req: LeadCreateRequest,
   ): Promise<LeadId> {
     const at = this.clock.now().toJSDate();
+
+    // The HIGHER of the two assessments wins, and carries its own signals. A folded thread is one
+    // row, so it needs one verdict — and taking the max is the only choice that cannot lose a
+    // signal: a clean opener followed by a blast must not launder the blast, and a spammy opener
+    // followed by a real enquiry still only RANKS the lead (it is never dropped or archived).
+    const rescored = scoreLeadForSpam({
+      name: req.name,
+      company: req.company ?? null,
+      message: req.message,
+    });
+    const spam =
+      rescored.score > existing.spamScore
+        ? { spamScore: rescored.score, spamSignals: rescored.signals }
+        : {
+            spamScore: existing.spamScore,
+            spamSignals: existing.spamSignals,
+          };
+
     const updated = await this.leads.recordResubmission(
       txExec,
       existing.id,
       at,
+      spam,
     );
 
     // The audit row is where the repeat's FULL payload survives — the lead row keeps the
@@ -165,10 +197,12 @@ export class LeadService {
       before: {
         submissionCount: existing.submissionCount,
         lastSubmittedAt: existing.lastSubmittedAt.toISOString(),
+        spamScore: existing.spamScore,
       },
       after: {
         submissionCount: updated.submissionCount,
         lastSubmittedAt: updated.lastSubmittedAt.toISOString(),
+        spamScore: updated.spamScore,
         message: req.message,
         source: req.source,
       },
