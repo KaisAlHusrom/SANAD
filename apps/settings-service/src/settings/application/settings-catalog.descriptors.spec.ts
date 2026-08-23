@@ -48,14 +48,25 @@ describe('settings catalog descriptors', () => {
     );
   });
 
-  it('puts every security key in the one rate-limit section', () => {
-    const sections = new Set(
-      SETTING_DESCRIPTORS.filter((d) => d.group === SECURITY_GROUP).map(
-        (d) => d.section,
-      ),
-    );
-    expect(sections).toEqual(new Set(['rateLimit']));
+  it('files every security key under the section its FIELD declares', () => {
+    const sections = SETTING_DESCRIPTORS.filter(
+      (d) => d.group === SECURITY_GROUP,
+    ).map((d) => d.section);
+    // Two sections since P8.10.B2. Order matters — it is the tab order the admin sees.
+    expect([...new Set(sections)]).toEqual(['rateLimit', 'leads']);
     expect(keysIn(SECURITY_GROUP).length).toBe(EDITABLE_SECURITY_KEYS.length);
+  });
+
+  it('reads the section from the field, so a new one cannot land in the wrong tab', () => {
+    const byKey = new Map(
+      SETTING_DESCRIPTORS.filter((d) => d.group === SECURITY_GROUP).map((d) => [
+        d.key,
+        d.section,
+      ]),
+    );
+    for (const field of SECURITY_FIELDS) {
+      expect(byKey.get(field.key), field.key).toBe(field.section);
+    }
   });
 
   it('hides the website art-direction / CMS-owned leaves (they would be dead controls)', () => {

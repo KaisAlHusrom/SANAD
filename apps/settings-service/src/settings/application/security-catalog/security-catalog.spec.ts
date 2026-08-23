@@ -1,6 +1,11 @@
 import {
+  LEAD_DEDUP_ENABLED_DEFAULT,
+  LEAD_DEDUP_SETTING_KEYS,
+  LEAD_DEDUP_WINDOW_SECONDS_DEFAULT,
   RATE_LIMIT_DEFAULTS,
   RATE_LIMIT_ENABLED_DEFAULT,
+  SECURITY_SECTION_LEADS,
+  SECURITY_SECTION_RATE_LIMIT,
   SECURITY_SETTING_KEYS,
 } from '@sanad/contracts';
 import { describe, expect, it } from 'vitest';
@@ -13,18 +18,43 @@ describe('security catalog', () => {
   it('declares every contract key exactly once', () => {
     const declared = SECURITY_FIELDS.map((field) => field.key);
     expect(new Set(declared)).toEqual(
-      new Set(Object.values(SECURITY_SETTING_KEYS)),
+      new Set([
+        ...Object.values(SECURITY_SETTING_KEYS),
+        ...Object.values(LEAD_DEDUP_SETTING_KEYS),
+      ]),
     );
     expect(declared.length).toBe(new Set(declared).size);
   });
 
-  it('renders the kill switch as a boolean and the rest as numbers', () => {
+  it('assigns every field to a real section of the group', () => {
+    const sections = new Set(SECURITY_FIELDS.map((field) => field.section));
+    expect(sections).toEqual(
+      new Set([SECURITY_SECTION_RATE_LIMIT, SECURITY_SECTION_LEADS]),
+    );
+  });
+
+  it('renders each kill switch as a boolean and every tunable as a number', () => {
     const byKey = new Map(SECURITY_FIELDS.map((f) => [f.key, f.type]));
-    expect(byKey.get(SECURITY_SETTING_KEYS.enabled)).toBe('boolean');
-    for (const key of Object.values(SECURITY_SETTING_KEYS)) {
-      if (key !== SECURITY_SETTING_KEYS.enabled) {
-        expect(byKey.get(key)).toBe('number');
-      }
+    const switches: string[] = [
+      SECURITY_SETTING_KEYS.enabled,
+      LEAD_DEDUP_SETTING_KEYS.enabled,
+    ];
+    for (const key of switches) {
+      expect(byKey.get(key), key).toBe('boolean');
+    }
+    const tunables = [
+      ...Object.values(SECURITY_SETTING_KEYS),
+      ...Object.values(LEAD_DEDUP_SETTING_KEYS),
+    ].filter((key) => !switches.includes(key));
+    for (const key of tunables) {
+      expect(byKey.get(key), key).toBe('number');
+    }
+  });
+
+  it('gives every number field the bounds that make a bad value a NAMED rejection (U0)', () => {
+    for (const field of SECURITY_FIELDS.filter((f) => f.type === 'number')) {
+      expect(field.bounds, field.key).toBeDefined();
+      expect(field.bounds?.min, field.key).toBeLessThan(field.bounds?.max ?? 0);
     }
   });
 
@@ -42,6 +72,9 @@ describe('security catalog', () => {
       [SECURITY_SETTING_KEYS.defaultLimit]: RATE_LIMIT_DEFAULTS.default.limit,
       [SECURITY_SETTING_KEYS.defaultWindowSeconds]:
         RATE_LIMIT_DEFAULTS.default.windowSeconds,
+      [LEAD_DEDUP_SETTING_KEYS.enabled]: LEAD_DEDUP_ENABLED_DEFAULT,
+      [LEAD_DEDUP_SETTING_KEYS.windowSeconds]:
+        LEAD_DEDUP_WINDOW_SECONDS_DEFAULT,
     });
   });
 

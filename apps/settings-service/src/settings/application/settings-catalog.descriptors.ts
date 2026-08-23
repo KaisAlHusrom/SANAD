@@ -1,10 +1,6 @@
 import type { SettingRequirement, SettingType } from '@sanad/contracts';
 import { BRANDING_FIELDS, BRANDING_GROUP } from './branding-catalog.js';
-import {
-  SECURITY_FIELDS,
-  SECURITY_GROUP,
-  SECURITY_SECTION_RATE_LIMIT,
-} from './security-catalog/index.js';
+import { SECURITY_FIELDS, SECURITY_GROUP } from './security-catalog/index.js';
 
 /** A UI catalog descriptor: where a key sits (group → section) + how to render it. */
 export interface SettingDescriptor {
@@ -100,7 +96,9 @@ const brandingDescriptors: readonly SettingDescriptor[] =
 const securityDescriptors: readonly SettingDescriptor[] = SECURITY_FIELDS.map(
   (field) => ({
     group: SECURITY_GROUP,
-    section: SECURITY_SECTION_RATE_LIMIT,
+    // Per-field, not per-group: `security` gained a second section in P8.10.B2, and a
+    // hard-coded one is how a new field silently renders under the wrong tab.
+    section: field.section,
     key: field.key,
     type: field.type,
     requirement: 'optional' as const,
