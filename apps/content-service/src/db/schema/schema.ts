@@ -1,4 +1,5 @@
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { auditLogTable } from '@sanad/audit';
 import { outboxTable } from '@sanad/messaging';
 import { pageTable } from './page.table.js';
 import { pageTranslationTable } from './page-translation.table.js';
@@ -67,6 +68,7 @@ export const schema = {
   leadTable,
   processedMessageTable,
   outboxTable,
+  auditLogTable,
 };
 
 /** The typed Drizzle handle bound to this service's schema (injected via `DRIZZLE`). */

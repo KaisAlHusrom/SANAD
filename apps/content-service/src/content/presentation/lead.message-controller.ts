@@ -1,4 +1,5 @@
 import { Controller } from '@nestjs/common';
+import { Audited } from '@sanad/audit';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   CONTENT_LEAD_LIST,
@@ -15,7 +16,7 @@ import {
   type Paginated,
 } from '@sanad/contracts';
 import { ZodValidationPipe } from '@sanad/util';
-import { LeadService } from '../application/services/lead.service.js';
+import { LeadService } from '../application/services/lead/lead.service.js';
 
 /**
  * RMQ entrypoints for leads (MS2). Thin — validate + delegate (U5). The gateway makes
@@ -26,6 +27,11 @@ import { LeadService } from '../application/services/lead.service.js';
 export class LeadMessageController {
   constructor(private readonly leads: LeadService) {}
 
+  // Opens the audit actor scope around the handler from the forwarded RMQ headers (MS4 + P8.8).
+  // A public submit is unauthenticated, so the actor is `anonymous` WITH the real client ip,
+  // user-agent and request id — exactly the trail an anti-abuse phase needs. `LeadService`
+  // records the row itself, on both the create and the fold path.
+  @Audited({ action: 'lead.submitted', entityType: 'lead' })
   @MessagePattern(CONTENT_LEAD_SUBMIT)
   submit(
     @Payload(new ZodValidationPipe(leadCreateRequestSchema))

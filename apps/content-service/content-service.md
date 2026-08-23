@@ -20,6 +20,16 @@ distinguishes them (no schema change was needed — both values pre-existed on `
 Since **P8.10.B1** a lead also carries a **required `phone`**, validated per-country by the shared
 `phoneSchema` (`@sanad/contracts`) and stored normalized as **E.164**; the column is nullable only
 because leads captured before it have none, and the inbox `search` filter covers it.
+Since **P8.10.B2** a repeat submission inside a settings-resolved window is **absorbed** by the lead
+that person already has: `submission_count` / `last_submitted_at` move, an `audit_log` row records
+the full new payload, and `lead.resubmitted` tells the team — instead of a second row and a second
+team email. The match is on **either** identifier (email case-insensitively, or the E.164 phone),
+excludes **archived** leads, and measures the window from the LAST submission. The decision is made
+INSIDE the transaction behind a `pg_advisory_xact_lock` on the identity plus `select … for update`
+on the candidate, so two simultaneous submissions cannot both conclude "this is new" (U30a).
+This service also **mounts `@sanad/audit`** (its own `audit_log`, MS5) and gained its first
+**settings RMQ client** (MS2) for the window; both fail open — an unreachable settings service
+resolves to the coded 24h default rather than refusing a lead.
 It is the first consumer of `media.deleted`
 (MS6) — it nulls stale media references.
 
@@ -214,9 +224,10 @@ the by-id counterpart of the slug `content.blog-post.get` that feeds the admin p
 
 ## Events emitted (MS3 — Outbox)
 
-| Event          | Payload            | Consumers                       |
-| -------------- | ------------------ | ------------------------------- |
-| `lead.created` | `LeadCreatedEvent` | notifications (P6), CRM (later) |
+| Event              | Payload                | Consumers                       |
+| ------------------ | ---------------------- | ------------------------------- |
+| `lead.created`     | `LeadCreatedEvent`     | notifications (P6), CRM (later) |
+| `lead.resubmitted` | `LeadResubmittedEvent` | notifications (P8.10.B2)        |
 
 ## Events consumed (MS6 — idempotent)
 

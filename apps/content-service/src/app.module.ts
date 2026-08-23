@@ -1,11 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule } from '@nestjs/microservices';
+import { AuditModule } from '@sanad/audit';
 import { DateTimeService, DrizzleModule } from '@sanad/database';
-import { createRmqClientOptions, eventsQueue } from '@sanad/messaging';
+import {
+  commandsQueue,
+  createRmqClientOptions,
+  eventsQueue,
+} from '@sanad/messaging';
 import { schema } from './db/schema/index.js';
+import { SETTINGS_CLIENT } from './core/injection-tokens.js';
 import { CONTENT_ENV, loadContentEnv } from './env.js';
 import { HealthController } from './health/health.controller.js';
-import { LeadService } from './content/application/services/lead.service.js';
+import { LeadDedupSettingsResolver } from './content/application/resolvers/index.js';
+import { LeadService } from './content/application/services/lead/lead.service.js';
 import { MediaReconcileService } from './content/application/services/media-reconcile.service.js';
 import { BlogCategoryService } from './content/application/services/blog-category.service.js';
 import { BlogPostService } from './content/application/services/blog-post.service.js';
@@ -67,12 +74,24 @@ const env = loadContentEnv();
 @Module({
   imports: [
     DrizzleModule.forRoot({ connectionString: env.DATABASE_URL, schema }),
+    // After DrizzleModule: the audit interceptor resolves the DRIZZLE handle to flush with,
+    // and `auditLogTable` is mounted in this service's own schema (P8.8, MS5).
+    AuditModule.forRoot(),
     ClientsModule.register([
       {
         name: CONTENT_EVENTS_CLIENT,
         ...createRmqClientOptions({
           url: env.RABBITMQ_URL,
           queue: eventsQueue('content'),
+        }),
+      },
+      {
+        // Request/reply to settings (MS2) — the lead duplicate window. The COMMANDS queue,
+        // not the events one: this is a question expecting an answer.
+        name: SETTINGS_CLIENT,
+        ...createRmqClientOptions({
+          url: env.RABBITMQ_URL,
+          queue: commandsQueue('settings'),
         }),
       },
     ]),
@@ -125,6 +144,7 @@ const env = loadContentEnv();
     BlogPostService,
     FaqService,
     MenuService,
+    LeadDedupSettingsResolver,
     LeadService,
     MediaReconcileService,
     OutboxRelayService,

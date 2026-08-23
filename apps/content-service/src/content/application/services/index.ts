@@ -3,7 +3,7 @@ export * from './blog-category.service.js';
 export * from './blog-post.service.js';
 export * from './blog-tag.service.js';
 export * from './faq.service.js';
-export * from './lead.service.js';
+export * from './lead/lead.service.js';
 export * from './media-reconcile.service.js';
 export * from './menu.service.js';
 export * from './page.service.js';

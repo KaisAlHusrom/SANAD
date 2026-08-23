@@ -7,8 +7,24 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { eq, sql } from 'drizzle-orm';
 // pg is CJS — default-import the module object (named exports aren't ESM-exposed, N12).
 import pg from 'pg';
-import { DateTimeService, failIfDbTestsRequired } from '@sanad/database';
-import { leadCreatedEventSchema } from '@sanad/contracts';
+import {
+  DateTimeService,
+  DrizzleTransactionRunner,
+  failIfDbTestsRequired,
+} from '@sanad/database';
+import {
+  AuditRecorder,
+  DrizzleAuditStore,
+  auditTestResetSql,
+  type AuditScope,
+} from '@sanad/audit';
+import {
+  LEAD_DEDUP_DEFAULTS,
+  leadCreatedEventSchema,
+  leadResubmittedEventSchema,
+  type LeadDedupSettings,
+} from '@sanad/contracts';
+import { LeadDedupSettingsResolver } from '../application/resolvers/lead-dedup-settings/index.js';
 import {
   blockTable,
   schema,
@@ -20,7 +36,7 @@ import { BlogPostService } from '../application/services/blog-post.service.js';
 import { BlogTagService } from '../application/services/blog-tag.service.js';
 import { CollectionHydrationService } from '../application/services/collection-hydration.service.js';
 import { FaqService } from '../application/services/faq.service.js';
-import { LeadService } from '../application/services/lead.service.js';
+import { LeadService } from '../application/services/lead/lead.service.js';
 import { MediaReconcileService } from '../application/services/media-reconcile.service.js';
 import { MenuService } from '../application/services/menu.service.js';
 import { PageService } from '../application/services/page.service.js';
@@ -139,7 +155,30 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
     teamMemberService,
   );
   const pageService = new PageService(pages, sections, blocks, hydration);
-  const leadService = new LeadService(leads, clock, db);
+
+  // Real audit recorder against the real table (P8.10.B2) — the point is to prove the trail
+  // lands in the SAME transaction as the lead write, which a fake could not show.
+  const auditRecorder = new AuditRecorder(new DrizzleAuditStore(), clock);
+  const auditScope: AuditScope = {
+    // What the gateway forwards for an UNAUTHENTICATED public submit.
+    actor: { userId: null, role: null, type: 'anonymous' },
+    context: { ip: '85.10.1.4', userAgent: 'Mozilla/5.0', requestId: 'req-b2' },
+  };
+  // A settable stand-in for the settings round trip; the resolver has its own unit spec.
+  let dedupSettings: LeadDedupSettings = LEAD_DEDUP_DEFAULTS;
+  const dedupResolver = {
+    current: () => Promise.resolve(dedupSettings),
+  } as LeadDedupSettingsResolver;
+  const leadService = new LeadService(
+    leads,
+    clock,
+    new DrizzleTransactionRunner(db),
+    auditRecorder,
+    dedupResolver,
+  );
+  /** Every submit arrives inside the interceptor's actor scope in production. */
+  const submit = (req: Parameters<typeof leadService.submit>[0]) =>
+    auditRecorder.runInScope(auditScope, () => leadService.submit(req));
   const reconcile = new MediaReconcileService(processed, db);
 
   beforeEach(async () => {
@@ -159,6 +198,10 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
         "lead", "processed_message", "outbox"
         restart identity cascade`,
     );
+    // `audit_log` is truncate-GUARDED, so it resets through the audit lib's sanctioned path —
+    // putting it in the bulk truncate above would raise SQLSTATE 23001 and fail every test.
+    await db.execute(sql.raw(auditTestResetSql()));
+    dedupSettings = LEAD_DEDUP_DEFAULTS;
   });
 
   it('TranslatableRepository canon: createLocalized + updateLocalized + findAllTranslations (N5)', async () => {
@@ -1272,7 +1315,7 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
   });
 
   it('persists a lead and emits a consumable lead.created via the Outbox (MS3, the Done-when)', async () => {
-    const { id } = await leadService.submit({
+    const { id } = await submit({
       name: 'Layla',
       email: 'layla@example.com',
       phone: '+966501234567',
@@ -1300,7 +1343,7 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
   });
 
   it('finds a lead by phone number from the inbox search bar (P8.10.B1)', async () => {
-    await leadService.submit({
+    await submit({
       name: 'Layla',
       email: 'layla@example.com',
       phone: '+966501234567',
@@ -1316,6 +1359,218 @@ describeDb('content-service DB integration (content_test, TDD2)', () => {
     });
     expect(found.items).toHaveLength(1);
     expect(found.items[0]?.phone).toBe('+966501234567');
+  });
+
+  it('folds a repeat from the same EMAIL into the existing lead (the Done-when)', async () => {
+    const first = await submit({
+      name: 'Layla',
+      email: 'Layla@Example.com',
+      phone: '+966501234567',
+      message: 'We need an LMS.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    const second = await submit({
+      name: 'Layla',
+      // Case differs on purpose — a person is not two people because they held shift.
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'Actually, budget is 500k.',
+      source: 'request-project',
+      locale: 'ar',
+    });
+    expect(second.id).toBe(first.id);
+
+    const rows = await db.execute(sql`select * from "lead"`);
+    expect(rows.rowCount).toBe(1);
+    expect(rows.rows[0]?.['submission_count']).toBe(2);
+    // The original message stands — the team's reply thread must not be rewritten under them.
+    expect(rows.rows[0]?.['message']).toBe('We need an LMS.');
+
+    const audit = await db.execute(
+      sql`select * from "audit_log" order by "occurred_at"`,
+    );
+    expect(audit.rows.map((r) => r['action'])).toEqual([
+      'lead.submitted',
+      'lead.resubmitted',
+    ]);
+    const repeat = audit.rows[1];
+    expect(repeat?.['entity_id']).toBe(first.id);
+    expect(repeat?.['actor_type']).toBe('anonymous');
+    expect(repeat?.['ip']).toBe('85.10.1.4');
+    expect(repeat?.['request_id']).toBe('req-b2');
+    // The words that exist nowhere else survive here.
+    expect(JSON.stringify(repeat?.['after'])).toContain(
+      'Actually, budget is 500k.',
+    );
+
+    const events = await db.execute(
+      sql`select payload from "outbox" where event_name = 'lead.resubmitted'`,
+    );
+    expect(events.rowCount).toBe(1);
+    const payload: unknown = JSON.parse(String(events.rows[0]?.['payload']));
+    const parsed = leadResubmittedEventSchema.parse(payload);
+    expect(parsed.submissionCount).toBe(2);
+    expect(parsed.message).toBe('Actually, budget is 500k.');
+  });
+
+  /**
+   * A race detector has to be reliable, not lucky. Two concurrent submits collide often enough
+   * to pass by accident with the lock REMOVED, so each race runs several rounds of several
+   * concurrent submits and asserts on every round — verified by mutation: delete the advisory
+   * lock and these fail every time.
+   */
+  const RACE_ROUNDS = 5;
+  const RACE_CONCURRENCY = 4;
+
+  async function raceSubmissions(
+    bodies: Parameters<typeof leadService.submit>[0][],
+  ): Promise<number> {
+    await db.execute(sql`truncate table "lead" restart identity cascade`);
+    await db.execute(sql.raw(auditTestResetSql()));
+    await Promise.all(bodies.map((body) => submit(body)));
+    const rows = await db.execute(sql`select id from "lead"`);
+    return rows.rowCount ?? 0;
+  }
+
+  it('folds concurrent FIRST submissions on the same email (U30a — the lock, not luck)', async () => {
+    const body = {
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'Simultaneous.',
+      source: 'contact' as const,
+      locale: 'ar' as const,
+    };
+    for (let round = 0; round < RACE_ROUNDS; round += 1) {
+      const leads = await raceSubmissions(
+        Array.from({ length: RACE_CONCURRENCY }, () => body),
+      );
+      expect(leads, `round ${String(round)}`).toBe(1);
+    }
+  });
+
+  it('folds concurrent FIRST submissions that share only a PHONE', async () => {
+    // The match is `email OR phone`, so the lock must cover BOTH — locking the email alone
+    // gives these four submissions four different keys and four lead rows.
+    for (let round = 0; round < RACE_ROUNDS; round += 1) {
+      const leads = await raceSubmissions(
+        Array.from({ length: RACE_CONCURRENCY }, (_unused, i) => ({
+          name: 'Layla',
+          email: `layla+${String(i)}@example.com`,
+          phone: '+966501234567',
+          message: 'Simultaneous.',
+          source: 'contact' as const,
+          locale: 'ar' as const,
+        })),
+      );
+      expect(leads, `round ${String(round)}`).toBe(1);
+    }
+  });
+
+  it('folds on a matching PHONE even when the email differs', async () => {
+    const first = await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'First.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    const second = await submit({
+      name: 'Layla',
+      email: 'layla.work@example.com',
+      phone: '+966501234567',
+      message: 'Second.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    expect(second.id).toBe(first.id);
+  });
+
+  it('does NOT fold once the window has passed', async () => {
+    dedupSettings = { enabled: true, windowSeconds: 60 };
+    const first = await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'First.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    // Age the first submission past the window.
+    await db.execute(
+      sql`update "lead" set "last_submitted_at" = now() - interval '10 minutes'`,
+    );
+    const second = await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'Second.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    expect(second.id).not.toBe(first.id);
+    const rows = await db.execute(sql`select id from "lead"`);
+    expect(rows.rowCount).toBe(2);
+  });
+
+  it('does NOT fold into an ARCHIVED lead — the team closed that thread', async () => {
+    const first = await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'First.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    await leadService.updateStatus({ id: first.id, status: 'archived' });
+    const second = await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'Second.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    expect(second.id).not.toBe(first.id);
+  });
+
+  it('creates every time when an operator turns detection off', async () => {
+    dedupSettings = { enabled: false, windowSeconds: 86_400 };
+    const first = await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'First.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    const second = await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'Second.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    expect(second.id).not.toBe(first.id);
+  });
+
+  it('keeps the audit trail append-only, even against a direct statement (P8.8)', async () => {
+    await submit({
+      name: 'Layla',
+      email: 'layla@example.com',
+      phone: '+966501234567',
+      message: 'First.',
+      source: 'contact',
+      locale: 'ar',
+    });
+    await expect(
+      db.execute(sql`update "audit_log" set "action" = 'tampered'`),
+    ).rejects.toThrow();
+    await expect(db.execute(sql`delete from "audit_log"`)).rejects.toThrow();
+    await expect(db.execute(sql`truncate table "audit_log"`)).rejects.toThrow();
   });
 
   it('reconciles media.deleted by nulling references, idempotently (MS6)', async () => {

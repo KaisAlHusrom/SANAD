@@ -20,6 +20,8 @@ export function assembleLead(row: LeadRow): Lead {
     source: row.source,
     locale: toLocale(row.locale),
     status: row.status,
+    submissionCount: row.submissionCount,
+    lastSubmittedAt: row.lastSubmittedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
