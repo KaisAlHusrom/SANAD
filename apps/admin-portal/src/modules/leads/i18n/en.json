@@ -28,5 +28,10 @@
   "statusUpdate": {
     "toastSuccess": "Lead status updated.",
     "toastError": "Couldn't update the lead status."
+  },
+  "repeat": {
+    "badge": "×{{count}}",
+    "title": "Submitted more than once",
+    "lastAt": "latest {{at}}"
   }
 }

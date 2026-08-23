@@ -25,7 +25,15 @@ export function LeadsPage() {
       header: t('columns.client'),
       cell: (row) => (
         <div className="flex flex-col">
-          <span className="font-medium text-text">{row.name}</span>
+          <span className="flex items-center gap-2 font-medium text-text">
+            {row.name}
+            {/* Only when it means something — a badge on every row is noise, not a signal. */}
+            {row.submissionCount > 1 ? (
+              <Badge tone="warn" title={t('repeat.title')}>
+                {t('repeat.badge', { count: row.submissionCount })}
+              </Badge>
+            ) : null}
+          </span>
           <span className="text-xs text-faint" dir="ltr">
             {row.email}
           </span>
@@ -67,7 +75,15 @@ export function LeadsPage() {
       sortable: true,
       sortKey: 'createdAt',
       cell: (row) => (
-        <span className="text-dim">{formatDate(row.createdAt)}</span>
+        <div className="flex flex-col">
+          <span className="text-dim">{formatDate(row.createdAt)}</span>
+          {/* The first contact is what the column sorts by; the latest is what to act on. */}
+          {row.submissionCount > 1 ? (
+            <span className="text-xs text-faint">
+              {t('repeat.lastAt', { at: formatDate(row.lastSubmittedAt) })}
+            </span>
+          ) : null}
+        </div>
       ),
     },
   ];

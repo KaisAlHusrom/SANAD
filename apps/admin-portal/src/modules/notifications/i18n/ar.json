@@ -6,6 +6,7 @@
   "unreadCount": "{{count}} غير مقروء",
   "item": {
     "leadCreated": "عميل محتمل جديد من {{name}}",
+    "leadResubmitted": "{{name}} تواصل معك مرة أخرى",
     "leadAck": "تم إرسال تأكيد إلى {{name}}"
   }
 }

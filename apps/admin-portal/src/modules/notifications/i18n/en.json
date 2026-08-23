@@ -6,6 +6,7 @@
   "unreadCount": "{{count}} unread",
   "item": {
     "leadCreated": "New lead from {{name}}",
+    "leadResubmitted": "{{name}} wrote again",
     "leadAck": "Acknowledgement sent to {{name}}"
   }
 }

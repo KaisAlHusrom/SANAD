@@ -11,6 +11,9 @@ inline (P7.D, S2). Read + status update are `content.manage`-guarded.
   date (sortable, defaults newest-first). No create (leads come from the public site), no delete
   (they archive). The DataTable's free-text search covers the phone too (the backend's
   `LEAD_FILTERS.search` whitelist, N7), so a number pasted from a missed call finds its lead.
+  A lead that has written more than once wears a **`×N` badge** beside the client name and shows its
+  latest submission under the received date (P8.10.B2). Both appear **only** when the count is > 1 —
+  a badge on every row is noise, not a signal.
 - `PhoneLink` (`src/components/phone-link/`, shared — the dashboard's recent-lead row uses it
   too, F9) — renders the stored E.164 number through the shared `formatPhoneInternational`
   (F8/U3: the same helper the team alert email uses) inside a `tel:` link, `dir="ltr"` in both
@@ -31,7 +34,7 @@ inline (P7.D, S2). Read + status update are `content.manage`-guarded.
 
 ## Contracts (`@sanad/contracts`, U3)
 
-`Lead` (now carrying `phone: string | null`), `LeadListQuery` (`status`/`source` whitelisted
+`Lead` (carrying `phone: string | null` plus `submissionCount` / `lastSubmittedAt`), `LeadListQuery` (`status`/`source` whitelisted
 filters), `LeadStatus` (`new|contacted|archived`), `LeadSource` (`contact|request-project`),
 and `formatPhoneInternational` from `common/phone`. No new contract file here — P8.10.B1 added
 the phone unit to `@sanad/contracts`, this module only consumes it.

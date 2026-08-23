@@ -1,5 +1,5 @@
 import type { Notification } from '@sanad/contracts';
-import { MailCheck, UserPlus, type LucideIcon } from 'lucide-react';
+import { MailCheck, RefreshCw, UserPlus, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../../lib/cn';
 import { useFormatDateTime } from '../../../lib/format';
@@ -7,6 +7,7 @@ import { useFormatDateTime } from '../../../lib/format';
 /** Icon per notification type — keeps the leaf presentational (no `unknown` into JSX, U4). */
 const ICON_BY_TYPE: Record<Notification['type'], LucideIcon> = {
   'lead.created': UserPlus,
+  'lead.resubmitted': RefreshCw,
   'lead.received.ack': MailCheck,
 };
 
@@ -16,6 +17,7 @@ const ICON_BY_TYPE: Record<Notification['type'], LucideIcon> = {
  */
 const LABEL_KEY_BY_TYPE: Record<Notification['type'], string> = {
   'lead.created': 'item.leadCreated',
+  'lead.resubmitted': 'item.leadResubmitted',
   'lead.received.ack': 'item.leadAck',
 };
 

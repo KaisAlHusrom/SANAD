@@ -20,7 +20,8 @@
       "seo": "SEO"
     },
     "security": {
-      "rateLimit": "Request limits"
+      "rateLimit": "Request limits",
+      "leads": "Duplicate leads"
     }
   },
   "colorGroups": {
@@ -73,6 +74,10 @@
           "limit": "Everything else — requests allowed",
           "windowSeconds": "Everything else — window (seconds)"
         }
+      },
+      "leads": {
+        "duplicateDetectionEnabled": "Fold repeat submissions into one lead",
+        "duplicateWindowSeconds": "Treat as the same lead within (seconds)"
       }
     }
   },

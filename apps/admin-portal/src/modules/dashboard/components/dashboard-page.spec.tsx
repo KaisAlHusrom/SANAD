@@ -27,6 +27,8 @@ const lead: Lead = {
   source: 'contact',
   locale: 'ar',
   status: 'new',
+  submissionCount: 1,
+  lastSubmittedAt: '2026-06-30T10:00:00.000Z',
   createdAt: '2026-06-30T10:00:00.000Z',
   updatedAt: '2026-06-30T10:00:00.000Z',
 };
@@ -45,6 +47,7 @@ const activity: Notification = {
     message: 'Hi',
     source: 'contact',
     locale: 'ar',
+    submissionCount: null,
   },
   readAt: null,
   createdAt: '2026-06-30T10:00:00.000Z',

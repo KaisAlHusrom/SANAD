@@ -28,5 +28,10 @@
   "statusUpdate": {
     "toastSuccess": "تم تحديث حالة العميل.",
     "toastError": "تعذّر تحديث حالة العميل."
+  },
+  "repeat": {
+    "badge": "×{{count}}",
+    "title": "أرسل الطلب أكثر من مرة",
+    "lastAt": "آخرها {{at}}"
   }
 }

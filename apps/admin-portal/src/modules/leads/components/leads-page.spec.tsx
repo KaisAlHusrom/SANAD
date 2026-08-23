@@ -46,6 +46,8 @@ const lead: Lead = {
   source: 'contact',
   locale: 'ar',
   status: 'new',
+  submissionCount: 1,
+  lastSubmittedAt: '2026-06-30T10:00:00.000Z',
   createdAt: '2026-06-30T10:00:00.000Z',
   updatedAt: '2026-06-30T10:00:00.000Z',
 };
@@ -106,6 +108,26 @@ describe('LeadsPage', () => {
     renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
     expect(await screen.findByText('Layla Hassan')).toBeInTheDocument();
     expect(screen.getByText('layla@example.com')).toBeInTheDocument();
+  });
+
+  it('stays quiet for a lead that only ever wrote once', async () => {
+    stub([lead]);
+    renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
+    await screen.findByText('Layla Hassan');
+    expect(screen.queryByTitle(/submitted/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('×2')).not.toBeInTheDocument();
+  });
+
+  it('flags a repeat submitter with the count (P8.10.B2)', async () => {
+    stub([
+      {
+        ...lead,
+        submissionCount: 3,
+        lastSubmittedAt: '2026-07-02T09:00:00.000Z',
+      },
+    ]);
+    renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
+    expect(await screen.findByText('×3')).toBeInTheDocument();
   });
 
   it('renders the phone as a readable, one-tap call link (P8.10.B1)', async () => {

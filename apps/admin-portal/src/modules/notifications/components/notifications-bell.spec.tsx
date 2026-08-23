@@ -36,6 +36,7 @@ const notification: Notification = {
     message: 'Need a platform',
     source: 'contact',
     locale: 'ar',
+    submissionCount: null,
   },
   readAt: null,
   createdAt: '2026-06-30T10:00:00.000Z',
