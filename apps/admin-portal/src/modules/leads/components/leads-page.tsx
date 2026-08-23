@@ -6,10 +6,13 @@ import {
   type DataTableColumn,
   type FilterDef,
 } from '../../../components/data-table';
+import { EmptyState } from '../../../components/feedback/empty-state';
 import { PhoneLink } from '../../../components/phone-link';
 import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { useFormatDateTime } from '../../../lib/format';
 import { useLeadsList } from '../hooks/use-leads-list';
+import { LeadSpamBadge } from './lead-spam-badge';
 import { LeadStatusCell } from './lead-status-cell';
 
 /** The leads inbox: a kit DataTable with status/source filters + inline status change (W1). */
@@ -69,6 +72,17 @@ export function LeadsPage() {
       cell: (row) => <LeadStatusCell lead={row} canManage={canManage} />,
     },
     {
+      id: 'spam',
+      header: t('columns.spam'),
+      sortable: true,
+      sortKey: 'spamScore',
+      // Sortable so a flood can be worked from the top; quiet on a clean lead, which is most
+      // of them — the badge itself decides whether to render anything (P8.10.B3).
+      cell: (row) => (
+        <LeadSpamBadge score={row.spamScore} signals={row.spamSignals} />
+      ),
+    },
+    {
       id: 'createdAt',
       header: t('columns.createdAt'),
       align: 'end',
@@ -108,7 +122,38 @@ export function LeadsPage() {
         { value: 'request-project', label: t('sources.request-project') },
       ],
     },
+    {
+      key: 'spam',
+      kind: 'select',
+      label: t('filters.spam'),
+      options: [
+        { value: 'clean', label: t('spam.verdicts.clean') },
+        { value: 'suspicious', label: t('spam.verdicts.suspicious') },
+        { value: 'likelySpam', label: t('spam.verdicts.likelySpam') },
+      ],
+    },
   ];
+
+  // Two genuinely different empties (U23): an inbox nobody has written to yet needs reassurance,
+  // a filtered-to-nothing one needs a way back — and filtering to "likely spam" and finding none
+  // is the most likely empty this feature produces.
+  const empty =
+    list.activeFilterCount > 0 || list.state.search ? (
+      <EmptyState
+        title={t('emptyFiltered.title')}
+        description={t('emptyFiltered.body')}
+        action={
+          <Button type="button" variant="secondary" onClick={list.clearFilters}>
+            {t('emptyFiltered.action')}
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        title={t('emptyFirst.title')}
+        description={t('emptyFirst.body')}
+      />
+    );
 
   return (
     <section className="flex flex-col gap-6">
@@ -126,6 +171,7 @@ export function LeadsPage() {
         isError={isError}
         list={list}
         filters={filters}
+        empty={empty}
       />
     </section>
   );

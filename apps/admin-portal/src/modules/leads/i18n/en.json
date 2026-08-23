@@ -10,11 +10,22 @@
     "company": "Company",
     "source": "Source",
     "status": "Status",
+    "spam": "Spam",
     "createdAt": "Received"
   },
   "filters": {
     "status": "Status",
-    "source": "Source"
+    "source": "Source",
+    "spam": "Spam"
+  },
+  "emptyFirst": {
+    "title": "No leads yet",
+    "body": "Requests from the website contact and project-request forms land here."
+  },
+  "emptyFiltered": {
+    "title": "No leads match these filters",
+    "body": "Try a different status, source or spam level.",
+    "action": "Show all leads"
   },
   "statuses": {
     "new": "New",
@@ -33,5 +44,23 @@
     "badge": "×{{count}}",
     "title": "Submitted more than once",
     "lastAt": "latest {{at}}"
+  },
+  "spam": {
+    "badgeLabel": "{{verdict}} — spam score {{score}} of 100",
+    "advisory": "Advisory only — a score never blocks, archives or hides a lead.",
+    "verdicts": {
+      "clean": "Clean",
+      "suspicious": "Possibly spam",
+      "likelySpam": "Likely spam"
+    },
+    "signals": {
+      "keywords": "Known spam phrases",
+      "links": "Links in the message",
+      "contactLinks": "A link in the name or company",
+      "foreignScript": "Written in an unexpected script",
+      "repeatedChars": "Repeated characters",
+      "shortMessage": "Message too short to be an enquiry",
+      "shouting": "Shouting"
+    }
   }
 }

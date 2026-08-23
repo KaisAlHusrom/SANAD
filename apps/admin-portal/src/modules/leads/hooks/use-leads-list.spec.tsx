@@ -78,4 +78,27 @@ describe('useLeadsList', () => {
     await waitFor(() => expect(lastUrl).toContain('/leads'));
     expect(lastUrl).not.toContain('status=bogus');
   });
+
+  it('passes the spam verdict filter through (P8.10.B3)', async () => {
+    renderHook(() => useLeadsList(), {
+      wrapper: wrapper('/leads?spam=likelySpam'),
+    });
+    await waitFor(() => expect(lastUrl).toContain('spam=likelySpam'));
+  });
+
+  it('drops an invalid spam filter (N7)', async () => {
+    renderHook(() => useLeadsList(), {
+      wrapper: wrapper('/leads?spam=bogus'),
+    });
+    await waitFor(() => expect(lastUrl).toContain('/leads'));
+    expect(lastUrl).not.toContain('spam=bogus');
+  });
+
+  it('sorts by spam score when the column asks it to', async () => {
+    renderHook(() => useLeadsList(), {
+      wrapper: wrapper('/leads?sort=spamScore&order=desc'),
+    });
+    await waitFor(() => expect(lastUrl).toContain('sort=spamScore'));
+    expect(lastUrl).toContain('order=desc');
+  });
 });

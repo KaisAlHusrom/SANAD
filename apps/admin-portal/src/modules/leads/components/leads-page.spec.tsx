@@ -48,8 +48,22 @@ const lead: Lead = {
   status: 'new',
   submissionCount: 1,
   lastSubmittedAt: '2026-06-30T10:00:00.000Z',
+  spamScore: 0,
+  spamSignals: [],
   createdAt: '2026-06-30T10:00:00.000Z',
   updatedAt: '2026-06-30T10:00:00.000Z',
+};
+
+const flagged: Lead = {
+  ...lead,
+  id: 'l2',
+  name: 'seo-master',
+  spamScore: 91,
+  spamSignals: [
+    { id: 'keywords', weight: 45, n: 3 },
+    { id: 'links', weight: 36, n: 3 },
+    { id: 'shouting', weight: 10 },
+  ],
 };
 
 const fetchMock = vi.fn();
@@ -97,10 +111,27 @@ afterEach(() => {
 });
 
 describe('LeadsPage', () => {
-  it('shows the empty state when there are no leads', async () => {
+  it('reassures on a first-use empty inbox, with nothing to clear', async () => {
     stub([]);
     renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
-    expect(await screen.findByText('No results')).toBeInTheDocument();
+    expect(await screen.findByText('No leads yet')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Show all leads' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers a way back when a filter matched nothing (U23)', async () => {
+    stub([]);
+    renderWithProviders(<LeadsPage />, {
+      store: storeWith(['manage']),
+      route: '/leads?spam=likelySpam',
+    });
+    expect(
+      await screen.findByText('No leads match these filters'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Show all leads' }),
+    ).toBeInTheDocument();
   });
 
   it('renders a lead row with name and email', async () => {
@@ -166,6 +197,35 @@ describe('LeadsPage', () => {
         ),
       ).toBe(true);
     });
+  });
+
+  it('leaves the spam column blank for a clean lead (P8.10.B3)', async () => {
+    stub([lead]);
+    renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
+    await screen.findByText('Layla Hassan');
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /spam score/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('flags a likely-spam lead with its score, and breaks it down on demand', async () => {
+    const user = userEvent.setup();
+    stub([lead, flagged]);
+    renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
+    await screen.findByText('seo-master');
+
+    const badge = screen.getByRole('button', { name: /spam score 91/i });
+    await user.click(badge);
+    expect(await screen.findByText(/Known spam phrases/)).toBeInTheDocument();
+    expect(screen.getByText(/never blocks/i)).toBeInTheDocument();
+  });
+
+  it('offers the spam filter in the toolbar', async () => {
+    stub([lead]);
+    renderWithProviders(<LeadsPage />, { store: storeWith(['manage']) });
+    await screen.findByText('Layla Hassan');
+    expect(screen.getByRole('combobox', { name: 'Spam' })).toBeInTheDocument();
   });
 
   it('shows a read-only status badge without content.manage', async () => {

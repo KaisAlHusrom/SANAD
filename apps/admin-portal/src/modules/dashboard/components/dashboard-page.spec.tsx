@@ -29,6 +29,8 @@ const lead: Lead = {
   status: 'new',
   submissionCount: 1,
   lastSubmittedAt: '2026-06-30T10:00:00.000Z',
+  spamScore: 0,
+  spamSignals: [],
   createdAt: '2026-06-30T10:00:00.000Z',
   updatedAt: '2026-06-30T10:00:00.000Z',
 };
