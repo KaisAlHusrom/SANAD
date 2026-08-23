@@ -298,7 +298,12 @@ export function DataTable<TRow>({
   );
 
   const tableCard = (
-    <div className="overflow-hidden rounded-md border border-border bg-surface shadow-portal">
+    // `overflow-x-auto`, never `overflow-hidden`: below desktop the table is wider than its card,
+    // and `hidden` clips the trailing columns with NO way for a user to reach them — at tablet the
+    // leads inbox lost its spam and received columns entirely (U0: a pane contains its own content).
+    // Found by screenshotting, not by a test: the PAGE never overflowed, so every structural
+    // assertion stayed green while the columns were unreachable (U21e).
+    <div className="overflow-x-auto rounded-md border border-border bg-surface shadow-portal">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="border-b border-border bg-surface-2 text-faint">

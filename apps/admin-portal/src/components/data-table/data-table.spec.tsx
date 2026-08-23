@@ -86,6 +86,25 @@ beforeEach(async () => {
 });
 
 describe('DataTable', () => {
+  it('lets a narrow viewport scroll to the trailing columns instead of clipping them', () => {
+    // Regression: the card was `overflow-hidden`, so below desktop the last columns were cut off
+    // with no scrollbar and no way to reach them — the leads inbox lost its spam column at tablet.
+    // jsdom has no layout, so this asserts the mechanism (the class) rather than a measured width.
+    renderWithProviders(
+      <DataTable
+        columns={columns}
+        rows={rows}
+        getRowId={(row) => row.id}
+        total={2}
+        isLoading={false}
+        list={makeList()}
+      />,
+    );
+    const card = document.querySelector('table')?.parentElement;
+    expect(card).toHaveClass('overflow-x-auto');
+    expect(card).not.toHaveClass('overflow-hidden');
+  });
+
   it('renders headers and rows', () => {
     renderWithProviders(
       <DataTable
