@@ -219,17 +219,38 @@ email; an invalid number is rejected with a localized ar+en message on the `phon
 boot-verifier UP.
 **Applies:** U0, U3, U15, U16, U17, U21, U23, U24, U26, N7, N12, F8, F9, WEB6, TDD1, TDD2, DOC1, DOC2.
 
-#### P8.10.B2 — duplicate detection + lead spam scoring
+> **B2 split into B2/B3 on 2026-08-19 (U0).** B2 as written bundled duplicate detection **and** spam
+> scoring on top of mounting `@sanad/audit` in a service that has never had it (schema export, module
+> wiring, an immutability-trigger migration, a new dependency) — the same overload that split B into
+> B1/B2. The halves map onto B2's two original "Done when" clauses, so no criterion is orphaned.
 
-**Tasks:** Lead spam scoring, and duplicate detection (same email/phone in a window) landing as
-**`submissionCount` + `lastSubmittedAt` on the existing lead plus an `audit_log` row** — _not_ a second lead
-row, and _not_ a new `lead_activity` table: the activity timeline belongs to `crm-service` (P8.15,
-`08-client-intake.md` §5.1), so building one here would create a concept that phase then has to own or
-migrate (decision 2026-08-19). Mounting `@sanad/audit` in content-service is part of this half.
-**Done when:** a repeat submission from the same email within the window increments the counter and writes
-an audit row instead of creating a second lead; the spam signal is visible in the inbox; verifier PASS +
-boot-verifier UP.
-**Applies:** U0, U3, U24, U27, N7, N14, TDD1, TDD2, DOC1, DOC2.
+#### P8.10.B2 — duplicate detection
+
+**Tasks:** Duplicate detection (same email **or** phone within a window) landing as **`submissionCount` +
+`lastSubmittedAt` on the existing lead plus an `audit_log` row** — _not_ a second lead row, and _not_ a new
+`lead_activity` table: the activity timeline belongs to `crm-service` (P8.15, `08-client-intake.md` §5.1),
+so building one here would create a concept that phase then has to own or migrate (decision 2026-08-19).
+Mounting `@sanad/audit` in content-service is part of this half, as is clearing `LeadService`'s
+grandfathered N14 debt (it needs the transaction executor for `recordWithin` anyway). The window is a
+**settings-resolved** value in a new `security.leads` section, not a constant — same reasoning as
+P8.10.A's rate limits: it must be tunable mid-campaign without a redeploy, so content-service gains its
+first settings RMQ client (MS2), awaiting on the submit path and failing **open** to the coded default.
+A folded duplicate is **not silent**: it emits a catalogued `lead.resubmitted` Outbox event that
+notifications-service turns into a short team alert carrying the visitor's **new** message and the
+submission count (no second visitor ack) — otherwise those words live only in `audit_log`, which has no
+admin surface, and the team is blind to a hot lead (decision 2026-08-19).
+**Done when:** a repeat submission from the same email or phone inside the window increments the counter
+and writes an audit row instead of creating a second lead; an archived lead is excluded; the team is told
+with the new message; the inbox shows the count; verifier PASS + boot-verifier UP.
+**Applies:** U0, U3, U9, U24, U27, U30, N7, N14, MS2, MS3, MS6, TDD1, TDD2, DOC1, DOC2.
+
+#### P8.10.B3 — lead spam scoring
+
+**Tasks:** A spam score + its contributing signals on the lead, surfaced in the inbox as a badge and a
+filter so the team can triage a flood without losing a real enquiry. **Degrades open** — a score never
+drops, rejects or auto-archives a lead; it only ranks one.
+**Done when:** a lead's spam signal is visible and filterable in the inbox; verifier PASS + boot-verifier UP.
+**Applies:** U0, U3, U21, U23, N7, TDD1, TDD2, DOC1.
 
 ### P8.10.C — Layered bot defence → **folded into P8.23 (2026-08-19)**
 
