@@ -27,6 +27,12 @@ identity's new flows (P8.11).
 | `nest/audit.module.ts`            | `AuditModule.forRoot()`                                                                                                               |
 | `migrations/`                     | drizzle-kit output for the fragment (this lib's suite + reference DDL)                                                                |
 
+## Adopters
+
+`settings-service` (P8.8, `settings.updated`) and `content-service` (P8.10.B2, `lead.submitted` /
+`lead.resubmitted` — the first **anonymous**-actor rows: a public form submit carries no identity but
+does carry the real client ip, user-agent and request id).
+
 ## Mounting it in a service
 
 1. Re-export `auditLogTable` from `db/schema/index.ts` and add it to the `schema` object in
