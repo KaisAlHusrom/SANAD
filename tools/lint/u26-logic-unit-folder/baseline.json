@@ -1,6 +1,6 @@
 {
   "//": "U26 ratchet. DO NOT hand-add paths — regenerate with `nx run lint-rules:baseline`. A NEW violation must be fixed, not listed; a file a phase touches is moved and struck from here in the same change (owner directive, 2026-08-08).",
-  "maxPaths": 566,
+  "maxPaths": 565,
   "paths": [
     "apps/admin-portal/src/app/guards/require-auth.tsx",
     "apps/admin-portal/src/app/guards/require-permission.tsx",
@@ -285,7 +285,6 @@
     "apps/content-service/src/content/application/services/blog-tag.service.ts",
     "apps/content-service/src/content/application/services/collection-hydration.service.ts",
     "apps/content-service/src/content/application/services/faq.service.ts",
-    "apps/content-service/src/content/application/services/lead.service.ts",
     "apps/content-service/src/content/application/services/media-reconcile.service.ts",
     "apps/content-service/src/content/application/services/menu.service.ts",
     "apps/content-service/src/content/application/services/page.service.ts",
