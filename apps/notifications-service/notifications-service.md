@@ -118,6 +118,12 @@ Email bodies are payload text the gateway's renderer never sees, so they are com
   through untranslated. Since **P8.10.B1** it carries the lead's **phone** row — formatted by the
   shared `formatPhoneInternational` and wrapped in a `tel:` link so the team calls from the alert,
   `dir="ltr"` in both locales, an em-dash when the lead predates the field.
+- **`repeatAlertEmail`** (P8.10.B2) — the team-only follow-up when `lead.resubmitted` lands: it leads
+  with the submission count so nobody mistakes it for a new opportunity, and carries what the visitor
+  wrote THAT time (the reason the event exists — those words are otherwise only in `audit_log`).
+  The visitor is deliberately **not** acknowledged twice. Its consumer claims idempotency under its
+  own ledger id keyed `<leadId>:<count>`, because the event repeats the lead id its `lead.created`
+  sibling already claimed.
 
 ## Event catalog (U27)
 

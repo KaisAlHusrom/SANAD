@@ -34,7 +34,8 @@ async function bootstrap(): Promise<void> {
       noAck: true, // RPC: auto-ack — Nest won't ack a @MessagePattern, else the consumer stalls.
     }),
   );
-  // Domain events from content (idempotent consumer, MS6) — `lead.created`.
+  // Domain events from content (idempotent consumers, MS6) — `lead.created` and
+  // `lead.resubmitted`. Both ride this one queue, so a new content event needs no binding here.
   app.connectMicroservice(
     createRmqServerOptions({
       url: env.RABBITMQ_URL,

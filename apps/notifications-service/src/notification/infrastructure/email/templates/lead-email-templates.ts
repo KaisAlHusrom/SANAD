@@ -102,6 +102,78 @@ export function visitorAckEmail(lead: LeadNotificationPayload): EmailBody {
   };
 }
 
+/**
+ * The team-only follow-up when a submission was folded into an existing lead (P8.10.B2). It leads
+ * with the count so nobody mistakes it for a new opportunity, and it carries what the visitor
+ * wrote THIS time — the reason the event exists at all. Rendered in the TEAM's language (U24d);
+ * the visitor's own words pass through untranslated.
+ */
+export function repeatAlertEmail(
+  lead: LeadNotificationPayload,
+  locale: Locale,
+): EmailBody {
+  const count = lead.submissionCount;
+  const subject =
+    count === null
+      ? translate('notifications.leadRepeat.subjectUncounted', locale, {
+          name: lead.name,
+        })
+      : translate('notifications.leadRepeat.subject', locale, {
+          name: lead.name,
+          count: String(count),
+        });
+  const heading = translate('notifications.leadRepeat.heading', locale, {
+    name: lead.name,
+  });
+  const intro =
+    count === null
+      ? ''
+      : translate('notifications.leadRepeat.lead', locale, {
+          count: String(count),
+        });
+  const rows: AlertRow[] = [
+    {
+      label: translate('notifications.leadAlert.email', locale),
+      value: lead.email,
+    },
+    {
+      label: translate('notifications.leadAlert.phone', locale),
+      value: lead.phone ? formatPhoneInternational(lead.phone) : EMPTY,
+      ...(lead.phone ? { href: `tel:${lead.phone}`, ltr: true } : {}),
+    },
+    {
+      label: translate('notifications.leadAlert.source', locale),
+      value: lead.source,
+    },
+  ];
+  const dir = locale === 'ar' ? 'rtl' : 'ltr';
+  return {
+    subject,
+    text: [
+      heading,
+      ...(intro === '' ? [] : [intro]),
+      '',
+      ...rows.map((row) => `${row.label}: ${row.value}`),
+      '',
+      `${translate('notifications.leadRepeat.newMessage', locale)}:`,
+      lead.message,
+    ].join('\n'),
+    html:
+      `<div dir="${dir}"><h2>${escapeHtml(heading)}</h2>` +
+      (intro === '' ? '' : `<p>${escapeHtml(intro)}</p>`) +
+      '<ul>' +
+      rows
+        .map(
+          (row) =>
+            `<li><strong>${escapeHtml(row.label)}:</strong> ${renderValue(row)}</li>`,
+        )
+        .join('') +
+      `</ul><h3>${escapeHtml(
+        translate('notifications.leadRepeat.newMessage', locale),
+      )}</h3><p>${escapeHtml(lead.message)}</p></div>`,
+  };
+}
+
 /** The HTML half of one alert row — a link when the value is actionable (a phone number). */
 function renderValue(row: AlertRow): string {
   const text = escapeHtml(row.value);

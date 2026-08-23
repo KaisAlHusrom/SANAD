@@ -1,6 +1,10 @@
 import type { LeadNotificationPayload } from '@sanad/contracts';
 import { describe, expect, it } from 'vitest';
-import { teamAlertEmail, visitorAckEmail } from './lead-email-templates.js';
+import {
+  repeatAlertEmail,
+  teamAlertEmail,
+  visitorAckEmail,
+} from './lead-email-templates.js';
 
 const lead: LeadNotificationPayload = {
   leadId: 'lead-1',
@@ -12,7 +16,10 @@ const lead: LeadNotificationPayload = {
   source: 'contact',
   locale: 'ar',
   message: 'أحتاج نظاماً لإدارة المشاريع.',
+  submissionCount: null,
 };
+
+const repeat: LeadNotificationPayload = { ...lead, submissionCount: 3 };
 
 describe('teamAlertEmail (U24d — the team reads its alerts in ITS language)', () => {
   it('renders subject, labels and heading in Arabic by default', () => {
@@ -86,5 +93,61 @@ describe('visitorAckEmail (follows the LEAD’s locale, not the team’s)', () =
     const body = visitorAckEmail({ ...lead, locale: 'en', name: 'Sara' });
     expect(body.subject).toContain('We received your request');
     expect(body.text).toContain('Hello Sara');
+  });
+});
+
+describe('repeatAlertEmail (P8.10.B2 — they wrote again)', () => {
+  it('leads with the count, so the team sees at a glance this is not a new lead', () => {
+    const body = repeatAlertEmail(repeat, 'ar');
+    expect(body.subject).toContain('3');
+    expect(body.subject).toContain('سارة');
+    expect(body.text).toContain('3');
+  });
+
+  it('carries the NEW message — the whole reason the event exists', () => {
+    const body = repeatAlertEmail(
+      { ...repeat, message: 'زدت الميزانية إلى ٥٠٠ ألف.' },
+      'ar',
+    );
+    expect(body.text).toContain('زدت الميزانية إلى ٥٠٠ ألف.');
+    expect(body.html).toContain('زدت الميزانية إلى ٥٠٠ ألف.');
+  });
+
+  it('keeps the lead reachable — email and a tel: link', () => {
+    const body = repeatAlertEmail(repeat, 'ar');
+    expect(body.text).toContain('sara@example.com');
+    expect(body.html).toContain('href="tel:+966501234567"');
+  });
+
+  it('renders in the TEAM’s language, not the visitor’s (U24d)', () => {
+    const body = repeatAlertEmail(
+      { ...repeat, name: 'Sara', message: 'Bumping this.' },
+      'en',
+    );
+    expect(body.subject).toMatch(/wrote again|again/i);
+    expect(body.html).toContain('dir="ltr"');
+    expect(body.text).not.toMatch(/[\u0600-\u06FF]/);
+  });
+
+  it('never translates the visitor’s own words — data is data', () => {
+    // The team reads English; the visitor wrote Arabic. Their sentence survives verbatim.
+    expect(repeatAlertEmail({ ...repeat, name: 'Sara' }, 'en').text).toContain(
+      lead.message,
+    );
+  });
+
+  it('escapes interpolated visitor content', () => {
+    const body = repeatAlertEmail(
+      { ...repeat, name: '<script>x</script>' },
+      'ar',
+    );
+    expect(body.html).not.toContain('<script>');
+    expect(body.html).toContain('&lt;script&gt;');
+  });
+
+  it('still reads sensibly when the count is somehow absent', () => {
+    const body = repeatAlertEmail({ ...repeat, submissionCount: null }, 'ar');
+    expect(body.subject).toContain('سارة');
+    expect(body.text).toContain(lead.message);
   });
 });

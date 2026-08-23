@@ -14,7 +14,10 @@ import {
   EmailProvider,
   SmtpEmailProvider,
 } from './notification/infrastructure/email/index.js';
-import { LeadCreatedConsumer } from './notification/infrastructure/consumers/index.js';
+import {
+  LeadCreatedConsumer,
+  LeadResubmittedConsumer,
+} from './notification/infrastructure/consumers/index.js';
 import {
   NotificationRepository,
   ProcessedMessageRepository,
@@ -65,6 +68,7 @@ const emailProvider: Provider = {
   ],
   controllers: [
     LeadCreatedConsumer,
+    LeadResubmittedConsumer,
     NotificationMessageController,
     EmailTestMessageController,
     HealthController,
