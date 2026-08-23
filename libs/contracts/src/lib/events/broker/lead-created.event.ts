@@ -14,7 +14,7 @@ export const leadCreatedEvent = {
   payloadSchema: leadCreatedEventSchema,
   producer: 'content-service',
   producedAt:
-    'apps/content-service/src/content/application/services/lead.service.ts',
+    'apps/content-service/src/content/application/services/lead/lead.service.ts',
   description:
     'A visitor submitted the contact or request-a-project form on the website.',
   consumers: [

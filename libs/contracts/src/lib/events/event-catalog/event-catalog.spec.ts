@@ -28,14 +28,14 @@ describe('EVENT_CATALOG (U27)', () => {
     expect(new Set(entries.map(([key]) => key)).size).toBe(entries.length);
   });
 
-  it('holds the events the platform emits today — 4 on the broker, 22 on the client bus', () => {
+  it('holds the events the platform emits today — 5 on the broker, 22 on the client bus', () => {
     const broker = entries.filter(([, event]) => event.transport === 'broker');
     const clientBus = entries.filter(
       ([, event]) => event.transport === 'client-bus',
     );
-    expect(broker).toHaveLength(4);
+    expect(broker).toHaveLength(5);
     expect(clientBus).toHaveLength(22);
-    expect(entries).toHaveLength(26);
+    expect(entries).toHaveLength(27);
   });
 
   it('carries a strict object schema for every payload (U16/N7)', () => {

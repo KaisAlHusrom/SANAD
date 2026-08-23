@@ -1,5 +1,6 @@
 import {
   leadCreatedEvent,
+  leadResubmittedEvent,
   mediaDeletedEvent,
   settingsChangedEvent,
   userRegisteredEvent,
@@ -40,6 +41,7 @@ import { defineCatalog } from '../define-catalog/index.js';
 export const EVENT_CATALOG = defineCatalog({
   // ---- broker: RabbitMQ, always through the transactional Outbox (MS3) ----
   'lead.created': leadCreatedEvent,
+  'lead.resubmitted': leadResubmittedEvent,
   'media.deleted': mediaDeletedEvent,
   'settings.changed': settingsChangedEvent,
   'user.registered': userRegisteredEvent,

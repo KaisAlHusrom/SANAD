@@ -20,6 +20,10 @@ export interface Lead {
   source: LeadSource;
   locale: Locale;
   status: LeadStatus;
+  /** How many times this person has submitted — 1 unless a repeat was folded in (P8.10.B2). */
+  submissionCount: number;
+  /** When they last submitted. Equals `createdAt` until a repeat is folded in. */
+  lastSubmittedAt: string;
   createdAt: string;
   updatedAt: string;
 }

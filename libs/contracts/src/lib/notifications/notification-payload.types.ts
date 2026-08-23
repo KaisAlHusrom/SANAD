@@ -18,6 +18,11 @@ export interface LeadNotificationPayload {
   message: string;
   source: LeadSource;
   locale: Locale;
+  /**
+   * How many times this person has submitted, including the one that produced this notice.
+   * `null` on a first submission — only a `lead.resubmitted` notice carries a count (P8.10.B2).
+   */
+  submissionCount: number | null;
 }
 
 /**

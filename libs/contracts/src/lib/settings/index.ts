@@ -8,6 +8,7 @@ export * from './settings-update.zod.types.js';
 export * from './settings-event.zod.types.js';
 export * from './setting-catalog.types.js';
 export * from './security-settings.js';
+export * from './lead-dedup-settings.js';
 export * from './integration-catalog.js';
 export * from './integration-status.types.js';
 export * from './integration.zod.types.js';

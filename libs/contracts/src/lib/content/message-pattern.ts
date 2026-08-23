@@ -124,3 +124,10 @@ export const CONTENT_LEAD_UPDATE = 'content.lead.update';
  * service (P6) and CRM (later) consume it. Uses the `<entity>.<event>` convention.
  */
 export const LEAD_CREATED_EVENT = 'lead.created';
+
+/**
+ * Emitted (Outbox, MS3) when a submission was folded into an EXISTING lead instead of creating a
+ * new one (P8.10.B2) — the counter moved and the visitor wrote something new. Two dot-segments,
+ * like every broker name.
+ */
+export const LEAD_RESUBMITTED_EVENT = 'lead.resubmitted';
