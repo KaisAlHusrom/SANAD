@@ -2405,10 +2405,25 @@
                   "key": "source",
                   "value": "contact",
                   "disabled": true
+                },
+                {
+                  "key": "spam",
+                  "value": "likelySpam",
+                  "disabled": true
+                },
+                {
+                  "key": "sort",
+                  "value": "spamScore",
+                  "disabled": true
+                },
+                {
+                  "key": "order",
+                  "value": "desc",
+                  "disabled": true
                 }
               ]
             },
-            "description": "**Purpose:** the admin leads inbox.\n\n**Auth:** bearer + `content.manage`.\n\n**Query** (`.strict()`): standard list + whitelisted `status` (`new`/`contacted`/`archived`) + `source`. `search` matches name/email/company.\n\n**Returns** `data`: `Paginated<Lead>`."
+            "description": "**Purpose:** the admin leads inbox.\n\n**Auth:** bearer + `content.manage`.\n\n**Query** (`.strict()`): standard list + whitelisted `status` (`new`/`contacted`/`archived`), `source` (`contact`/`request-project`) and `spam` (`clean`/`suspicious`/`likelySpam`, P8.10.B3 — the VERDICT, which the service resolves into the band's `spamScore` range; never a raw score). `search` matches name/email/phone/company. `sort` accepts any lead column, e.g. `spamScore` with `order=desc` to triage a flood from the top.\n\n**Returns** `data`: `Paginated<Lead>` — each lead carries `spamScore` (0–100, advisory only: it never blocked, archived or hid the lead) and `spamSignals` (`[{ id, weight, n? }]`, the reasons it scored)."
           },
           "response": []
         },
