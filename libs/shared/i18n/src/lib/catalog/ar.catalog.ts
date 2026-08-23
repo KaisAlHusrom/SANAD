@@ -113,6 +113,12 @@ export const AR_CATALOG = {
   'notifications.leadAlert.source': 'المصدر',
   'notifications.leadAlert.locale': 'اللغة',
   'notifications.leadAlert.message': 'الرسالة',
+  'notifications.leadRepeat.subject': 'طلب متكرر: {name} (المرة {count})',
+  'notifications.leadRepeat.subjectUncounted': 'طلب متكرر: {name}',
+  'notifications.leadRepeat.heading': '{name} تواصل معك مرة أخرى',
+  'notifications.leadRepeat.lead':
+    'هذه ليست فرصة جديدة — أُضيفت إلى نفس السجل. تواصلَ معك {count} مرات حتى الآن.',
+  'notifications.leadRepeat.newMessage': 'ما كتبه هذه المرة',
   'notifications.test.connected':
     'تم الاتصال بنجاح — قَبِل الخادم «{host}:{port}» الاتصال.',
   'notifications.test.missingFields':

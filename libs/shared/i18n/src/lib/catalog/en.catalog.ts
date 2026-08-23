@@ -117,6 +117,12 @@ export const EN_CATALOG: Record<MessageKey, string> = {
   'notifications.leadAlert.source': 'Source',
   'notifications.leadAlert.locale': 'Language',
   'notifications.leadAlert.message': 'Message',
+  'notifications.leadRepeat.subject': 'Wrote again: {name} (time {count})',
+  'notifications.leadRepeat.subjectUncounted': 'Wrote again: {name}',
+  'notifications.leadRepeat.heading': '{name} reached out again',
+  'notifications.leadRepeat.lead':
+    'Not a new lead — folded into the same record. They have now been in touch {count} times.',
+  'notifications.leadRepeat.newMessage': 'What they wrote this time',
   'notifications.test.connected':
     'Connected — “{host}:{port}” accepted the connection.',
   'notifications.test.missingFields':
