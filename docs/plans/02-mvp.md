@@ -420,6 +420,61 @@ across reload and expires with `rememberDays`; a `policyVersion` bump re-asks ev
 reduced-motion, and every U23 state, verified by looking.
 **Applies:** U0, U23, WEB1–WEB7, F7, F12, U7, U8.
 
+**SPLIT (2026-08-24, U0/E, owner-confirmed).** ~11 new logic units, including the website's **first
+ever** overlay primitive — past the ~6–8 threshold. The split line is **state vs. surface**, so no
+half-built UX is ever visible to a visitor: A2a is invisible infrastructure, A2b lands the whole
+interface at once. Owner also fixed the banner's behaviour for A2b: a **non-blocking bottom bar**
+with accept and reject at equal visual weight, never a blocking modal gate — nothing is tracked
+while a visitor ignores it, because nothing loads before consent, so covering the landing cinematic
+buys no protection and costs the brand's first impression.
+
+#### P8.23.A2a — the deny-first consent state
+
+**Scope:** every fact a tag layer must obey, decided and stored, before any surface asks anything.
+**Tasks:** the pure consent evaluator (a versioned record → `pending` / `decided` / `not-required`,
+honouring `policyVersion` and expiring with `rememberDays`); SSR- and throw-safe browser storage; a
+`useSyncExternalStore` store that also mirrors the visitor's status onto `<html data-consent>` and
+follows a decision made in another tab; a React-context provider carrying the resolved
+`PublicConsentPolicy` per request; the `useConsent` hook; and the **blocking inline script** that
+emits **Google Consent Mode v2 `default: denied`** — all six gated signals denied, `security_storage`
+granted — before any other script on the page, then restores an already-valid stored decision.
+`bannerEnabled: false` resolves to **nothing granted**, overriding a stored grant: A1's admin screen
+already promises exactly that on screen (`tracking.consent.bannerOffWarning`), and the admin's
+promise is the spec (U3). No UI.
+**Done when:** every page's served HTML carries the `default: denied` block **before any script
+that can read consent** (Next's own `async` React chunks precede it in `<head>` and cannot; every
+vendor tag loads from React, after it) and stamps `<html data-consent>` before first paint; the
+inline script and `evaluateConsent` agree on every stored input, proven by a parity table that runs
+both; a stored decision is honoured, expires
+with `rememberDays`, and is invalidated by a `policyVersion` bump; `bannerEnabled: false` grants
+nothing; no cookie is written and no third-party request is made; verifier PASS + boot UP, proven in
+the served HTML and the running browser.
+**Applies:** U0, U3, U4, U10, U16, U18, U20, U23, U26, F7, F12, WEB1, WEB2, DOC1, TDD1.
+
+#### P8.23.A2b — the consent UI
+
+**Scope:** the surface that asks, and the affordance that lets a visitor change their mind forever.
+**Tasks:** the website's first overlay primitive (portal + focus trap + Escape + scroll lock +
+sticky header/footer with an internally-scrolling body, U21c); the bespoke **non-blocking** consent
+bar (accept all / reject all / customize, equal weight, policy links only when a path is set, F7);
+the granular preferences dialog (`necessary` shown and never toggled, `analytics` and `marketing`
+theirs to grant); a permanent "Cookie preferences" affordance in **both** footers — `SiteFooter`
+**and** `FooterFinale`, because the chrome footer is suppressed on the landing route and the finale
+is that page's footer; the `consent` i18n section ar+en; the website z-index token ladder the
+consent layer joins (U6 — today's ladder is bare numbers); **and the `revalidateTag('tracking')`
+hook** — the website caches the tracking config for 300 s and nothing invalidates it, so an
+admin's "Ask everyone again" or banner-off save takes **up to five minutes** to reach visitors
+(measured at ~80 s and ~4 min in the A2a runtime gate) while that screen's own confirm dialog
+promises existing decisions stop applying _immediately_. Wiring it makes the promise true, which
+is the right fix; a copy change would only make the product honest about a gap. No exposure today
+(nothing is deployed and A3's tags do not exist yet), but it is a launch blocker before ads run.
+This is the narrow, `tracking`-only slice of the broker→website ISR debt the `EVENT_CATALOG`
+orphans name as P8.23 — the general mechanism stays open.
+**Done when:** a visitor can accept all, reject all, or choose per category; the decision persists,
+expires, and is revisable from any page including the landing; ar/en + RTL, reduced-motion, and
+every U23 state, verified by looking.
+**Applies:** U0, U6, U7, U8, U21, U23, U26, F7, F9, WEB1–WEB7, WEB13, DOC1, TDD1.
+
 ### P8.23.A3 — the tag layer + conversions
 
 **Scope:** the tags themselves, and the number an ad platform actually optimizes on.

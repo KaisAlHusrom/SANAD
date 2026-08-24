@@ -545,7 +545,8 @@ phoneNoCountry,invalidPhone}`; styles in `.lead-phone*` / `.lead-hint` (`site-ch
   on every public page render; tagged `tracking` so a settings save can revalidate it. It is the one
   reader that **never throws** — a gateway that cannot answer degrades to `DEFAULT_TRACKING_CONFIG`
   (consent still asked, no destination loaded) rather than 500-ing a page for the sake of a pixel.
-  Nothing renders it yet; the consent layer (P8.23.A2) and the tag layer (P8.23.A3) consume it.
+  Read once in `app/[locale]/layout.tsx` and handed to the consent layer below (P8.23.A2a); the
+  tag layer (P8.23.A3) will read the same object's `destinations`.
 - `lead-action.ts` — the `'use server'` action the client `LeadForm` calls (re-validates with
   `leadCreateRequestSchema`, N7).
 - **Media resolver (`src/data/media.ts` + `src/media/`, 8.C).** `resolveMediaUrls(ids)` batch-calls
@@ -590,6 +591,74 @@ case studies are seeded PUBLISHED in the content-service so the works orbit is n
   Services/Process/Work/Blog) shown when the CMS menu is empty — targeting the section-anchor ids
   (`ChapterStage id={id}`, `WorksSection id="works"`). Sound toggle + locale switch sit quiet beside
   the accent CTA pill.
+
+## Consent (`src/consent/`, P8.23.A2a — the deny-first state)
+
+The lawful gate every vendor tag must pass. **A2a is the state only** — no banner, no dialog; the
+interface is A2b, and the loaders are A3.
+
+- **The blocking bootstrap (`consent-bootstrap/`).** A pure builder for the source of a
+  parser-blocking inline `<script>`, rendered as the first child of `<body>` in the locale layout.
+  It creates `dataLayer` + the canonical `gtag` shim, emits **Consent Mode v2 `default`** with all
+  six gated signals `denied` (`security_storage` granted, plus `wait_for_update`), restores an
+  already-valid stored decision with a single `update`, and stamps
+  `<html data-consent="pending|decided|not-required">` **before first paint**. It is emitted
+  unconditionally, even with zero destinations configured — deny-first must not depend on which
+  vendor happens to be set up. `<html>` therefore carries `suppressHydrationWarning`.
+  - **Placement is a measured decision, not an assumption.** It is not literally the first
+    `<script>` in the document: Next emits ~14 of its own `async` chunk tags into `<head>` first.
+    None of them can read consent, and A3 loads every vendor tag from React (after hydration), so
+    nothing that CAN read consent runs before this. `next/script` with
+    `strategy="beforeInteractive"` is Next's documented mechanism for this exact case, but the
+    App Router **ignores inline content** for it — tried on Next 15.5.19, the built HTML placed it
+    in the identical position, so it would buy only a hydration wrapper.
+  - **Two implementations of one rule, held together by a parity table.** The script necessarily
+    re-implements `parseConsentRecord` + `evaluateConsent` inline. Its spec runs **both** over the
+    same stored strings and asserts they reach the same verdict. That table is not decoration: an
+    earlier draft's script lacked the key-count and integer checks, so it **granted all three ad
+    signals for a record the schema rejects** — a visitor tracked while still being asked.
+    `CONSENT_RECORD_KEY_COUNT` is `.strict()` expressed inline and is **derived from the schema**,
+    so a new field cannot silently re-open the gap.
+- **The verdict (`evaluate-consent/` + `parse-consent-record/`).** `evaluateConsent(record, policy,
+now)` is the single place a stored record becomes `pending` / `decided` / `not-required`. The
+  clock is injected. A record is re-asked when the operator's `policyVersion` differs **in either
+  direction** (a rollback is as much a change of terms as a bump) or when it is older than
+  `rememberDays`. A **future** `decidedAt` is honoured — a wrong clock is not an attack, and
+  re-asking on every load would be the worse bug. `parseConsentRecord` validates the stored text
+  with a `.strict()` Zod schema; every rejection collapses to "never decided", because a decision
+  we cannot read in full is not a decision.
+- **`bannerEnabled: false` grants NOTHING** and overrides a stored grant. The admin screen already
+  promises exactly that (`tracking.consent.bannerOffWarning`), and the admin's promise is the spec
+  (U3) — an operator switching the banner off has withdrawn the basis, not preserved old answers.
+- **Storage + store (`consent-storage/`, `consent-store/`).** `localStorage`, not a cookie: reading
+  a cookie in the App Router opts every page out of static rendering, and the blocking script
+  removes the only advantage a cookie had. Every access is wrapped — Safari's private mode throws
+  on read _and_ write, and a consent layer must never crash the page it protects. The store is a
+  `useSyncExternalStore` source whose cache is keyed on the **stored text**, never on a "loaded"
+  flag, so its answer can never drift from storage (U30b — an earlier draft cached the flag and
+  served a stale `null`; a spec now pins it). It follows the `storage` event, so a decision made in
+  another tab applies without a reload. A write the browser **refuses** (private mode, quota) is
+  kept in memory instead, so the decision still applies to this page view — without that, clicking
+  Accept in such a browser produces nothing at all and the A2b banner could never be dismissed
+  (U23). `writeConsentRecord` and `clearConsentRecord` both return whether they succeeded; neither
+  `catch` is comment-only. A failed write also **clears** whatever storage still held, so a
+  superseded older decision cannot resurface on the next load and silently revert the visitor's
+  change of mind.
+- **Policy by context, record by singleton (`consent-provider/`, `use-consent/`).** A module
+  singleton is shared across requests on the server, so it holds only browser state; the resolved
+  `PublicConsentPolicy` travels through React context, seeded per request from the layout, and
+  defaults to the coded policy so a consumer outside the provider still gets "ask, grant nothing"
+  (F7). `useSyncExternalStore`'s `getServerSnapshot` returns `null` through SSR _and_ hydration,
+  which is what removes the banner flash A2b would otherwise have: a visitor who already decided
+  never sees a banner appear and vanish, and React never warns about a mismatch.
+- **`consent-status-mirror/`** keeps `<html data-consent>` truthful after a live decision — an
+  attribute that lies for the rest of the session is worse than no attribute.
+- **No new event, deliberately (U27).** Consent is per-browser and never crosses a module or
+  service boundary; the external store _is_ the mechanism A3 subscribes to. A catalog entry would
+  be a second name for the same fact.
+- **Still open after A2a:** nothing revalidates the `tracking` cache tag. That is the broker →
+  website ISR hook the `EVENT_CATALOG` orphans name as P8.23 (a route handler + a shared secret +
+  a consumer), not part of the consent layer.
 
 ## i18n (`src/i18n/`)
 
@@ -644,7 +713,10 @@ placeholder.
 (incl. F7 null-safety), i18n `parity` + `locale-route`, the CMS `cms-render`, the `lead-form`, the
 motion cores (`motion-core.spec` — split/orbit/count-up) + React parts (`motion-react.spec` — Lenis
 reduced-motion gating, reveal/word-split), and the landing sections (`landing-sections.spec` —
-DB content, empty states, WEB10 orbit cards, trust derivation). **66 specs.**
+DB content, empty states, WEB10 orbit cards, trust derivation), and the **consent layer**
+(`src/consent/*` — the evaluator's re-ask rules, the `.strict()` record parser, throw-safe storage,
+the bootstrap script **executed** in jsdom, the store's read-through cache, and the hook/provider
+end to end). **74 spec files.**
 
 ## One universe — per-route star systems + comet-flight navigation (P8.D, 2026-07-09)
 
