@@ -140,6 +140,8 @@ export const AR_CATALOG = {
     'الإعداد «{key}» يتطلّب نصاً، أو قيمة فارغة.',
   'settings.value.outOfRange':
     'الإعداد «{key}» يتطلّب رقماً صحيحاً بين {min} و {max}.',
+  'settings.value.invalidFormat':
+    'قيمة الإعداد «{key}» بصيغة غير صحيحة. الصيغة المتوقّعة مثل: {example}',
 
   // ── security — the gateway edge (P8.10.A) ─────────────────────────────────────────
   'security.rateLimited':

@@ -144,6 +144,8 @@ export const EN_CATALOG: Record<MessageKey, string> = {
   'settings.value.expected.string': 'Setting “{key}” expects a string or null.',
   'settings.value.outOfRange':
     'Setting “{key}” expects a whole number between {min} and {max}.',
+  'settings.value.invalidFormat':
+    'Setting “{key}” has the wrong format. It should look like: {example}',
 
   // ── security — the gateway edge (P8.10.A) ─────────────────────────────────────────
   'security.rateLimited':
