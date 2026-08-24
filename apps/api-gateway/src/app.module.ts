@@ -12,6 +12,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { loadGatewayEnv } from './env.js';
 import { SecurityModule } from './security/security.module.js';
 import { SettingsModule } from './settings/settings.module.js';
+import { TrackingModule } from './tracking/tracking.module.js';
 import { UsersModule } from './users/users.module.js';
 
 /**
@@ -19,7 +20,8 @@ import { UsersModule } from './users/users.module.js';
  * RMQ clients + token verifier; feature modules add the public auth routes, the
  * RBAC-guarded users route, the branding surface (public read + guarded write), the media
  * surface (signed upload + library), the content surface (public CMS reads + guarded writes
- * + public lead submit), and health. `SecurityModule` binds the global rate-limit guard
+ * + public lead submit), the public tracking-config surface the website's consent layer
+ * reads, and health. `SecurityModule` binds the global rate-limit guard
  * (P8.10.A); `CacheModule` backs it with the Redis counter.
  */
 // Validated once at module load (U19), same as `core.module.ts`.
@@ -40,6 +42,7 @@ const env = loadGatewayEnv();
     IntegrationsModule,
     NotificationsModule,
     DashboardModule,
+    TrackingModule,
   ],
 })
 export class AppModule {}
