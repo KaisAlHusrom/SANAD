@@ -93,7 +93,7 @@ export function AssetPreview({
                   type="button"
                   onClick={onPrev}
                   aria-label={t('preview.prev')}
-                  className="absolute start-4 inline-flex size-10 items-center justify-center rounded-full border border-border-2 bg-surface/80 text-text shadow-portal backdrop-blur transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-line"
+                  className="absolute start-4 inline-flex size-10 items-center justify-center rounded-full border border-border-2 bg-veil-surface text-text shadow-portal backdrop-blur transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-line"
                 >
                   <ChevronLeft
                     className="size-5 rtl:rotate-180"
@@ -106,7 +106,7 @@ export function AssetPreview({
                   type="button"
                   onClick={onNext}
                   aria-label={t('preview.next')}
-                  className="absolute end-4 inline-flex size-10 items-center justify-center rounded-full border border-border-2 bg-surface/80 text-text shadow-portal backdrop-blur transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-line"
+                  className="absolute end-4 inline-flex size-10 items-center justify-center rounded-full border border-border-2 bg-veil-surface text-text shadow-portal backdrop-blur transition-colors hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-line"
                 >
                   <ChevronLeft
                     className="size-5 rotate-180 rtl:rotate-0"

@@ -62,7 +62,7 @@ function BlogFormEditor({ item }: { item: BlogPostItem | undefined }) {
 
   return (
     <section className="flex flex-col gap-6 pb-10">
-      <header className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-4 border-b border-border bg-bg/80 px-1 py-4 backdrop-blur">
+      <header className="sticky top-0 z-10 -mx-1 flex items-center justify-between gap-4 border-b border-border bg-veil px-1 py-4 backdrop-blur">
         <div className="flex flex-col gap-1">
           <Link
             to={POSTS_PATH}

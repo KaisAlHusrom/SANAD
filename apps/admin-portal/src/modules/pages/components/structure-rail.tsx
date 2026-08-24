@@ -101,7 +101,7 @@ export function StructureRail({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="text-bad hover:bg-bad/10 hover:text-bad"
+                    className="text-bad hover:bg-bad-soft hover:text-bad"
                     onClick={() => deleteSection(detailSection)}
                   >
                     <Trash2 className="size-4" aria-hidden="true" />

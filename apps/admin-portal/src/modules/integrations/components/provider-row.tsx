@@ -8,6 +8,7 @@ import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
+import { Callout } from '../../../components/ui/callout';
 import { useModalActions } from '../../../data/modal/use-modal';
 import { useProviderTest } from '../hooks/use-provider-test';
 import { PROVIDER_CONFIG_MODAL } from './provider-config-modal';
@@ -127,16 +128,13 @@ export function ProviderRow({
       ) : null}
 
       {publicUrlIsSignedOnly ? (
-        <p
+        <Callout
           role="status"
-          className="flex items-start gap-2 rounded-lg border border-warn/30 bg-warn/10 px-3 py-2 text-sm text-warn"
+          tone="warn"
+          icon={<AlertTriangle className="size-4" aria-hidden="true" />}
         >
-          <AlertTriangle
-            className="mt-0.5 size-4 shrink-0"
-            aria-hidden="true"
-          />
           {t('warnings.publicUrlIsApiEndpoint')}
-        </p>
+        </Callout>
       ) : null}
 
       {/*

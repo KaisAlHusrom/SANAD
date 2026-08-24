@@ -64,7 +64,7 @@ export const SheetContent = forwardRef<
   return (
     <RadixDialog.Portal>
       {modal ? (
-        <RadixDialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-bg/70 backdrop-blur-sm" />
+        <RadixDialog.Overlay className="sheet-overlay fixed inset-0 z-40 bg-scrim backdrop-blur-sm" />
       ) : null}
       <RadixDialog.Content
         ref={ref}

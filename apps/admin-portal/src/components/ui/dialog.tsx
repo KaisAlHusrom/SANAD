@@ -80,7 +80,7 @@ const StackedDialogContent = forwardRef<
   return (
     <>
       <RadixDialog.Overlay
-        className="fixed inset-0 bg-bg/70 backdrop-blur-sm"
+        className="fixed inset-0 bg-scrim backdrop-blur-sm"
         // Runtime stacking value (U6 carve-out: genuine computed data, not a design token).
         style={{ zIndex: Z_OVERLAY_BASE + depth * Z_STEP }}
       />

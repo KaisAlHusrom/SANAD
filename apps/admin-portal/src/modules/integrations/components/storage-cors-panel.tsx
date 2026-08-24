@@ -8,7 +8,9 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { formatList } from '../../../lib/format';
 import { Button } from '../../../components/ui/button';
+import { CALLOUT_TONE_CLASSES } from '../../../components/ui/callout';
 import { Skeleton } from '../../../components/feedback/skeleton';
 import {
   useStorageCors,
@@ -22,13 +24,13 @@ interface StorageCorsPanelProps {
   canManage: boolean;
 }
 
-/** Tone → the token classes for the panel's border/background/text. No raw colors (U6). */
-const TONE_CLASSES: Record<StorageCorsTone, string> = {
-  good: 'border-good/30 bg-good/10 text-good',
-  bad: 'border-bad/30 bg-bad/10 text-bad',
-  warn: 'border-warn/30 bg-warn/10 text-warn',
-  neutral: 'border-border-2 bg-surface-2 text-dim',
-};
+/**
+ * Tone → the token classes for the panel's border/background/text, from the shared Callout
+ * canon (U3/F9). It used to spell them as `bg-good/10` etc., which Tailwind 3.4 compiles to
+ * NOTHING for a `var(--token)` color — so every verdict here rendered with no tint and no
+ * border (found and fixed in P8.23.A1).
+ */
+const TONE_CLASSES: Record<StorageCorsTone, string> = CALLOUT_TONE_CLASSES;
 
 const TONE_ICON: Record<StorageCorsTone, typeof CheckCircle2> = {
   good: CheckCircle2,
@@ -50,7 +52,8 @@ export function StorageCorsPanel({
   configured,
   canManage,
 }: StorageCorsPanelProps) {
-  const { t } = useTranslation('integrations');
+  const { t, i18n } = useTranslation('integrations');
+  const locale = i18n.language === 'en' ? 'en' : 'ar';
   const cors = useStorageCors(provider, { enabled: configured && canManage });
 
   // Nothing to say yet: an unconfigured provider already reads "not configured" on its row, and
@@ -98,7 +101,9 @@ export function StorageCorsPanel({
         <Icon className="size-4 shrink-0" aria-hidden="true" />
         <span className="font-medium">{t(`cors.state.${status.state}`)}</span>
         <span className="text-dim">
-          {t('cors.origins', { origins: status.requiredOrigins.join('، ') })}
+          {t('cors.origins', {
+            origins: formatList(status.requiredOrigins, locale),
+          })}
         </span>
 
         <div className="flex flex-1 items-center justify-end gap-2">
@@ -143,7 +148,7 @@ export function StorageCorsPanel({
       status.allowedOrigins.length > 0 ? (
         <p className="text-dim">
           {t('cors.currentlyAllowed', {
-            origins: status.allowedOrigins.join('، '),
+            origins: formatList(status.allowedOrigins, locale),
           })}
         </p>
       ) : null}

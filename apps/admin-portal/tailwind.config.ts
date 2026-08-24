@@ -10,6 +10,10 @@ import type { Config } from 'tailwindcss';
  */
 const tokenColor = (name: string): string => `var(--${name})`;
 
+/** A token mixed with transparency — see the `scrim`/`veil` note below for why not `/opacity`. */
+const tokenMix = (name: string, percent: number): string =>
+  `color-mix(in oklab, var(--${name}) ${percent}%, transparent)`;
+
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
@@ -40,6 +44,23 @@ export default {
         good: tokenColor('good'),
         warn: tokenColor('warn'),
         bad: tokenColor('bad'),
+        /**
+         * Translucent token surfaces, named by ROLE.
+         *
+         * They exist because Tailwind 3.4's opacity modifier (`bg-bg/70`, `hover:bg-bad/10`)
+         * emits **no CSS at all** when the color is a `var(--token)` — silently, with no error.
+         * Eight call sites had written it that way, including every dialog and sheet scrim,
+         * which meant the page behind an open modal was blurred but never dimmed. `color-mix`
+         * is the form that actually compiles (the same canon `Badge`/`Callout` use), so it is
+         * declared once here instead of re-spelled per call site (U6/U3).
+         *
+         * **Never write `bg-<token>/<n>` in this app** — an ESLint rule now refuses it.
+         */
+        scrim: tokenMix('bg', 70),
+        veil: tokenMix('bg', 85),
+        'veil-surface': tokenMix('surface', 92),
+        'veil-accent': tokenMix('accent-soft', 85),
+        'bad-soft': tokenMix('bad', 12),
       },
       borderRadius: {
         // design-spec §4 portal radius scale

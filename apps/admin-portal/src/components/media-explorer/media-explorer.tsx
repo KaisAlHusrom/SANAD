@@ -285,7 +285,7 @@ export function MediaExplorer({
             )}
           >
             {isFileOver ? (
-              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-card bg-accent-soft/80 text-sm font-medium text-accent">
+              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-card bg-veil-accent text-sm font-medium text-accent">
                 <Upload className="size-4" aria-hidden="true" />
                 {t('drop.uploadHint')}
               </div>
