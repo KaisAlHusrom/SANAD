@@ -15,9 +15,12 @@ import {
 } from '@sanad/audit';
 import { RedisCache, type RedisClient } from '@sanad/cache';
 import {
+  CONSENT_SETTING_KEYS,
   RATE_LIMIT_DEFAULTS,
   SECURITY_GROUP,
   SECURITY_SETTING_KEYS,
+  TRACKING_GROUP,
+  trackingDestinationSettingKeys,
 } from '@sanad/contracts';
 import {
   DateTimeService,
@@ -351,6 +354,110 @@ describeDb('settings-service DB integration (settings_test, TDD2)', () => {
     await expect(
       writer(fakeCache()).setMany(
         [{ key: 'branding.colors.primary', value: 123 }],
+        { scope: 'global' },
+      ),
+    ).rejects.toThrow();
+  });
+
+  // ── P8.23.A1: the `tracking` group, end to end through the real catalog + writer ──────
+  it('seeds the tracking group with every destination off and no id', async () => {
+    await seedCatalog();
+    const rows = await settings.findByGroup(TRACKING_GROUP);
+    expect(rows.length).toBe(
+      SETTINGS_CATALOG.filter((row) => row.group === TRACKING_GROUP).length,
+    );
+    const ga4 = await settings.findByKey(
+      trackingDestinationSettingKeys('ga4').id,
+    );
+    expect(ga4?.type).toBe('text');
+    expect(ga4?.defaultValue).toBeNull();
+  });
+
+  /**
+   * The descriptor→writer wiring, proven rather than assumed: a pattern that stopped at the
+   * field list would validate nothing, and the wrong id would be accepted and then fail
+   * silently for as long as the campaign ran.
+   */
+  it('the generic writer rejects a vendor id of the wrong shape (U0)', async () => {
+    await seedCatalog();
+    await expect(
+      writer(fakeCache()).setMany(
+        [
+          {
+            key: trackingDestinationSettingKeys('ga4').id,
+            // A GTM container pasted into the GA4 field — the exact real-world mistake.
+            value: 'GTM-ABCDE12',
+          },
+        ],
+        { scope: 'global' },
+      ),
+    ).rejects.toThrow();
+  });
+
+  it('accepts a well-shaped vendor id and surfaces it on the catalog', async () => {
+    await seedCatalog();
+    const key = trackingDestinationSettingKeys('ga4').id;
+    await writer(fakeCache()).setMany([{ key, value: 'G-ABCDE12345' }], {
+      scope: 'global',
+    });
+    const catalog = await catalogService.getCatalog({ scope: 'global' });
+    const field = catalog.groups
+      .find((group) => group.group === TRACKING_GROUP)
+      ?.sections.find((s) => s.section === 'destinations')
+      ?.fields.find((f) => f.key === key);
+    expect(field?.value).toBe('G-ABCDE12345');
+    // The control needs the shape to refuse a bad paste before the round trip.
+    expect(field?.pattern).toBe('^G-[A-Z0-9]{4,20}$');
+    expect(field?.patternExample).toBe('G-ABCDE12345');
+  });
+
+  /**
+   * An all-digit vendor id — a **Meta pixel**, the single most common paid destination — must
+   * come back as the STRING it was written as. Found by the runtime gate: it resolved as the
+   * number `123456789012345`, so the gateway's `typeof raw === 'string'` check dropped the
+   * destination from the public config and the admin field rendered blank. Silent on every
+   * layer, and only for the ids that happen to be all digits.
+   */
+  it('round-trips an ALL-DIGIT vendor id as a string, not a number', async () => {
+    await seedCatalog();
+    const key = trackingDestinationSettingKeys('metaPixel').id;
+    await writer(fakeCache()).setMany([{ key, value: '123456789012345' }], {
+      scope: 'global',
+    });
+
+    const resolved = await resolver.resolveGroup(TRACKING_GROUP, {
+      scope: 'global',
+    });
+    expect(typeof resolved[key]).toBe('string');
+    expect(resolved[key]).toBe('123456789012345');
+
+    const catalog = await catalogService.getCatalog({ scope: 'global' });
+    const field = catalog.groups
+      .find((group) => group.group === TRACKING_GROUP)
+      ?.sections.find((s) => s.section === 'destinations')
+      ?.fields.find((f) => f.key === key);
+    expect(field?.value).toBe('123456789012345');
+  });
+
+  it('CLEARS a vendor id with null rather than failing its pattern (U9)', async () => {
+    await seedCatalog();
+    const key = trackingDestinationSettingKeys('ga4').id;
+    const w = writer(fakeCache());
+    await w.setMany([{ key, value: 'G-ABCDE12345' }], { scope: 'global' });
+    await w.setMany([{ key, value: null }], { scope: 'global' });
+    const catalog = await catalogService.getCatalog({ scope: 'global' });
+    const field = catalog.groups
+      .find((group) => group.group === TRACKING_GROUP)
+      ?.sections.find((s) => s.section === 'destinations')
+      ?.fields.find((f) => f.key === key);
+    expect(field?.value).toBeNull();
+  });
+
+  it('rejects a remember-days outside its bounds with a named cause, not a silent clamp', async () => {
+    await seedCatalog();
+    await expect(
+      writer(fakeCache()).setMany(
+        [{ key: CONSENT_SETTING_KEYS.rememberDays, value: 4000 }],
         { scope: 'global' },
       ),
     ).rejects.toThrow();

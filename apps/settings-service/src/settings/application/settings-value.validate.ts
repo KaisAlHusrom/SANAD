@@ -9,6 +9,12 @@ export interface SettingNumberBounds {
   max: number;
 }
 
+/** The shape a string descriptor accepts, plus a valid example to show the operator. */
+export interface SettingStringShape {
+  pattern: string;
+  example?: string;
+}
+
 /**
  * Validate a value against its setting descriptor `type` before persisting (N7). Throws a keyed
  * 400 the gateway maps + localizes (N9, U24) on a type mismatch. Nullable leaves accept `null`, which clears the value back to the coded default
@@ -21,6 +27,7 @@ export function assertValidSettingValue(
   type: SettingType,
   value: SettingValue,
   bounds?: SettingNumberBounds,
+  shape?: SettingStringShape,
 ): void {
   const reject = (expected: MessageKey): never => {
     throw rpcError(HttpStatus.BAD_REQUEST, expected, { key });
@@ -63,6 +70,20 @@ export function assertValidSettingValue(
     case 'select':
       if (value !== null && typeof value !== 'string') {
         reject('settings.value.expected.string');
+      }
+      // A descriptor that declares a shape enforces it HERE. `null` and `''` both mean
+      // "unset" and clear back to the coded default (U9) — a pattern that refused them would
+      // trap an operator who simply wants to remove a value.
+      if (
+        shape !== undefined &&
+        typeof value === 'string' &&
+        value !== '' &&
+        !new RegExp(shape.pattern).test(value)
+      ) {
+        throw rpcError(HttpStatus.BAD_REQUEST, 'settings.value.invalidFormat', {
+          key,
+          example: shape.example ?? '',
+        });
       }
       return;
     default:

@@ -1,6 +1,7 @@
 import type { SettingRequirement, SettingType } from '@sanad/contracts';
 import { BRANDING_FIELDS, BRANDING_GROUP } from './branding-catalog.js';
 import { SECURITY_FIELDS, SECURITY_GROUP } from './security-catalog/index.js';
+import { TRACKING_FIELDS, TRACKING_GROUP } from './tracking-catalog/index.js';
 
 /** A UI catalog descriptor: where a key sits (group → section) + how to render it. */
 export interface SettingDescriptor {
@@ -13,6 +14,9 @@ export interface SettingDescriptor {
   /** Inclusive range for `number` fields. Declaring it makes the writer enforce it (U0). */
   min?: number;
   max?: number;
+  /** Required shape for string fields. Declaring it makes the writer enforce it (U0). */
+  pattern?: string;
+  patternExample?: string;
 }
 
 /** The descriptor for a key, or `undefined` if it is not admin-editable. */
@@ -76,10 +80,19 @@ export const EDITABLE_SECURITY_KEYS: readonly string[] = SECURITY_FIELDS.map(
   (field) => field.key,
 );
 
+/**
+ * Every tracking key is editable — each one changes what the website loads or how it asks for
+ * consent, so nothing here can become a dead control either.
+ */
+export const EDITABLE_TRACKING_KEYS: readonly string[] = TRACKING_FIELDS.map(
+  (field) => field.key,
+);
+
 /** Every editable key across all groups. */
 export const EDITABLE_SETTING_KEYS: readonly string[] = [
   ...EDITABLE_BRANDING_KEYS,
   ...EDITABLE_SECURITY_KEYS,
+  ...EDITABLE_TRACKING_KEYS,
 ];
 
 const brandingDescriptors: readonly SettingDescriptor[] =
@@ -109,6 +122,21 @@ const securityDescriptors: readonly SettingDescriptor[] = SECURITY_FIELDS.map(
   }),
 );
 
+const trackingDescriptors: readonly SettingDescriptor[] = TRACKING_FIELDS.map(
+  (field) => ({
+    group: TRACKING_GROUP,
+    section: field.section,
+    key: field.key,
+    type: field.type,
+    requirement: 'optional' as const,
+    ...(field.bounds ? { min: field.bounds.min, max: field.bounds.max } : {}),
+    // A vendor id is the case bounds cannot cover: well-typed and still completely wrong,
+    // failing silently for as long as the campaign runs (P8.23.A1).
+    ...(field.pattern ? { pattern: field.pattern } : {}),
+    ...(field.patternExample ? { patternExample: field.patternExample } : {}),
+  }),
+);
+
 /**
  * The descriptor-driven settings catalog the admin renders (group → section → field). The
  * gateway + admin are generic, with no per-group code (U3, the single source of structure) —
@@ -118,4 +146,5 @@ const securityDescriptors: readonly SettingDescriptor[] = SECURITY_FIELDS.map(
 export const SETTING_DESCRIPTORS: readonly SettingDescriptor[] = [
   ...brandingDescriptors,
   ...securityDescriptors,
+  ...trackingDescriptors,
 ];

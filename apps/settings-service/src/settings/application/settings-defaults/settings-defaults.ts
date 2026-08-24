@@ -1,6 +1,7 @@
 import { BRANDING_SETTING_DEFAULTS } from '../branding-catalog.js';
 import type { ResolvedValue } from '../resolved-value.js';
 import { SECURITY_SETTING_DEFAULTS } from '../security-catalog/security-catalog.js';
+import { TRACKING_SETTING_DEFAULTS } from '../tracking-catalog/tracking-catalog.js';
 
 /**
  * The flat-key projection of EVERY group's coded defaults (U9) — the resolver's terminal
@@ -14,4 +15,5 @@ import { SECURITY_SETTING_DEFAULTS } from '../security-catalog/security-catalog.
 export const SETTINGS_DEFAULTS: Readonly<Record<string, ResolvedValue>> = {
   ...BRANDING_SETTING_DEFAULTS,
   ...SECURITY_SETTING_DEFAULTS,
+  ...TRACKING_SETTING_DEFAULTS,
 };

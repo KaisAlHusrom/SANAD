@@ -107,3 +107,62 @@ describe('numeric bounds (P8.10.A)', () => {
     ).not.toThrow();
   });
 });
+
+/**
+ * String shape (P8.23.A1). A vendor id is the case bounds cannot cover: it is a perfectly
+ * valid string and still completely wrong, and the failure is silent — the tag loads, the
+ * campaign reports nothing, and nobody learns why for months.
+ */
+describe('string pattern', () => {
+  const ga4 = { pattern: '^G-[A-Z0-9]{4,20}$', example: 'G-ABCDE12345' };
+  const key = 'tracking.destinations.ga4.id';
+
+  it('accepts a value of the declared shape', () => {
+    expect(() =>
+      assertValidSettingValue(key, 'text', 'G-ABCDE12345', undefined, ga4),
+    ).not.toThrow();
+  });
+
+  it('rejects another vendor’s id pasted into the field, naming the expected shape', () => {
+    expect(() =>
+      assertValidSettingValue(key, 'text', 'GTM-ABCDE12', undefined, ga4),
+    ).toThrow(RpcException);
+    try {
+      assertValidSettingValue(key, 'text', '123456789012345', undefined, ga4);
+    } catch (error) {
+      expect((error as RpcException).getError()).toEqual({
+        statusCode: 400,
+        messageKey: 'settings.value.invalidFormat',
+        params: { key, example: ga4.example },
+      });
+    }
+  });
+
+  /**
+   * Clearing must still work (U9): `null` from the API and `''` from an emptied text input
+   * both mean "unset", and a pattern that refused them would trap an operator who simply
+   * wants to remove a destination's id.
+   */
+  it.each([
+    ['null', null],
+    ['an emptied input', ''],
+  ])('CLEARS with %s rather than failing the pattern', (_label, value) => {
+    expect(() =>
+      assertValidSettingValue(key, 'text', value, undefined, ga4),
+    ).not.toThrow();
+  });
+
+  it('leaves a pattern-less text setting alone', () => {
+    expect(() =>
+      assertValidSettingValue('branding.brand.tagline', 'text', 'anything'),
+    ).not.toThrow();
+  });
+
+  // A pattern is only meaningful for the string types; declaring one on a number must not
+  // make the number path start doing regex work on a non-string.
+  it('ignores a pattern on a non-string type', () => {
+    expect(() =>
+      assertValidSettingValue('k', 'boolean', true, undefined, ga4),
+    ).not.toThrow();
+  });
+});

@@ -55,6 +55,14 @@ export class SettingsCatalogService {
         ...(descriptor.options ? { options: descriptor.options } : {}),
         ...(descriptor.min !== undefined ? { min: descriptor.min } : {}),
         ...(descriptor.max !== undefined ? { max: descriptor.max } : {}),
+        // Carried to the client so the control can refuse a bad value BEFORE the round trip
+        // and show the operator the shape it wants (U0/U23).
+        ...(descriptor.pattern !== undefined
+          ? { pattern: descriptor.pattern }
+          : {}),
+        ...(descriptor.patternExample !== undefined
+          ? { patternExample: descriptor.patternExample }
+          : {}),
         value:
           resolved[descriptor.key] ?? SETTINGS_DEFAULTS[descriptor.key] ?? null,
       });

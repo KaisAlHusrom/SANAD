@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { pk, softDelete, timestamps } from '@sanad/database';
+import { pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { jsonbScalar, pk, softDelete, timestamps } from '@sanad/database';
 import { settingTable } from './setting.table.js';
 import { settingScopeEnum } from './enums.js';
 import type { SettingScalar } from './value.types.js';
@@ -21,7 +21,10 @@ export const settingValueTable = pgTable(
       .references(() => settingTable.id, { onDelete: 'cascade' }),
     scope: settingScopeEnum('scope').notNull().default('global'),
     scopeId: text('scope_id'),
-    value: jsonb('value').$type<SettingScalar>(),
+    // `jsonbScalar`, NOT drizzle's `jsonb()`: the latter re-parses a value node-pg has
+    // already parsed, so an all-digit id like a Meta pixel reads back as a NUMBER (see the
+    // helper's own doc). Silent, and only for the values whose text is itself valid JSON.
+    value: jsonbScalar('value').$type<SettingScalar>(),
     ...timestamps(),
     ...softDelete(),
   },

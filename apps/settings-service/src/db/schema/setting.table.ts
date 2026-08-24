@@ -1,5 +1,5 @@
 import { index, jsonb, pgTable, text } from 'drizzle-orm/pg-core';
-import { pk, softDelete, timestamps } from '@sanad/database';
+import { jsonbScalar, pk, softDelete, timestamps } from '@sanad/database';
 import {
   settingRequirementEnum,
   settingScopeEnum,
@@ -26,7 +26,10 @@ export const settingTable = pgTable(
       .default('optional'),
     scope: settingScopeEnum('scope').notNull().default('global'),
     options: jsonb('options').$type<string[]>(),
-    defaultValue: jsonb('default_value').$type<SettingScalar>(),
+    // A bare scalar, so it carries the same double-parse trap as `setting_value.value` —
+    // see `jsonbScalar`. `options` above is an ARRAY, which pg hands over already parsed as
+    // an array, so drizzle never re-parses it and stock `jsonb()` is correct there.
+    defaultValue: jsonbScalar('default_value').$type<SettingScalar>(),
     ...timestamps(),
     ...softDelete(),
   },

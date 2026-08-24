@@ -62,6 +62,12 @@ export class SettingsWriter {
         descriptor?.min !== undefined && descriptor.max !== undefined
           ? { min: descriptor.min, max: descriptor.max }
           : undefined,
+        descriptor?.pattern !== undefined
+          ? {
+              pattern: descriptor.pattern,
+              example: descriptor.patternExample ?? '',
+            }
+          : undefined,
       );
       planned.push({ setting, value: write.value });
     }

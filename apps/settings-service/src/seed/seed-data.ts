@@ -6,6 +6,10 @@ import {
   SECURITY_FIELDS,
   SECURITY_GROUP,
 } from '../settings/application/security-catalog/index.js';
+import {
+  TRACKING_FIELDS,
+  TRACKING_GROUP,
+} from '../settings/application/tracking-catalog/index.js';
 import { SETTINGS_DEFAULTS } from '../settings/application/settings-defaults/index.js';
 import { isLocalizedText } from '../settings/application/resolved-value.js';
 import type { SettingCatalogInput } from '../settings/infrastructure/setting.repository.js';
@@ -46,4 +50,5 @@ function catalogRows(
 export const SETTINGS_CATALOG: readonly SettingCatalogInput[] = [
   ...catalogRows(BRANDING_FIELDS, BRANDING_GROUP),
   ...catalogRows(SECURITY_FIELDS, SECURITY_GROUP),
+  ...catalogRows(TRACKING_FIELDS, TRACKING_GROUP),
 ];
