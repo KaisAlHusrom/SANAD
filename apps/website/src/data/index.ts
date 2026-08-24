@@ -9,3 +9,4 @@ export * from './testimonials';
 export * from './blog';
 export * from './team';
 export * from './faq';
+export * from './tracking/index';
