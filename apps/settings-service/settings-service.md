@@ -247,6 +247,43 @@ limit an operator sees is not the limit that applies (U3). Seeded by the existin
 
 `security` is also the first caller of `settings.group.resolve` from another service.
 
+### The `tracking` group (P8.23.A1)
+
+The third group, and the first one the generic admin page deliberately does **not** render: it has a
+purpose-built screen at `/settings/tracking` (U0), and rendering it generically too would put two
+differently-shaped editors on the same keys. It still writes through `SETTINGS_SET` like everything
+else — the surface is bespoke, the write path is not.
+
+`TRACKING_FIELDS` (`application/tracking-catalog/`) declares two sections:
+
+- **`consent`** — `bannerEnabled` (default **true**: a tracking layer that loads without asking is
+  the unlawful default, so the safe state is the one an operator must deliberately leave),
+  `policyVersion` (bumping it re-asks every visitor; bounded `1..1_000_000` because `0` is the
+  natural marker for "never asked"), `rememberDays` (180, capped at 730 — a consent record older
+  than two years is an assumption, not a decision), and `privacyPolicyPath` / `cookiePolicyPath`,
+  which default to **null**. A coded `/privacy` would aim the banner at a 404 until P8.23.B seeds
+  the legal pages; an absent link is the lesser harm, and the admin card warns while they are unset.
+- **`destinations`** — an `enabled` + `id` pair per entry of `TRACKING_DESTINATIONS` (GA4, GTM,
+  Meta, Snap, TikTok). Every one ships **off with a null id**, so an unconfigured platform loads no
+  third-party tag at all; `null` rather than `''` is what keeps "nobody entered one" distinguishable
+  from "somebody entered nothing".
+
+**`pattern` on the descriptor is new here.** A vendor id is the case `min`/`max` cannot cover: a
+perfectly valid string that is nonetheless completely wrong, failing **silently** for as long as the
+campaign runs. `SettingDescriptor` (and `SettingField`, so the control can refuse it before the round
+trip) now carries `pattern` + `patternExample`; `assertValidSettingValue` enforces it for the string
+types and rejects with `settings.value.invalidFormat` carrying the expected example (U24). `null` and
+`''` still clear (U9) — a pattern that refused them would trap an operator removing a value.
+
+The patterns are deliberately **loose shape hints, not vendor specifications**: these formats belong
+to third parties and cannot be verified from this repo (U15), so they check prefix + charset with
+generous lengths. One overlap is tolerated and declared rather than hidden — an all-digit TikTok id
+is indistinguishable from a Meta pixel id, so the admin surfaces the ambiguity
+(`matchingDestinationIds`) instead of rejecting a legitimate id.
+
+Coded defaults again come from `@sanad/contracts`, and the group is seeded by the existing idempotent
+`SeedService` — catalog rows, not schema, so **no migration**.
+
 ## Settings used
 
 Owns them. Seeds the branding catalog idempotently at boot; seeds **no** values, so

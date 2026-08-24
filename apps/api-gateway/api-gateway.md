@@ -21,16 +21,17 @@ forwards the validated identity to services in RMQ headers (never the raw token)
 All responses are the 5-field wire envelope (N9), added by the global
 `ResponseEnvelopeInterceptor`; errors by the global `AllExceptionsFilter`.
 
-| Method | Path (behind nginx)   | Auth                        | Returns               | Notes                                                                                                           |
-| ------ | --------------------- | --------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/health`         | —                           | `{ status }`          | liveness                                                                                                        |
-| POST   | `/api/auth/login`     | —                           | `AuthResult`          | → `identity.auth.login` (MS2)                                                                                   |
-| POST   | `/api/auth/refresh`   | —                           | `TokenPair`           | rotates the refresh token                                                                                       |
-| POST   | `/api/auth/logout`    | —                           | `LogoutResult`        | revokes the refresh token                                                                                       |
-| GET    | `/api/auth/me`        | JWT                         | `IdentityContext`     | sample protected route                                                                                          |
-| GET    | `/api/identity/users` | JWT + `identity.users.read` | `Paginated<AuthUser>` | **RBAC sample**: 403 without the permission; forwards identity headers to `identity.users.list` (MS4)           |
-| GET    | `/api/branding`       | — (public)                  | `BrandingRecord`      | **P3**: website reads branding unauthenticated; → `settings.branding.get` (MS2); coded defaults when unset (F7) |
-| PUT    | `/api/branding`       | JWT + `settings.manage`     | `BrandingRecord`      | **P3**: deep-partial update; forwards identity headers to `settings.branding.update` (MS4)                      |
+| Method | Path (behind nginx)    | Auth                        | Returns                | Notes                                                                                                                        |
+| ------ | ---------------------- | --------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/health`          | —                           | `{ status }`           | liveness                                                                                                                     |
+| POST   | `/api/auth/login`      | —                           | `AuthResult`           | → `identity.auth.login` (MS2)                                                                                                |
+| POST   | `/api/auth/refresh`    | —                           | `TokenPair`            | rotates the refresh token                                                                                                    |
+| POST   | `/api/auth/logout`     | —                           | `LogoutResult`         | revokes the refresh token                                                                                                    |
+| GET    | `/api/auth/me`         | JWT                         | `IdentityContext`      | sample protected route                                                                                                       |
+| GET    | `/api/identity/users`  | JWT + `identity.users.read` | `Paginated<AuthUser>`  | **RBAC sample**: 403 without the permission; forwards identity headers to `identity.users.list` (MS4)                        |
+| GET    | `/api/branding`        | — (public)                  | `BrandingRecord`       | **P3**: website reads branding unauthenticated; → `settings.branding.get` (MS2); coded defaults when unset (F7)              |
+| PUT    | `/api/branding`        | JWT + `settings.manage`     | `BrandingRecord`       | **P3**: deep-partial update; forwards identity headers to `settings.branding.update` (MS4)                                   |
+| GET    | `/api/tracking-config` | — (public)                  | `PublicTrackingConfig` | **P8.23.A1**: consent policy + the destinations that are enabled AND configured; coded defaults when settings is unreachable |
 
 P6 additions (integrations + in-app notifications). **Integrations** are grouped
 capability → providers → active (N13, reworked 2026-07-19); masked reads need
@@ -187,6 +188,25 @@ returns the full `SettingsCatalog` (groups → sections → fields with descript
 value); `PUT /api/settings` (guard `settings.manage`) → `SETTINGS_SET` applies a batch of
 typed `{ key, value }` writes and returns the refreshed catalog (identity forwarded in RMQ
 headers, MS4). Uses the existing `SETTINGS_CLIENT`. `GET /api/branding` stays public/unchanged.
+
+## Tracking config (P8.23.A1)
+
+`tracking/tracking.controller.ts` — `GET /api/tracking-config`, **public**: the website's consent
+banner renders before any visitor could be authenticated, and a pixel id is public by construction
+(it ships in the page). It resolves the whole `tracking` group via `SETTINGS_RESOLVE_GROUP` (MS2,
+the same path the rate-limit resolver uses) and projects it through the pure
+`tracking/tracking-config/tracking-config.assembler.ts`.
+
+Two properties carry the endpoint, and both are probed:
+
+- **It publishes only what is finished.** A destination appears only when it is BOTH enabled and
+  configured; one switched off, or switched on with a blank id, is omitted entirely. A loader handed
+  `''` would request a tag that can never work, from a visitor who was asked to consent to it.
+- **It degrades open.** This sits on the render path of every public page, so an unreachable
+  settings-service returns `DEFAULT_TRACKING_CONFIG` (consent still asked, **no** destinations)
+  rather than throwing — failing it would take the site down for the sake of a pixel (U23, U30b).
+  Every leaf is read null-safely: a value of the wrong type falls back to the coded default instead
+  of travelling to the browser (F7).
 
 ## Run
 

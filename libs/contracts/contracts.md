@@ -60,6 +60,33 @@
 - `lib/settings/setting-catalog.types.ts` — `SettingField` gained `min?`/`max?`, alongside the existing
   `options?`: a descriptor-declared range, enforced on write and rendered on the control.
 
+## P8.23.A1 additions — the `tracking` domain (`lib/tracking/`)
+
+- `consent-category.ts` — `consentCategorySchema` (`necessary | analytics | marketing`),
+  `CONSENT_CATEGORIES`, `TOGGLABLE_CONSENT_CATEGORIES`. The set is **code-shaped on purpose**:
+  making it an admin setting multiplies the state machine the banner must prove and buys an
+  operator nothing they would ever change.
+- `tracking-settings.ts` — the `tracking` settings group: `TRACKING_GROUP`,
+  `TRACKING_SECTION_CONSENT`/`_DESTINATIONS`, `CONSENT_SETTING_KEYS`, the coded defaults and the
+  bounds (`CONSENT_POLICY_VERSION_BOUNDS`, `CONSENT_REMEMBER_DAYS_BOUNDS`), plus
+  `POLICY_PATH_PATTERN` — a site path or an absolute **https** url, nothing else, because the value
+  is rendered as an `href` and `javascript:` must never survive validation.
+- `tracking-destination.ts` — `TRACKING_DESTINATIONS` (ga4 · gtm · metaPixel · snapPixel ·
+  tiktokPixel), each with the consent `category` that gates it, an `idPattern` and an `idExample`;
+  `trackingDestinationSettingKeys()`, `trackingDestination()`, and `matchingDestinationIds()` — the
+  last one exists because Meta and TikTok id shapes genuinely overlap, so the admin surfaces the
+  ambiguity rather than the pattern silently accepting a mis-paste.
+  The patterns are **shape hints, not vendor specifications** (U15): third-party formats cannot be
+  verified from this repo, so they check prefix + charset with generous lengths.
+- `tracking-config.types.ts` + `tracking-config.defaults.ts` — `PublicTrackingConfig`, the public
+  projection `GET /api/tracking-config` serves, and `DEFAULT_TRACKING_CONFIG`. The default lists
+  **no destinations**: "the operator has configured nothing" and "we could not read the settings"
+  must collapse to the same safe answer (U30b).
+- Same reasoning as `security-settings.ts` for why the defaults live here: settings-service uses
+  them as the U9 coded default, the gateway serves them when the broker is unreachable (U3).
+- `lib/settings/setting-catalog.types.ts` — `SettingField` gained `pattern?`/`patternExample?`
+  beside `min?`/`max?`: a descriptor-declared shape, enforced on write and shown on the control.
+
 ## P8.8 additions — money + sequence shapes
 
 - `lib/money/*` — the shapes every priced document shares; the **arithmetic and formatting live in

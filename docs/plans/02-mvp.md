@@ -381,6 +381,69 @@ in P8.10.B1 — this phase acts on the number); thank-you states that fire **con
 **Done when:** a lead submission from an ad click produces a **tracked conversion with consent respected**, and every legal page renders from the CMS in ar + en.
 **Applies:** U0, U9, WEB1–WEB6, F7, U8.
 
+**SPLIT (2026-08-23, U0/E).** One paragraph covering consent, five ad platforms, conversion events,
+legal pages, WhatsApp, SEO and sitemap is not one phase. Split into **A1 → A2 → A3** (the "consent +
+pixels" half of the launch route) and **B** (the rest). P8.10.C's honeypot / time-floor / Turnstile
+was folded here in P8.10's split and lands in **B**.
+
+### P8.23.A1 — the tracking & consent configuration spine
+
+**Scope:** every fact about tracking becomes a resolved setting with a coded default (U9) — the
+platform is sellable, so a vendor ID is **never** in the code.
+**Tasks:** a new `tracking` settings group with two sections — `consent` (banner on/off, policy
+version, remember-days, privacy/cookie policy paths) and `destinations` (GA4 · GTM · Meta · Snap ·
+TikTok, each an `enabled` + `id` pair); a **per-destination ID pattern** enforced on write with a
+localized rejection, generalized as an optional `pattern` on the settings descriptor beside the
+existing `min`/`max`; a **public** `GET /api/tracking-config` that serves the resolved config and
+lists **only** destinations that are both enabled and configured; the website's typed reader; and a
+**purpose-built** admin _Tracking & consent_ page at `/settings/tracking` — consent-policy card +
+one card per destination with format hint, inline validation, status chip and the two honest
+warnings (GTM tags sit outside this consent gate unless they honor Consent Mode; GA4 + GTM both on
+double-counts). **Not** a key/value grid (U0).
+**Done when:** an admin configures the consent policy and every destination from a purpose-built
+screen with real per-vendor validation and every U23 state; the public endpoint serves the resolved
+config with coded defaults, never lists a destination that is off or unconfigured, never returns a
+key outside the group, and still answers when settings-service is down; verifier PASS + boot UP.
+**Applies:** U0, U9, U3, U15, U23, U24, N7, F7, MS2, DOC1, DOC2.
+
+### P8.23.A2 — the website consent layer
+
+**Scope:** the lawful gate that must exist before a single vendor tag may load.
+**Tasks:** a versioned, category-granular consent state (`necessary` always granted · `analytics` ·
+`marketing`) persisted for `rememberDays`; **Google Consent Mode v2 `default: denied` emitted in
+`<head>` before anything else**; the bespoke consent banner + a granular preferences dialog (accept
+all / reject all / per-category), both on the website's single signature theme (WEB7); a permanent
+"Cookie preferences" affordance in the footer so a decision is always revisable; the policy links
+rendered only when a path is set (F7).
+**Done when:** no tracking cookie and no vendor request exists before consent; a decision persists
+across reload and expires with `rememberDays`; a `policyVersion` bump re-asks everyone; ar/en + RTL,
+reduced-motion, and every U23 state, verified by looking.
+**Applies:** U0, U23, WEB1–WEB7, F7, F12, U7, U8.
+
+### P8.23.A3 — the tag layer + conversions
+
+**Scope:** the tags themselves, and the number an ad platform actually optimizes on.
+**Tasks:** consent-gated loaders for every enabled destination (nothing requested until its
+category is granted), a Consent Mode `update` on grant **and** on withdrawal; thank-you states on
+contact + request-a-project that fire a **deduped** lead conversion to every enabled destination
+(one per submission, never on a re-render or a back-navigation).
+**Done when:** a lead submission from an ad click produces a tracked conversion with consent
+respected; revoking a category stops that destination on the spot.
+**Applies:** U0, U23, U27, WEB1–WEB4, F7.
+
+### P8.23.B — legal pages, WhatsApp, SEO, and bot defence
+
+**Scope:** the remaining launch blockers.
+**Tasks:** genuine **privacy notice, terms, and data-processing** pages rendered from the CMS in
+ar + en (and linked from the A2 banner); a configurable **WhatsApp CTA** on contact and
+request-a-project acting on the P8.10.B1 phone number; per-page SEO/OG re-verified; sitemap +
+robots re-checked against the new routes; a client-portal entry point in the site chrome; and the
+P8.10.C bot defence (honeypot · time-floor · Turnstile), which only earns its keep once paid
+traffic starts and must degrade open.
+**Done when:** every legal page renders from the CMS in ar + en and is reachable from the banner and
+the footer; the WhatsApp CTA opens the configured number; sitemap/robots cover every route.
+**Applies:** U0, U9, WEB1–WEB6, F7, U8.
+
 ---
 
 ## P9 — End-to-end verify + DEPLOY (staging → production) ← priority milestone

@@ -539,6 +539,13 @@ phoneNoCountry,invalidPhone}`; styles in `.lead-phone*` / `.lead-hint` (`site-ch
   **`getBlogPost(slug)`** (article) / **`getBlogCategories()`** (filter chips) (8.E-3) ·
   **`faq.ts` `getFaqs(limit)`** (the FAQ accordion, 8.E-4) — cached + tagged public reads.
   `leads.ts` `createLead(body)` — `no-store` POST.
+- **`tracking/tracking.ts` `getTrackingConfig()`** (P8.23.A1) — the public consent policy + the ad
+  destinations the site may load, from `GET /api/tracking-config`. Cached for **300 s** (not 60 s
+  like branding): a pixel id and a consent policy change about once a campaign, and this read sits
+  on every public page render; tagged `tracking` so a settings save can revalidate it. It is the one
+  reader that **never throws** — a gateway that cannot answer degrades to `DEFAULT_TRACKING_CONFIG`
+  (consent still asked, no destination loaded) rather than 500-ing a page for the sake of a pixel.
+  Nothing renders it yet; the consent layer (P8.23.A2) and the tag layer (P8.23.A3) consume it.
 - `lead-action.ts` — the `'use server'` action the client `LeadForm` calls (re-validates with
   `leadCreateRequestSchema`, N7).
 - **Media resolver (`src/data/media.ts` + `src/media/`, 8.C).** `resolveMediaUrls(ids)` batch-calls

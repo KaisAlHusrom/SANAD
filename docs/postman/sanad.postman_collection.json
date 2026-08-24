@@ -345,6 +345,77 @@
       ]
     },
     {
+      "name": "Settings",
+      "description": "The **descriptor-driven** settings catalog behind the admin's settings screens (groups → sections → fields). One generic read and one generic batch write serve every group — `branding`, `security` (P8.10.A) and `tracking` (P8.23.A1) — so a new group needs no new endpoint. Branding also has its own public read (see the Branding folder); the tracking group's *public projection* is `GET /tracking-config` (see Tracking).",
+      "item": [
+        {
+          "name": "Get settings catalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["settings"]
+            },
+            "description": "**Purpose:** every admin-editable setting, grouped for the UI, each paired with its **resolved** value (override → global → coded default, U9) so a control is never blank (F7).\n\n**Auth:** bearer + permission `settings.read` (admin `manage` covers it).\n\n**Returns** `data`: `SettingsCatalog` — `{ groups: [{ group, sections: [{ section, fields: [SettingField] }] }] }`.\n\n`SettingField` — `key` (flat dot key), `type` (`text|number|boolean|color|url|image|select|localized_text`), `requirement`, optional `options` (for `select`), optional `min`/`max` (inclusive range, enforced on write), optional `pattern` + `patternExample` (required shape for a string field, enforced on write), and `value` (the resolved value; `{ar,en}` for `localized_text`, `null` when explicitly unset)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"values\": [\n    {\n      \"key\": \"tracking.destinations.ga4.enabled\",\n      \"value\": true\n    },\n    {\n      \"key\": \"tracking.destinations.ga4.id\",\n      \"value\": \"G-ABCDE12345\"\n    },\n    {\n      \"key\": \"tracking.consent.rememberDays\",\n      \"value\": 180\n    },\n    {\n      \"key\": \"tracking.consent.privacyPolicyPath\",\n      \"value\": null\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["settings"]
+            },
+            "description": "**Purpose:** apply a batch of typed key→value writes. The admin sends **only the keys that changed**. Each write is validated against its descriptor before anything is persisted, then the values, one audit row per key, and one `settings.changed` Outbox event per touched group are committed in a single transaction (MS3).\n\n**Auth:** bearer + permission `settings.manage`. Missing → 403.\n\n**Body** (`.strict()`): `{ values: [{ key, value }] }`, at least one entry. `value` is a string, number, boolean, `{ar,en}`, or `null`.\n\n**`null` clears** a value back to its coded default (U9) — including a `localized_text`, whose per-locale rows are dropped with it.\n\n**Rejections (400, localized ar/en):** wrong type for the descriptor (`settings.value.expected.*`), a number outside a declared range (`settings.value.outOfRange`, carries `min`/`max`), or a string that does not match a declared `pattern` (`settings.value.invalidFormat`, carries the expected `example`). An unknown key is ignored, not an error.\n\n**Returns** `data`: the re-resolved `SettingsCatalog`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tracking",
+      "description": "The **public projection** of the `tracking` settings group (P8.23.A1): the consent policy the website's banner obeys, and the ad/analytics destinations it is allowed to load. Configured through `PUT /settings` (see Settings) — this endpoint is read-only and is what the website actually consumes.",
+      "item": [
+        {
+          "name": "Get tracking config",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tracking-config",
+              "host": ["{{baseUrl}}"],
+              "path": ["tracking-config"]
+            },
+            "description": "**Purpose:** everything the website's consent layer needs, resolved and safe to publish. A pixel id is public by construction (it ships in the page); nothing else from the settings catalog is projected here.\n\n**Auth:** **public** — the banner renders before any visitor could be authenticated.\n\n**Degrades open:** if the settings-service cannot be reached this still answers **200** with the coded defaults (consent asked, `destinations: []`) rather than failing the page render.\n\n**Returns** `data`: `PublicTrackingConfig` —\n- `consent`: `{ bannerEnabled: boolean, policyVersion: number, rememberDays: number, privacyPolicyPath: string|null, cookiePolicyPath: string|null }`\n- `destinations`: `[{ id: 'ga4'|'gtm'|'metaPixel'|'snapPixel'|'tiktokPixel', category: 'analytics'|'marketing', measurementId: string }]`\n\n**A destination appears ONLY when it is both enabled and configured** — one switched off, or switched on with a blank id, is omitted entirely, so a loader can never be handed an id that cannot work."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Integrations",
       "description": "Capability -> providers -> active provider (N13). Masked reads need settings.integrations.read; configure/activate/test need settings.integrations.<capability>.manage.",
       "item": [
