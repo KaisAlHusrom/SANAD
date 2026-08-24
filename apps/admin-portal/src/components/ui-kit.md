@@ -100,6 +100,16 @@ cramped modal (U21). All tokens-only, RTL-correct, exported from the `ui/` barre
 - **`Badge`** (`badge.tsx`, `cva`) — the tokenized status pill (tones `good|warn|bad|accent|neutral`;
   tinted `color-mix` bg per design-spec §4; optional leading `dot`). Adopted by the secrets table
   ("not wired" + status) and available for any status cell.
+- **`Callout`** (`callout/`, `cva`, P8.23.A1) — the inline notice panel: a tinted, bordered block for
+  a warning, a verdict, or a caveat that belongs beside the control it is about (tones
+  `good|warn|bad|accent|neutral`, optional leading `icon`).
+  **Why it exists, and the rule it encodes:** two integrations panels had hand-rolled this as
+  `border-warn/30 bg-warn/10 text-warn`, and Tailwind 3.4 emits **no CSS at all** for an opacity
+  modifier on a `var(--token)` color — so both rendered as bare text with no tint and no border, with
+  no error anywhere. `CALLOUT_TONE_CLASSES` is the single source of the tone paint (exported, so a
+  panel with its own layout tints identically) and uses the same explicit `color-mix` canon as
+  `Badge`. `callout.spec.tsx` asserts each tone paints through `color-mix` and carries **no**
+  `bg-<tone>/…` modifier, so the silent-nothing regression cannot come back.
 - **`Dialog` sub-parts** (`dialog.tsx`) — `DialogContent` now caps height (`max-h` + internal
   scroll) and takes a `size` (sm/md/lg). Compose `DialogHeader` + `DialogBody` (the only scroll
   region) + `DialogFooter` for a fixed header/footer around a scrollable body; flat children stay

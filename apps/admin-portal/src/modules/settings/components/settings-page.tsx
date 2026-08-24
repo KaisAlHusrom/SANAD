@@ -1,3 +1,4 @@
+import { TRACKING_GROUP } from '@sanad/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '../../../components/feedback/empty-state';
@@ -23,7 +24,12 @@ import { SettingSectionForm } from './setting-section-form';
 export function SettingsPage() {
   const { t } = useTranslation('settings');
   const { data, isLoading, isError } = useGetSettingsQuery();
-  const groups = data?.groups ?? [];
+  // `tracking` is deliberately NOT a tab here: it has its own purpose-built page at
+  // /settings/tracking (U0), and rendering it generically too would put two differently-shaped
+  // editors on the same keys — the operator would have no way to know which one is the real one.
+  const groups = (data?.groups ?? []).filter(
+    (group) => group.group !== TRACKING_GROUP,
+  );
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const current =
     groups.find((group) => group.group === activeGroup) ?? groups[0];

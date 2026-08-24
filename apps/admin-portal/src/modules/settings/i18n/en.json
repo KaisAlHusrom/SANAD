@@ -8,7 +8,8 @@
   },
   "group": {
     "branding": "Visual identity",
-    "security": "Security"
+    "security": "Security",
+    "tracking": "Tracking & consent"
   },
   "section": {
     "branding": {
@@ -22,6 +23,10 @@
     "security": {
       "rateLimit": "Request limits",
       "leads": "Duplicate leads"
+    },
+    "tracking": {
+      "consent": "Consent",
+      "destinations": "Destinations"
     }
   },
   "colorGroups": {
@@ -87,5 +92,98 @@
   "errors": {
     "loadFailed": "Couldn't load settings.",
     "unknown": "Something went wrong."
+  },
+  "tracking": {
+    "title": "Tracking & consent",
+    "subtitle": "What the website is allowed to measure, who it asks first, and where each measurement is sent.",
+    "actions": {
+      "retry": "Try again",
+      "unsaved": "You have unsaved changes."
+    },
+    "unavailable": {
+      "title": "Tracking settings aren’t available yet",
+      "description": "The settings service didn’t return a tracking group. It appears the moment the service starts with this version — no migration needed."
+    },
+    "consent": {
+      "title": "Consent",
+      "subtitle": "The banner visitors see before anything is measured.",
+      "bannerEnabled": "Ask visitors for consent",
+      "bannerEnabledHelp": "Shows the consent banner on every page until a visitor decides.",
+      "bannerOffWarning": "With the banner off nobody is asked, so nothing is granted — every destination below stays dormant. Turn it off only if you have another lawful basis in place.",
+      "rememberDays": "Remember a decision for (days)",
+      "rememberDaysHelp": "Between {{min}} and {{max}} days. After that, visitors are asked again.",
+      "policyVersion": "Policy version",
+      "categoriesNote": "Visitors decide per category: essentials are always on, analytics and marketing are theirs to grant. Each destination below names the category that gates it.",
+      "link": {
+        "tracking.consent.privacyPolicyPath": "Privacy notice",
+        "tracking.consent.cookiePolicyPath": "Cookie notice",
+        "opensAt": "Opens at",
+        "unset": "Not linked yet — the banner will render without this link.",
+        "invalid": "Enter a site path starting with “/” or a full https:// address."
+      },
+      "linkPlaceholder": {
+        "tracking.consent.privacyPolicyPath": "/privacy",
+        "tracking.consent.cookiePolicyPath": "/cookies"
+      },
+      "reask": {
+        "action": "Ask everyone again",
+        "help": "Raises the version, so every visitor is asked once more.",
+        "saveFirst": "Save your changes before asking everyone again.",
+        "title": "Ask every visitor again?",
+        "message": "This raises the policy version. Every visitor — including those who already decided — is asked once more on their next page view. Existing decisions stop applying immediately.",
+        "confirm": "Raise the version",
+        "done": "Every visitor will be asked again."
+      }
+    },
+    "destinations": {
+      "title": "Destinations",
+      "subtitle": "Each one loads only after a visitor grants the category that gates it."
+    },
+    "category": {
+      "analytics": "Analytics",
+      "marketing": "Marketing"
+    },
+    "status": {
+      "off": "Off",
+      "notConfigured": "No ID yet",
+      "invalid": "ID looks wrong",
+      "live": "Live"
+    },
+    "fields": {
+      "enable": "Enable {{name}}",
+      "measurementId": "ID",
+      "idHint": "Looks like"
+    },
+    "destination": {
+      "ga4": {
+        "name": "Google Analytics 4",
+        "help": "Page views and events, reported in the GA4 property."
+      },
+      "gtm": {
+        "name": "Google Tag Manager",
+        "help": "A container that loads whatever tags you configure inside it."
+      },
+      "metaPixel": {
+        "name": "Meta pixel",
+        "help": "Conversions for Facebook and Instagram campaigns."
+      },
+      "snapPixel": {
+        "name": "Snap pixel",
+        "help": "Conversions for Snapchat campaigns."
+      },
+      "tiktokPixel": {
+        "name": "TikTok pixel",
+        "help": "Conversions for TikTok campaigns."
+      }
+    },
+    "warnings": {
+      "doubleCounting": "Google Analytics 4 and Tag Manager are both on. If the container also loads GA4, every session is counted twice.",
+      "gtmOutsideGate": "Tags configured inside the container are loaded by Tag Manager, not by this platform. We set Consent Mode; each tag in the container must be set to honour it.",
+      "ambiguousId": "This value also matches the format of: {{others}}. Check you pasted it into the right field."
+    },
+    "errors": {
+      "invalidId": "That doesn’t look like a valid ID. It should look like {{example}}.",
+      "fixFieldsFirst": "Nothing was saved — fix the highlighted fields first."
+    }
   }
 }

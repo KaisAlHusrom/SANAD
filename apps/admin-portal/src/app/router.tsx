@@ -16,7 +16,7 @@ import { MenusPage } from '../modules/menus';
 import { PageBuilderPage, PagesPage } from '../modules/pages';
 import { PortfolioCategoriesPage, PortfolioPage } from '../modules/portfolio';
 import { ServicesPage } from '../modules/services';
-import { SettingsPage } from '../modules/settings';
+import { SettingsPage, TrackingPage } from '../modules/settings';
 import { TeamPage } from '../modules/team';
 import { TestimonialsPage } from '../modules/testimonials';
 import { UsersPage } from '../modules/users';
@@ -167,6 +167,14 @@ export const router = createBrowserRouter(
               element: (
                 <RequirePermission permission="settings.read">
                   <SettingsPage />
+                </RequirePermission>
+              ),
+            },
+            {
+              path: '/settings/tracking',
+              element: (
+                <RequirePermission permission="settings.manage">
+                  <TrackingPage />
                 </RequirePermission>
               ),
             },

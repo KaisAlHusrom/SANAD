@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   FileText,
   Image,
   Inbox,
@@ -31,6 +32,12 @@ export const ADMIN_NAV: readonly NavItem[] = [
     to: '/settings',
     labelKey: 'nav.settings',
     icon: Settings,
+    permission: 'settings.manage',
+  },
+  {
+    to: '/settings/tracking',
+    labelKey: 'nav.tracking',
+    icon: BarChart3,
     permission: 'settings.manage',
   },
   {
