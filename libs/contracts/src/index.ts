@@ -16,6 +16,7 @@ export * from './lib/money/index.js';
 export * from './lib/sequence/index.js';
 export * from './lib/identity/index.js';
 export * from './lib/settings/index.js';
+export * from './lib/tracking/index.js';
 export * from './lib/media/index.js';
 export * from './lib/content/index.js';
 export * from './lib/notifications/index.js';

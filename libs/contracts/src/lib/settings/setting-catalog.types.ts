@@ -21,6 +21,14 @@ export interface SettingField {
   /** Inclusive range for `number`-typed fields — enforced on write, and on the control. */
   min?: number;
   max?: number;
+  /**
+   * A shape a string-typed value must match — enforced on write, and surfaced on the control.
+   * The same generic capability `min`/`max` are; a value that cannot be right must be refused
+   * at the moment it is typed, not accepted and reported back as "saved" (U0).
+   */
+  pattern?: string;
+  /** A valid example of `pattern`, shown as the field's placeholder and in the rejection. */
+  patternExample?: string;
   /** The current resolved value (never blank — coded default when unset, F7). */
   value: SettingValue;
 }
