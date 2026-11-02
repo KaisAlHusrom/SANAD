@@ -1,0 +1,143 @@
+/*
+ * The website's overlay layer (P8.23.A2b-1) — the first one on this site.
+ *
+ * `scrollbar-gutter: stable` on <html> is what makes the lock free of layout shift: without it,
+ * `overflow: hidden` reclaims the scrollbar's width and the fixed nav jumps by ~15px the moment a
+ * dialog opens. Reserving the gutter always is cheaper and steadier than measuring and padding.
+ */
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html.is-scroll-locked {
+  overflow: hidden;
+}
+
+.sanad-web .overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--web-z-overlay);
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 4vw, 48px);
+}
+
+.sanad-web .overlay-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--web-bg) 78%, transparent);
+  backdrop-filter: blur(6px);
+  /* On touch the capped scroller never installs, so this is what stops the page panning behind. */
+  touch-action: none;
+}
+
+.sanad-web .overlay-panel {
+  position: relative;
+  /* auto | minmax(0, 1fr) | auto is the whole U21c structure: a header and a footer that stay put
+     while the middle — and only the middle — scrolls. `minmax(0,…)` is load-bearing; a bare `1fr`
+     refuses to shrink below its content and the panel grows past the viewport instead. */
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  inline-size: min(560px, 100%);
+  /* dvh, not vh — mobile browser chrome would otherwise clip the action row out of reach. */
+  max-block-size: min(680px, 100dvh - 2 * clamp(16px, 4vw, 48px));
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--web-s2) 94%, transparent),
+    color-mix(in oklab, var(--web-s1) 92%, transparent)
+  );
+  border: 1px solid var(--web-hairline-strong);
+  border-radius: var(--web-radius-lg);
+  box-shadow: 0 28px 70px color-mix(in srgb, var(--web-bg) 78%, transparent);
+  overflow: hidden;
+}
+
+.sanad-web .overlay-panel:focus {
+  outline: none;
+}
+
+.sanad-web .overlay-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-block: 20px;
+  padding-inline: clamp(20px, 4vw, 28px);
+  border-block-end: 1px solid var(--web-hairline);
+}
+
+.sanad-web .overlay-body {
+  overflow-y: auto;
+  /* Keeps a flick at the end of the list from chaining into the page behind the scrim. */
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding-block: 20px;
+  padding-inline: clamp(20px, 4vw, 28px);
+  scrollbar-width: thin;
+  scrollbar-color: var(--web-hairline-strong) transparent;
+}
+
+/* macOS hides overlay scrollbars until you scroll, so the panel needs its own persistent one —
+   otherwise a body cut off at a row boundary reads as complete content (U21: every scroller wears
+   the product's design, never the raw platform default). */
+.sanad-web .overlay-body::-webkit-scrollbar {
+  inline-size: 6px;
+}
+
+.sanad-web .overlay-body::-webkit-scrollbar-thumb {
+  border-radius: var(--web-radius-pill);
+  background: var(--web-hairline-strong);
+}
+
+.sanad-web .overlay-body::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--web-text) 28%, transparent);
+}
+
+.sanad-web .overlay-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sanad-web .overlay-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-block: 16px;
+  padding-inline: clamp(20px, 4vw, 28px);
+  border-block-start: 1px solid var(--web-hairline);
+  background: color-mix(in oklab, var(--web-bg) 40%, transparent);
+}
+
+/* A sheet, not a shrunken desktop dialog. */
+@media (max-width: 640px) {
+  .sanad-web .overlay-root {
+    place-items: end stretch;
+    padding: 0;
+  }
+
+  .sanad-web .overlay-panel {
+    inline-size: 100%;
+    max-block-size: 88dvh;
+    border-inline: none;
+    border-block-end: none;
+    border-start-start-radius: var(--web-radius-lg);
+    border-start-end-radius: var(--web-radius-lg);
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+}
+
+/*
+ * The site had no DESIGNED focus ring — buttons and links fell back to the UA outline. A
+ * hand-rolled focus trap makes that load-bearing, so the treatment is defined once, here, for
+ * every interactive element in the website scope rather than only for the consent surfaces.
+ */
+.sanad-web a:focus-visible,
+.sanad-web button:focus-visible,
+.sanad-web [role='switch']:focus-visible,
+.sanad-web input:focus-visible,
+.sanad-web textarea:focus-visible,
+.sanad-web select:focus-visible {
+  outline: none;
+  box-shadow: var(--web-focus-ring);
+  border-radius: var(--web-radius-md);
+}

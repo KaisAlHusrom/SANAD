@@ -14,6 +14,7 @@ vi.mock('gsap', () => ({
 vi.mock('gsap/ScrollTrigger', () => ({ ScrollTrigger: { update: vi.fn() } }));
 
 import { MotionProvider } from './motion-provider';
+import { scrollLock } from './scroll';
 import { Reveal } from './reveal';
 import { WordReveal } from './word-reveal';
 
@@ -56,6 +57,76 @@ describe('MotionProvider (WEB4 — capped scroll gated on reduced-motion)', () =
     );
     expect(screen.getByText('calm')).toBeInTheDocument();
     expect(tickerAdd).not.toHaveBeenCalled();
+  });
+});
+
+describe('MotionProvider — it must not eat input it does not own', () => {
+  function wheel(): WheelEvent {
+    const event = new WheelEvent('wheel', {
+      deltaY: 120,
+      cancelable: true,
+      bubbles: true,
+    });
+    window.dispatchEvent(event);
+    return event;
+  }
+
+  function keyOn(target: Element, key: string): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', {
+      key,
+      cancelable: true,
+      bubbles: true,
+    });
+    target.dispatchEvent(event);
+    return event;
+  }
+
+  it('claims the wheel while unlocked, and hands it back while an overlay holds the lock', () => {
+    setReducedMotion(false);
+    render(
+      <MotionProvider>
+        <p>cosmos</p>
+      </MotionProvider>,
+    );
+
+    expect(wheel().defaultPrevented).toBe(true);
+
+    const release = scrollLock.acquire();
+    // Handing the wheel back is what lets the dialog's own body scroll natively while
+    // `overflow: hidden` freezes the page behind it.
+    expect(wheel().defaultPrevented).toBe(false);
+
+    release();
+    expect(wheel().defaultPrevented).toBe(true);
+  });
+
+  // The pre-existing platform bug: Space is a page-scroll key for the capped scroller, so a
+  // focused button was paging the document instead of activating.
+  it('never swallows Space aimed at a button', () => {
+    setReducedMotion(false);
+    render(
+      <MotionProvider>
+        <button type="button">Accept all</button>
+      </MotionProvider>,
+    );
+
+    const button = screen.getByRole('button', { name: 'Accept all' });
+    expect(keyOn(button, ' ').defaultPrevented).toBe(false);
+    expect(keyOn(document.body, ' ').defaultPrevented).toBe(true);
+  });
+
+  it('leaves keyboard scrolling alone while an overlay holds the lock', () => {
+    setReducedMotion(false);
+    render(
+      <MotionProvider>
+        <p>cosmos</p>
+      </MotionProvider>,
+    );
+
+    const release = scrollLock.acquire();
+    expect(keyOn(document.body, 'PageDown').defaultPrevented).toBe(false);
+    expect(keyOn(document.body, 'Home').defaultPrevented).toBe(false);
+    release();
   });
 });
 

@@ -12,6 +12,8 @@ import {
   keyScrollDelta,
   normalizeWheelDelta,
   scrollLead,
+  scrollLock,
+  shouldDriveScroll,
   stepCappedScroll,
   MAX_SCROLL_SPEED,
 } from './scroll';
@@ -77,16 +79,19 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey) return; // leave pinch-zoom alone
+      // BEFORE preventDefault, deliberately: handing the wheel back to the browser is what lets an
+      // open overlay's own body scroll natively while `overflow: hidden` freezes the page behind it.
+      if (scrollLock.isLocked()) return;
       e.preventDefault();
       const d = normalizeWheelDelta(e.deltaY, e.deltaMode, window.innerHeight);
       target = clampScrollTarget(target + d, cur, lead, maxY());
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      const tag = el?.tagName ?? '';
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable)
-        return;
+      if (scrollLock.isLocked()) return;
+      // Not a tag check: the control that must keep Space is a <button>, and Space is one of the
+      // keys this scroller drives — so a bare tag exemption silently broke every button on the site.
+      if (!shouldDriveScroll(e.key, e.target as Element | null)) return;
       if (e.key === 'Home') {
         e.preventDefault();
         target = 0;
@@ -105,6 +110,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 
     // nav / in-page anchors glide there at the same capped pace
     const onAnchorClick = (e: MouseEvent) => {
+      if (scrollLock.isLocked()) return;
       const anchor = (e.target as HTMLElement | null)?.closest?.(
         'a[href^="#"]',
       );
@@ -140,6 +146,13 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // While an overlay held the lock the page could still move under it (a scrollbar drag, browser
+    // find). `onScroll`'s epsilon adoption would only catch that on the next scroll event, so the
+    // first wheel tick after closing would jump from a stale target — resync the moment it releases.
+    const offScrollLock = scrollLock.subscribe(() => {
+      if (!scrollLock.isLocked()) cur = target = lastSetY = window.scrollY;
+    });
+
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', onKeyDown);
     document.addEventListener('click', onAnchorClick);
@@ -158,6 +171,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     window.addEventListener('pointermove', onPointerMove, { passive: true });
 
     return () => {
+      offScrollLock();
       gsap.ticker.remove(onTick);
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKeyDown);
