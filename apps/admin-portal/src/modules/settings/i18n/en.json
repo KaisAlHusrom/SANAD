@@ -156,23 +156,18 @@
     },
     "destination": {
       "ga4": {
-        "name": "Google Analytics 4",
         "help": "Page views and events, reported in the GA4 property."
       },
       "gtm": {
-        "name": "Google Tag Manager",
         "help": "A container that loads whatever tags you configure inside it."
       },
       "metaPixel": {
-        "name": "Meta pixel",
         "help": "Conversions for Facebook and Instagram campaigns."
       },
       "snapPixel": {
-        "name": "Snap pixel",
         "help": "Conversions for Snapchat campaigns."
       },
       "tiktokPixel": {
-        "name": "TikTok pixel",
         "help": "Conversions for TikTok campaigns."
       }
     },

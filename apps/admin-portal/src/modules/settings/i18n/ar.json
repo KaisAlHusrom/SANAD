@@ -156,23 +156,18 @@
     },
     "destination": {
       "ga4": {
-        "name": "Google Analytics 4",
         "help": "مشاهدات الصفحات والأحداث، تُعرض في خاصية GA4."
       },
       "gtm": {
-        "name": "Google Tag Manager",
         "help": "حاوية تُحمّل الوسوم التي تضبطها بداخلها."
       },
       "metaPixel": {
-        "name": "بكسل Meta",
         "help": "تحويلات حملات فيسبوك وإنستغرام."
       },
       "snapPixel": {
-        "name": "بكسل Snap",
         "help": "تحويلات حملات سناب شات."
       },
       "tiktokPixel": {
-        "name": "بكسل TikTok",
         "help": "تحويلات حملات تيك توك."
       }
     },

@@ -2,6 +2,7 @@ import * as Label from '@radix-ui/react-label';
 import { AlertTriangle } from 'lucide-react';
 import { Controller, type UseFormReturn } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { pickLocalized, TRACKING_DESTINATION_NAMES } from '@sanad/contracts';
 import { formatList } from '../../../../lib/format';
 import { Badge, type BadgeProps } from '../../../../components/ui/badge';
 import { Callout } from '../../../../components/ui/callout';
@@ -39,7 +40,9 @@ export function DestinationCard({
 }: DestinationCardProps) {
   const { t, i18n } = useTranslation('settings');
   const locale = i18n.language === 'en' ? 'en' : 'ar';
-  const name = t(`tracking.destination.${view.id}.name`);
+  // From contracts, not this catalog: the website's consent dialog names the same five vendors to
+  // visitors, and two catalogs would drift — with the legal disclosure being the half that drifts (U3).
+  const name = pickLocalized(TRACKING_DESTINATION_NAMES[view.id], locale);
   const inputId = `destination-${view.id}`;
   const hintId = `${inputId}-hint`;
   const error = form.formState.errors[view.idField];
@@ -123,7 +126,7 @@ export function DestinationCard({
               // the English page (F8).
               others: formatList(
                 view.alsoLooksLike.map((id) =>
-                  t(`tracking.destination.${id}.name`),
+                  pickLocalized(TRACKING_DESTINATION_NAMES[id], locale),
                 ),
                 locale,
               ),
