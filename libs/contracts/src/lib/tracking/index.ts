@@ -4,5 +4,6 @@
 export * from './consent-category.js';
 export * from './tracking-settings.js';
 export * from './tracking-destination.js';
+export * from './tracking-destination-names.js';
 export * from './tracking-config.types.js';
 export * from './tracking-config.defaults.js';

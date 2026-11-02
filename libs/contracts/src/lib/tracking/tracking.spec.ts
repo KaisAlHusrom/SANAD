@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { pickLocalized } from '../common/localized-text.js';
+import { TRACKING_DESTINATION_NAMES } from './tracking-destination-names.js';
 import {
   CONSENT_CATEGORIES,
   TOGGLABLE_CONSENT_CATEGORIES,
@@ -194,5 +196,33 @@ describe('the coded default config (U9/F7)', () => {
 
   it('has the banner ON by default — a silent opt-out is the unlawful default', () => {
     expect(DEFAULT_TRACKING_CONFIG.consent.bannerEnabled).toBe(true);
+  });
+});
+
+describe('destination display names (U3 — one source for admin and website)', () => {
+  it('names every destination in the registry, in both locales', () => {
+    for (const destination of TRACKING_DESTINATIONS) {
+      const name = TRACKING_DESTINATION_NAMES[destination.id];
+      expect(name.ar.length).toBeGreaterThan(0);
+      expect(name.en.length).toBeGreaterThan(0);
+    }
+  });
+
+  // The map is what the consent dialog reads to tell a visitor which third party a category
+  // admits, so an id the registry gains and this map forgets would show them a blank vendor.
+  it('carries no name for a destination that does not exist', () => {
+    const registered = new Set<string>(TRACKING_DESTINATIONS.map((d) => d.id));
+    for (const id of Object.keys(TRACKING_DESTINATION_NAMES)) {
+      expect(registered.has(id)).toBe(true);
+    }
+  });
+
+  it('keeps vendor brand names untranslated where the vendor does not translate them', () => {
+    expect(pickLocalized(TRACKING_DESTINATION_NAMES.ga4, 'ar')).toContain(
+      'Google Analytics',
+    );
+    expect(pickLocalized(TRACKING_DESTINATION_NAMES.ga4, 'en')).toContain(
+      'Google Analytics',
+    );
   });
 });
