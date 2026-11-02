@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { fonts, processPhaseAccents, websiteTokens } from '@sanad/config';
+import {
+  fonts,
+  processPhaseAccents,
+  websiteTokens,
+  websiteZLayers,
+} from '@sanad/config';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -44,6 +49,16 @@ describe('web-ui.css token parity with @sanad/config', () => {
   it('contains the process phase-accent cycle (--web-phase-*)', () => {
     for (const value of processPhaseAccents) {
       expect(cssText).toContain(strip(value));
+    }
+  });
+
+  // The ladder is only useful if the CSS actually carries it — a token declared in @sanad/config
+  // and forgotten here compiles to NOTHING, silently, which is the failure mode U29 exists for.
+  it('declares every website z-layer token', () => {
+    const cssVar = (key: string) =>
+      `--web-z-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
+    for (const [key, value] of Object.entries(websiteZLayers)) {
+      expect(cssText).toContain(strip(`${cssVar(key)}:${value};`));
     }
   });
 });

@@ -43,6 +43,30 @@
   /* type families (fonts) */
   --web-sans: 'IBM Plex Sans Arabic', system-ui, sans-serif;
   --web-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  /*
+   * Stacking ladder (websiteZLayers — drift-guarded). SITE-GLOBAL layers only, in paint order.
+   * Ordering inside one component's own stacking context stays a local number: promoting those
+   * would claim a site-wide relationship that does not exist.
+   */
+  --web-z-under: -1;
+  --web-z-cosmos: 1;
+  --web-z-lift: 1;
+  --web-z-world-veil: 2;
+  --web-z-content: 10;
+  --web-z-popover: 20;
+  --web-z-wayfinder: 40;
+  --web-z-finale: 45;
+  --web-z-cursor: 55;
+  --web-z-travel-veil: 60;
+  --web-z-nav: 65;
+  --web-z-scroll-progress: 70;
+  --web-z-consent-bar: 80;
+  --web-z-ignition: 90;
+  --web-z-overlay: 100;
+  /* focus ring — the site had no DESIGNED keyboard affordance until the consent layer needed one */
+  --web-focus-ring: 0 0 0 3px
+    color-mix(in oklab, var(--web-accent) 32%, transparent);
+  --web-focus-ring-offset: 2px;
 
   background: var(--web-bg);
   color: var(--web-text);
@@ -290,7 +314,7 @@
 
 .web-hero {
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -412,7 +436,7 @@
 .web-hero-veil {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: var(--web-z-under);
   pointer-events: none;
   background: radial-gradient(
     48% 44% at 50% 42%,
@@ -684,6 +708,7 @@
 .web-process {
   position: relative;
 }
+/* Local sibling order inside `.web-process`, not the site-global ladder — see --web-z-* above. */
 .web-process-head {
   position: relative;
   z-index: 3;

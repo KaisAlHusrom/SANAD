@@ -5,6 +5,7 @@ import {
   pageAccents,
   universeSystems,
   websiteTokens,
+  websiteZLayers,
 } from './tokens.js';
 import { sanadTailwindPreset } from './tailwind-preset.js';
 import {
@@ -105,5 +106,33 @@ describe('portal theme', () => {
     expect(css).toContain('[data-app] {');
     expect(css).toContain('[data-app][data-theme="light"] {');
     expect(css).toContain('--accent: #22d3ee;');
+  });
+});
+
+describe('website z-layer ladder', () => {
+  // The ladder's whole value is that reading it tells you the paint intent. Two layers sharing a
+  // number are fine (`cosmos`/`lift` are both 1 by design), but a LATER key with a SMALLER value
+  // would mean the object no longer reads as an order at all.
+  it('reads top-to-bottom as a real order', () => {
+    const values = Object.values(websiteZLayers);
+    for (let i = 1; i < values.length; i += 1) {
+      expect(values[i]).toBeGreaterThanOrEqual(values[i - 1] as number);
+    }
+  });
+
+  it('puts the consent surfaces where the design needs them', () => {
+    // Above the chrome, so the bar is reachable over the full-viewport landing finale…
+    expect(websiteZLayers.consentBar).toBeGreaterThan(websiteZLayers.nav);
+    expect(websiteZLayers.consentBar).toBeGreaterThan(websiteZLayers.finale);
+    // …and below the first-arrival beat, which owns the screen while it plays.
+    expect(websiteZLayers.consentBar).toBeLessThan(websiteZLayers.ignition);
+    // A modal is by definition the topmost interactive surface.
+    expect(websiteZLayers.overlay).toBeGreaterThan(
+      Math.max(
+        ...Object.values(websiteZLayers).filter(
+          (v) => v !== websiteZLayers.overlay,
+        ),
+      ),
+    );
   });
 });

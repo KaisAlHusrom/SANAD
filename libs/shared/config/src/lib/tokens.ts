@@ -249,6 +249,40 @@ export const radius = {
   pill: 999,
 } as const;
 
+/**
+ * The website's stacking ladder — every SITE-GLOBAL layer, in paint order.
+ *
+ * It exists because these numbers were scattered as bare integers across four stylesheets, so
+ * nobody could answer "what sits above what" without grepping, and a new fixed layer had to guess.
+ *
+ * It covers global layers only. Ordering INSIDE one component's own stacking context (the process
+ * moons over their system, a works card's orbit depth) stays a local number: promoting those would
+ * assert a site-wide relationship that does not exist, and orbit depth is runtime data anyway.
+ *
+ * Caveat worth knowing before trusting the numbers as painted order: `.lp-content` is itself
+ * `z-index: 10`, so the landing layers nested inside it (`ignition`, `finale`, `wayfinder`) are
+ * local to THAT context and paint below `nav`/`scrollProgress` despite the larger numbers. The
+ * ladder records the intent; where intent and paint order differ, a `:has()` rule enforces it.
+ */
+export const websiteZLayers = {
+  under: -1,
+  cosmos: 1,
+  /** The WEB13 lift: content over the persistent cosmos canvas must claim a stacking context. */
+  lift: 1,
+  worldVeil: 2,
+  content: 10,
+  popover: 20,
+  wayfinder: 40,
+  finale: 45,
+  cursor: 55,
+  travelVeil: 60,
+  nav: 65,
+  scrollProgress: 70,
+  consentBar: 80,
+  ignition: 90,
+  overlay: 100,
+} as const;
+
 /** Spacing rhythm (px). */
 export const spacing = [
   2, 6, 8, 10, 12, 14, 16, 18, 22, 24, 26, 28, 30, 34, 38, 46, 48,
