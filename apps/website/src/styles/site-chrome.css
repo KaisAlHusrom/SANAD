@@ -33,7 +33,7 @@
   position: fixed;
   inset-block-start: 0;
   inset-inline: 0;
-  z-index: 65;
+  z-index: var(--web-z-nav);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -194,7 +194,7 @@
   inset-block-start: 0;
   inset-inline-start: 0;
   block-size: 2px;
-  z-index: 70;
+  z-index: var(--web-z-scroll-progress);
   background: linear-gradient(90deg, var(--web-secondary), var(--web-accent));
   box-shadow: 0 0 12px color-mix(in srgb, var(--web-accent) 60%, transparent);
   transition: inline-size 0.05s linear;
@@ -206,7 +206,7 @@
   inset-block-start: 0;
   inset-inline: 0;
   block-size: 2px;
-  z-index: -1;
+  z-index: var(--web-z-under);
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -279,6 +279,10 @@
 /* ---- footer ---- */
 
 .site-footer {
+  /* WEB13 — the chrome footer sits over the fixed cosmos canvas and has to claim its own stacking
+     context like `.mk-page` does, or every link in it is visible and unclickable. */
+  position: relative;
+  z-index: var(--web-z-lift);
   border-block-start: 1px solid var(--web-hairline);
   padding-block: clamp(28px, 5vw, 56px);
   padding-inline: clamp(16px, 4vw, 48px);
@@ -383,6 +387,11 @@
 
 .site-footer-copy {
   inline-size: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding-block-start: 18px;
   border-block-start: 1px solid var(--web-hairline);
   color: var(--web-faint);
@@ -398,7 +407,7 @@
      so it MUST claim its own stacking context above the canvas or its upper fields sit behind the
      Beacon rings (invisible in a screenshot though present + interactive in the DOM). */
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -513,7 +522,7 @@
   position: absolute;
   inset-block-start: calc(100% + 6px);
   inset-inline-start: 0;
-  z-index: 20;
+  z-index: var(--web-z-popover);
   inline-size: min(320px, 100%);
   padding: 10px;
   border-radius: var(--web-radius-md);

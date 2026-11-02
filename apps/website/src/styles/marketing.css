@@ -9,7 +9,7 @@
 
 .sanad-web .mk-page {
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
 }
 
 /* section colour rhythm (world-linked chrome, of-the-world like the landing) */
@@ -1348,7 +1348,7 @@
      `--hero`/`--tail` bands. (About/faq only survived without it because their calm systems stay
      transparent; careers' Beacon does too, but the lift is the rule, not the luck.) */
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
   display: flex;
   flex-direction: column;
   gap: clamp(56px, 10vh, 120px);
@@ -1369,12 +1369,12 @@
    keeps the bespoke hero's generous top offset so it idles below the system's focal object (U21e). */
 .sanad-web .mk-cms--hero {
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
   padding-block-start: clamp(96px, 16vh, 190px);
   padding-block-end: 0;
 }
 .sanad-web .mk-cms--tail {
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
   padding-block-start: 0;
 }

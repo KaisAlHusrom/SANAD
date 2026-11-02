@@ -75,7 +75,7 @@
 .cosmos-layer {
   position: fixed;
   inset: 0;
-  z-index: 1;
+  z-index: var(--web-z-cosmos);
   pointer-events: none; /* page scrolls natively over it — linked, never jacked */
   overflow: hidden;
 }
@@ -87,6 +87,14 @@
   inline-size: 100%;
   block-size: 100%;
   display: block;
+  /*
+   * Restated here because R3F sets `pointer-events` on its own wrapper, which DEFEATS the `none`
+   * declared on `.cosmos-layer` above. The canvas then hit-tests as the topmost element over the
+   * whole viewport, so any content that has not claimed a stacking context above it (WEB13) is
+   * visible but **unclickable** — which is what the chrome footer's links had become. Found by
+   * clicking, not by looking: the pixels were perfect (P8.23.A2b-1).
+   */
+  pointer-events: none;
 }
 /* static token-coloured glow shown on SSR / mobile / reduced-motion (WEB4/WEB10) */
 .cosmos-fallback {
@@ -103,7 +111,7 @@
 .world-veil {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: var(--web-z-world-veil);
   pointer-events: none;
   mix-blend-mode: screen;
   opacity: 0.4;
@@ -113,7 +121,7 @@
 .ink-cursor {
   position: fixed;
   inset: 0;
-  z-index: 55;
+  z-index: var(--web-z-cursor);
   inline-size: 100vw;
   block-size: 100vh;
   pointer-events: none;
@@ -122,14 +130,14 @@
 /* ---------- shared section scaffold ---------- */
 .lp-content {
   position: relative;
-  z-index: 10;
+  z-index: var(--web-z-content);
   /* clip the orbiting works cards + any off-canvas decoration horizontally without establishing a
      scroll container — `clip` (unlike `hidden`) keeps `position: sticky` chapters working (WEB6/U7) */
   overflow-x: clip;
 }
 .lp-section {
   position: relative;
-  z-index: 10;
+  z-index: var(--web-z-content);
   padding-block: clamp(72px, 12vh, 150px);
   padding-inline: clamp(20px, 5vw, 72px);
 }
@@ -137,7 +145,7 @@
 /* ---------- sticky "chapter" travel stages (WEB10, 8.B-2) ---------- */
 .lp-chapter {
   position: relative;
-  z-index: 10;
+  z-index: var(--web-z-content);
   min-block-size: 100vh; /* JS grows this to the per-section travel height when motion is on */
 }
 .lp-stage {
@@ -351,7 +359,7 @@
 /* ---------- hero ---------- */
 .lp-hero {
   position: relative;
-  z-index: 10;
+  z-index: var(--web-z-content);
   min-block-size: 100vh;
   display: flex;
   flex-direction: column;
@@ -366,7 +374,7 @@
 .lp-hero-veil {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: var(--web-z-under);
   pointer-events: none;
   background: radial-gradient(
     48% 44% at 50% 42%,
@@ -377,7 +385,7 @@
 }
 .lp-hero-top {
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -385,7 +393,7 @@
 }
 .lp-hero-bottom {
   position: relative;
-  z-index: 1;
+  z-index: var(--web-z-lift);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -634,6 +642,8 @@
 .lp-process {
   min-block-size: 100vh;
 }
+/* 0–6 here and in the finale below order siblings INSIDE this component's own stacking context —
+   deliberately not `--web-z-*`, which is the site-global ladder (see web-ui.css). */
 .lp-process-shell {
   position: relative;
   z-index: 3;
@@ -1143,7 +1153,7 @@
 /* ---------- impact / re-entry + footer finale (WEB10, 8.B-2) ---------- */
 .lp-impact {
   position: relative;
-  z-index: 10;
+  z-index: var(--web-z-content);
   min-block-size: 300vh; /* the long, quiet descent that reveals the finale */
 }
 .lp-reentry {
@@ -1165,7 +1175,7 @@
 .lp-finale {
   position: fixed;
   inset: 0;
-  z-index: 45;
+  z-index: var(--web-z-finale);
   overflow-x: hidden;
   overflow-y: auto;
   background: #04070c;
@@ -1417,13 +1427,18 @@
 }
 .lp-finale-bar-links {
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
 }
-.lp-finale-bar-links a {
+/* The consent affordance is a <button> (it opens a dialog, it does not navigate) but reads as one
+   of these links — the finale is the landing page's only footer, so it has to carry it. */
+.lp-finale-bar-links a,
+.lp-finale-bar-links button {
   color: inherit;
   transition: color 0.2s ease;
 }
-.lp-finale-bar-links a:hover {
+.lp-finale-bar-links a:hover,
+.lp-finale-bar-links button:hover {
   color: var(--web-dim);
 }
 
@@ -2248,7 +2263,7 @@
   inset-block-start: 50%;
   inset-inline-end: clamp(14px, 2vw, 30px);
   transform: translateY(-50%);
-  z-index: 40;
+  z-index: var(--web-z-wayfinder);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2323,7 +2338,7 @@
 .lp-ignition {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: var(--web-z-ignition);
   background: var(--web-bg);
   display: grid;
   place-items: center;

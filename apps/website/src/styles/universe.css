@@ -55,7 +55,7 @@
 .travel-veil {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--web-z-travel-veil);
   pointer-events: none;
   opacity: var(--veil-o, 0);
   background:
