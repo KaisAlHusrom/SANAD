@@ -13,7 +13,7 @@
 ## Status snapshot
 
 - **This session (2026-11-02): repo prepared to go public — no phase work.**
-  - **Committed the half-built P8.23.A2b as-is (owner's call)** in six chunks, pushed `d3306a17..ec6c1761`.
+  - **Committed the half-built P8.23.A2b as-is (owner's call)** in six chunks, pushed `9b761fe..bbd9cc9`.
     Unit tests pass, but A2b has **not** been through verifier/boot-verifier, so it stays unchecked. The one
     fix: a no-op `ResizeObserver` shim in the website `test-setup.ts` — jsdom lacks it and the consent bar
     measures its own height, which alone failed 11 consent tests.
@@ -22,10 +22,11 @@
     `infra/scripts/dev-env-init.mjs` creates `infra/.env.development` with a fresh RS256 pair (never
     overwrites; `--print` for staging/prod). The old pair stays in git history and this machine's
     `.env.development` — fine locally, **never use it on a server**.
-  - **Added `README.md`** for recruiters and engineers: architecture, services, highlights, stack, local run,
-    and an all-rights-reserved notice (deliberately no open-source licence).
-  - **NEXT:** owner decides on the history cleanup (`.pnpm-store` in early commits → 203 MB pack) and on making
-    the repo public; then `/continue-plan` → finish **P8.23.A2b** (still owes the `tracking` revalidate hook).
+  - **Added `README.md`** for recruiters/engineers, all rights reserved (deliberately no open-source licence).
+  - **History rewritten (owner-approved):** `.pnpm-store` dropped from every commit (pack 203 MB → 8.6 MB) and the
+    one Claude co-author trailer removed; every SHA changed, force-pushed. Backup: `../SANAD-history-backup-2026-11-02.bundle`.
+  - **NEXT:** owner makes the repo public after reading the README; then `/continue-plan` → finish
+    **P8.23.A2b** (still owes the `tracking` revalidate hook).
 
 - **Previous session (2026-08-24): P8.23.A2 SPLIT into A2a/A2b, and P8.23.A2a — the deny-first consent state — BUILT.**
   - **Split (U0, owner-confirmed):** A2 was ~11 logic units including the website's first-ever overlay primitive. Split **state vs surface** so no half-built UX is ever visible: A2a is invisible infrastructure, A2b lands the whole interface at once. Owner also fixed A2b's banner as a **non-blocking bottom bar**, not a modal gate — nothing is tracked while a visitor ignores it, so covering the landing cinematic buys no protection.
