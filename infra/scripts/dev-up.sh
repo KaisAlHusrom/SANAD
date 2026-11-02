@@ -28,7 +28,8 @@ KNOWN_PROFILES=' settings media content notifications admin web full '
 if [ ! -f "$ENV_FILE" ]; then
   echo "ERROR: $ENV_FILE is missing." >&2
   echo "It carries the RS256 JWT keypair + APP_SECRETS_ENCRYPTION_KEY; without it the" >&2
-  echo "gateway + identity fail fast at boot (U19). Copy infra/.env.example and fill it in." >&2
+  echo "gateway + identity fail fast at boot (U19). Create it with a fresh keypair:" >&2
+  echo "  node infra/scripts/dev-env-init.mjs" >&2
   exit 1
 fi
 

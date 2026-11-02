@@ -187,7 +187,7 @@ services:
       HOST: 0.0.0.0
       DATABASE_URL: postgresql://${POSTGRES_USER:-sanad}:${POSTGRES_PASSWORD:-sanad}@postgres:5432/identity
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-sanad}:${RABBITMQ_PASSWORD:-sanad}@rabbitmq:5672
-      # RS256 keypair (dev throwaway in infra/.env.example) — identity signs + verifies.
+      # RS256 keypair (per machine, from infra/scripts/dev-env-init.mjs) — identity signs + verifies.
       JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
       JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sanad.tech}
