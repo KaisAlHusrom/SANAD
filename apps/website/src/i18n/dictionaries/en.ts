@@ -65,4 +65,61 @@ export const en: typeof ar = {
     off: 'Sound off',
     label: 'Sound',
   },
+  consent: {
+    bar: {
+      label: 'Cookie notice',
+      title: 'We ask first',
+      body: 'No analytics or advertising tool runs before you agree. Only the necessary files are active right now, so the site works.',
+      acceptAll: 'Accept all',
+      rejectAll: 'Reject all',
+      customize: 'Customize',
+    },
+    dialog: {
+      title: 'Cookie preferences',
+      lead: 'Choose what we may use. You can change this any time from the bottom of any page.',
+      close: 'Close',
+      save: 'Save preferences',
+      acceptAll: 'Accept all',
+      rejectAll: 'Reject all',
+      withdraw: 'Withdraw my consent',
+      remembered: 'We keep your choice for {{days}} days, then ask again.',
+    },
+    categories: {
+      necessary: {
+        name: 'Necessary',
+        description:
+          'Run the basics: language, security, and form submission. The site does not work without them.',
+        alwaysOn: 'Always required',
+      },
+      analytics: {
+        name: 'Performance',
+        description:
+          'Show us which pages matter to you and where to improve. Aggregate numbers, no personal identity.',
+      },
+      marketing: {
+        name: 'Marketing',
+        description:
+          'Measure how our campaigns perform so they reach people actually looking for our services.',
+      },
+    },
+    vendors: {
+      label: 'Loads if you agree',
+      none: 'Nothing is configured yet.',
+    },
+    state: {
+      on: 'On',
+      off: 'Off',
+    },
+    links: {
+      privacy: 'Privacy policy',
+      cookies: 'Cookie policy',
+    },
+    preferences: {
+      open: 'Cookie preferences',
+    },
+    feedback: {
+      notStored:
+        'Applied for this session only — your browser’s storage appears to be disabled, so we can’t remember it after you close it.',
+    },
+  },
 };

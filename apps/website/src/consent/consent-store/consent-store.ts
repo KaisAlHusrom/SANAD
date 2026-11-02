@@ -60,8 +60,14 @@ class ConsentStore {
     };
   };
 
-  save = (record: ConsentRecord): void => {
-    if (writeConsentRecord(record)) {
+  /**
+   * Returns whether the decision was PERSISTED. It always applies to this page view; the boolean
+   * is what lets the UI say so when it will not survive the tab (U23) instead of promising a
+   * memory the browser has already refused.
+   */
+  save = (record: ConsentRecord): boolean => {
+    const persisted = writeConsentRecord(record);
+    if (persisted) {
       this.unpersisted = null;
     } else {
       this.unpersisted = record;
@@ -71,6 +77,7 @@ class ConsentStore {
       clearConsentRecord();
     }
     this.notify();
+    return persisted;
   };
 
   clear = (): void => {

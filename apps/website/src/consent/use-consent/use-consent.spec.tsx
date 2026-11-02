@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import userEvent from '@testing-library/user-event';
 import {
   CONSENT_REMEMBER_DAYS_DEFAULT,
   DEFAULT_TRACKING_CONFIG,
   type PublicConsentPolicy,
+  type PublicTrackingConfig,
 } from '@sanad/contracts';
 import {
   CONSENT_STATUS_ATTRIBUTE,
@@ -35,17 +37,32 @@ const record = (over: Partial<ConsentRecord> = {}): ConsentRecord => ({
 });
 
 function Probe() {
-  const { status, granted, decide, withdraw } = useConsent();
+  const { status, granted, destinations, decide, withdraw } = useConsent();
+  const [persisted, setPersisted] = useState<boolean | null>(null);
   return (
     <div>
       <span data-testid="status">{status}</span>
       <span data-testid="granted">
         {`${granted.necessary}/${granted.analytics}/${granted.marketing}`}
       </span>
-      <button onClick={() => decide({ analytics: true, marketing: false })}>
+      <span data-testid="destinations">
+        {destinations.map((d) => d.id).join(',')}
+      </span>
+      <span data-testid="persisted">
+        {persisted === null ? '' : String(persisted)}
+      </span>
+      <button
+        onClick={() =>
+          setPersisted(decide({ analytics: true, marketing: false }))
+        }
+      >
         analytics only
       </button>
-      <button onClick={() => decide({ analytics: true, marketing: true })}>
+      <button
+        onClick={() =>
+          setPersisted(decide({ analytics: true, marketing: true }))
+        }
+      >
         everything
       </button>
       <button onClick={withdraw}>withdraw</button>
@@ -53,9 +70,17 @@ function Probe() {
   );
 }
 
-const show = (over: Partial<PublicConsentPolicy> = {}) =>
+const config = (
+  over: Partial<PublicConsentPolicy> = {},
+  destinations: PublicTrackingConfig['destinations'] = [],
+): PublicTrackingConfig => ({ consent: policy(over), destinations });
+
+const show = (
+  over: Partial<PublicConsentPolicy> = {},
+  destinations: PublicTrackingConfig['destinations'] = [],
+) =>
   render(
-    <ConsentProvider policy={policy(over)}>
+    <ConsentProvider config={config(over, destinations)}>
       <Probe />
     </ConsentProvider>,
   );
@@ -228,6 +253,46 @@ describe('useConsent', () => {
 
       expect(status()).toBe('pending');
       expect(granted()).toBe('true/false/false');
+      expect(screen.getByTestId('destinations').textContent).toBe('');
+    });
+  });
+
+  // The dialog names the third parties a category would admit, so the list has to reach it —
+  // and it is the same list A3's loaders read.
+  describe('the destinations a decision actually admits', () => {
+    it('carries the resolved list through the provider', () => {
+      show({}, [
+        { id: 'ga4', category: 'analytics', measurementId: 'G-ABCDE12345' },
+        {
+          id: 'metaPixel',
+          category: 'marketing',
+          measurementId: '1234567890123',
+        },
+      ]);
+
+      expect(screen.getByTestId('destinations').textContent).toBe(
+        'ga4,metaPixel',
+      );
+    });
+  });
+
+  describe('what decide() reports back', () => {
+    it('says the answer was kept when the browser stored it', async () => {
+      show();
+      await userEvent.click(screen.getByRole('button', { name: 'everything' }));
+      expect(screen.getByTestId('persisted').textContent).toBe('true');
+    });
+
+    it('says the answer was NOT kept when storage refused it', async () => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('QuotaExceededError');
+      });
+      show();
+
+      await userEvent.click(screen.getByRole('button', { name: 'everything' }));
+
+      expect(status()).toBe('decided');
+      expect(screen.getByTestId('persisted').textContent).toBe('false');
     });
   });
 });

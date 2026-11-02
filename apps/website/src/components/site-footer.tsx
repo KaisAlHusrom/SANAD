@@ -6,6 +6,7 @@ import {
   type MenuTree,
 } from '@sanad/contracts';
 import type { Dictionary } from '../i18n/get-dictionary';
+import { ConsentPreferencesLink } from '../consent/consent-preferences-link';
 import { localizeHref } from '../lib/localize-href';
 import {
   contactAddress,
@@ -120,7 +121,16 @@ export function SiteFooter({
       ) : null}
 
       <div className="site-footer-copy">
-        {copyrightLine(branding, locale, dict.footer.rights, brandName)}
+        <span>
+          {copyrightLine(branding, locale, dict.footer.rights, brandName)}
+        </span>
+        {/* A client island inside this server component: the decision must stay revisable from
+            every page, and this footer renders on all of them except the landing (where the
+            finale carries the same link — `site-chrome.css` hides this one there). */}
+        <ConsentPreferencesLink
+          copy={dict.consent.preferences}
+          className="site-footer-link"
+        />
       </div>
     </footer>
   );

@@ -1,0 +1,405 @@
+/*
+ * The consent layer (P8.23.A2b-1): a non-blocking bottom bar and the preferences dialog's contents.
+ *
+ * The bar takes the route's accent like every other surface (WEB12) — it is part of the universe,
+ * not chrome bolted on top of it.
+ */
+
+.sanad-web .consent-bar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: var(--web-z-consent-bar);
+  border-block-start: 1px solid var(--web-hairline-strong);
+  background: color-mix(in oklab, var(--web-s1) 92%, transparent);
+  backdrop-filter: blur(14px);
+  padding-block: 16px;
+  padding-inline: clamp(16px, 4vw, 48px);
+  /* iOS home indicator: the actions must never sit under it. */
+  padding-block-end: max(16px, env(safe-area-inset-bottom));
+}
+
+/*
+ * Belt, not the mechanism: React already renders nothing unless `status === 'pending'`. But the
+ * blocking bootstrap stamps this attribute before first paint, so if the store's SSR snapshot ever
+ * changes, a visitor who already decided still never sees a flash of the bar.
+ */
+html:not([data-consent='pending']) .consent-bar {
+  display: none;
+}
+
+/*
+ * Clearance. A fixed bottom bar covers whatever the page ends with, so the last band buys back
+ * exactly the bar's measured height while it is up — otherwise the footer's copyright row (and the
+ * finale's legal links) are visible but unreachable. `--consent-bar-height` is written by the bar
+ * itself; the `0px` fallback keeps this inert everywhere else.
+ */
+html[data-consent='pending'] .site-footer,
+html[data-consent='pending'] .lp-finale-inner {
+  padding-block-end: calc(
+    var(--consent-bar-height, 0px) + var(--consent-bar-gap)
+  );
+}
+
+.sanad-web {
+  --consent-bar-gap: 12px;
+}
+
+/*
+ * The landing's first-arrival beat owns the screen while it plays. `.lp-ignition` carries a larger
+ * number (90) but lives inside `.lp-content`'s z-10 stacking context, so it does NOT paint above a
+ * layout-level bar — this rule is what actually keeps the cinematic intact. `IgnitionGate`
+ * unmounts itself when the beat ends and the bar rises straight after.
+ */
+.sanad-web:has(.lp-ignition) .consent-bar {
+  display: none;
+}
+
+.sanad-web .consent-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(12px, 2vw, 28px);
+  margin-inline: auto;
+  inline-size: min(1320px, 100%);
+}
+
+.sanad-web .consent-bar-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* Grows into the space beside the actions instead of wrapping early against a wide empty gap,
+     but still stops before the line gets uncomfortable to read. */
+  flex: 1 1 420px;
+  max-inline-size: 88ch;
+}
+
+.sanad-web .consent-bar-title {
+  color: var(--web-text);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sanad-web .consent-bar-body {
+  color: var(--web-dim);
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+
+.sanad-web .consent-bar-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-block-start: 2px;
+}
+
+.sanad-web .consent-bar-links a {
+  color: var(--web-muted);
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.sanad-web .consent-bar-links a:hover {
+  color: var(--web-text);
+}
+
+.sanad-web .consent-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/*
+ * Accept and reject are the SAME control. Giving accept the accent fill and reject a quiet outline
+ * is the standard consent dark pattern, and the owner's directive is equal weight — so they differ
+ * in nothing but their words. `consent-bar.spec` asserts the class equality so a restyle cannot
+ * quietly reintroduce the bias.
+ */
+.sanad-web .consent-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-block: 10px;
+  padding-inline: 20px;
+  border: 1px solid color-mix(in oklab, var(--web-accent) 45%, transparent);
+  border-radius: var(--web-radius-pill);
+  background: color-mix(in oklab, var(--web-accent) 12%, transparent);
+  color: var(--web-text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.sanad-web .consent-action:hover {
+  background: color-mix(in oklab, var(--web-accent) 22%, transparent);
+  border-color: color-mix(in oklab, var(--web-accent) 70%, transparent);
+  transform: translateY(-1px);
+}
+
+/* The dialog's save is the one place a primary DOES belong — the choice is already made by then. */
+.sanad-web .consent-action--save {
+  margin-inline-start: auto;
+  background: var(--web-accent);
+  border-color: var(--web-accent);
+  color: var(--web-accent-ink);
+}
+
+.sanad-web .consent-action--save:hover {
+  background: color-mix(in oklab, var(--web-accent) 88%, white);
+}
+
+.sanad-web .consent-tertiary {
+  padding-block: 8px;
+  padding-inline: 12px;
+  border: none;
+  background: none;
+  color: var(--web-faint);
+  font-family: var(--web-mono);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+/* WEB5 — never letter-space Arabic; the mono label only gets tracking in Latin. */
+.sanad-web .consent-tertiary:lang(en) {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sanad-web .consent-tertiary:hover {
+  color: var(--web-text);
+}
+
+/* ---------- the preferences dialog ---------- */
+
+.sanad-web .consent-dialog-title {
+  flex: 1;
+  color: var(--web-text);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sanad-web .consent-dialog-close {
+  border: 1px solid var(--web-hairline);
+  border-radius: var(--web-radius-pill);
+  background: none;
+  color: var(--web-muted);
+  inline-size: 30px;
+  block-size: 30px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.sanad-web .consent-dialog-close:hover {
+  color: var(--web-text);
+  border-color: var(--web-hairline-strong);
+}
+
+.sanad-web .consent-dialog-lead {
+  color: var(--web-dim);
+  font-size: 13.5px;
+  line-height: 1.8;
+}
+
+.sanad-web .consent-dialog-notice {
+  margin-block-start: 14px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--web-danger) 40%, transparent);
+  border-radius: var(--web-radius-md);
+  background: color-mix(in oklab, var(--web-danger) 10%, transparent);
+  color: var(--web-text);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.sanad-web .consent-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-block-start: 18px;
+  list-style: none;
+}
+
+.sanad-web .consent-category {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--web-hairline);
+  border-radius: var(--web-radius-md);
+  background: color-mix(in oklab, var(--web-bg) 45%, transparent);
+}
+
+.sanad-web .consent-category-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.sanad-web .consent-category-name {
+  color: var(--web-text);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.sanad-web .consent-category-locked {
+  color: var(--web-faint);
+  font-family: var(--web-mono);
+  font-size: 11px;
+}
+
+.sanad-web .consent-category-help {
+  color: var(--web-muted);
+  font-size: 12.5px;
+  line-height: 1.75;
+}
+
+.sanad-web .consent-category-vendors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--web-faint);
+  font-size: 11.5px;
+}
+
+.sanad-web .consent-category-vendors-label {
+  font-family: var(--web-mono);
+}
+
+.sanad-web .consent-category-vendor {
+  padding-block: 3px;
+  padding-inline: 8px;
+  border: 1px solid var(--web-hairline);
+  border-radius: var(--web-radius-pill);
+  color: var(--web-dim);
+}
+
+.sanad-web .consent-dialog-remembered {
+  margin-block-start: 16px;
+  color: var(--web-faint);
+  font-size: 12px;
+}
+
+.sanad-web .consent-dialog-withdraw {
+  margin-block-start: 6px;
+  padding-inline: 0;
+}
+
+/*
+ * On a phone the three actions wrapped into a ragged two rows with `Save` stranded by its
+ * `margin-inline-start: auto`. A 2-column grid gives the equal-weight pair one row and the
+ * dialog's own primary a full-width row of its own.
+ */
+@media (max-width: 640px) {
+  .sanad-web .overlay-panel.consent-dialog .overlay-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sanad-web .overlay-panel.consent-dialog .overlay-foot .consent-action--save {
+    grid-column: 1 / -1;
+    margin-inline-start: 0;
+  }
+}
+
+/* ---------- the switch ---------- */
+
+.sanad-web .consent-switch {
+  --switch-travel: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  border: none;
+  background: none;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.sanad-web .consent-switch[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sanad-web .consent-switch-track {
+  position: relative;
+  display: inline-block;
+  inline-size: 42px;
+  block-size: 24px;
+  border: 1px solid var(--web-hairline-strong);
+  border-radius: var(--web-radius-pill);
+  background: color-mix(in oklab, var(--web-bg) 70%, transparent);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.sanad-web .consent-switch[aria-checked='true'] .consent-switch-track {
+  background: color-mix(in oklab, var(--web-accent) 55%, transparent);
+  border-color: color-mix(in oklab, var(--web-accent) 70%, transparent);
+}
+
+.sanad-web .consent-switch-thumb {
+  position: absolute;
+  inset-block-start: 3px;
+  /* Logical inset + a `--dir` scalar: there is no logical property for `transform`, so RTL flips
+     the thumb's travel by sign (WEB6) — the same mechanism the orbit motion uses. */
+  inset-inline-start: 3px;
+  inline-size: 16px;
+  block-size: 16px;
+  border-radius: 50%;
+  background: var(--web-text);
+  transition: transform 0.2s ease;
+}
+
+.sanad-web .consent-switch[aria-checked='true'] .consent-switch-thumb {
+  transform: translateX(calc(var(--dir, 1) * var(--switch-travel)));
+}
+
+.sanad-web .consent-switch-state {
+  color: var(--web-muted);
+  font-family: var(--web-mono);
+  font-size: 11px;
+  min-inline-size: 4ch;
+}
+
+/* ---------- the footer affordance ---------- */
+
+.sanad-web .consent-preferences-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sanad-web .consent-action,
+  .sanad-web .consent-switch-thumb,
+  .sanad-web .consent-tertiary,
+  .sanad-web .consent-dialog-close {
+    transition: none;
+  }
+
+  .sanad-web .consent-action:hover {
+    transform: none;
+  }
+}

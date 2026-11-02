@@ -656,9 +656,71 @@ now)` is the single place a stored record becomes `pending` / `decided` / `not-r
 - **No new event, deliberately (U27).** Consent is per-browser and never crosses a module or
   service boundary; the external store _is_ the mechanism A3 subscribes to. A catalog entry would
   be a second name for the same fact.
-- **Still open after A2a:** nothing revalidates the `tracking` cache tag. That is the broker →
-  website ISR hook the `EVENT_CATALOG` orphans name as P8.23 (a route handler + a shared secret +
-  a consumer), not part of the consent layer.
+- **Still open:** nothing revalidates the `tracking` cache tag. That is the broker → website ISR
+  hook the `EVENT_CATALOG` orphans name as P8.23 (a route handler + a shared secret + a consumer)
+  — **P8.23.A2b-2**, deliberately split out of the UI phase.
+
+## Consent UI (`src/consent/` + `src/components/overlay/`, P8.23.A2b-1)
+
+The surface that asks, and the affordance that keeps a decision revisable. A2a decided; this is
+where a visitor can answer.
+
+- **The context widened.** `ConsentProvider` now carries the whole resolved `PublicTrackingConfig`,
+  not just `consent`, and `useConsent()` exposes `destinations`. The dialog names the third parties
+  a category would actually admit ("Marketing → Meta pixel"), which is the reason it is worth
+  opening; the five localized vendor names live in **`libs/contracts`**
+  (`TRACKING_DESTINATION_NAMES`) so the admin screen and the website read ONE source (U3) — the
+  admin catalogs no longer carry them.
+- **`decide()` returns a boolean.** The store already knew whether the write persisted and threw it
+  away, so a visitor in private mode saved preferences that would silently vanish. The dialog now
+  stays open and says so (`consent.feedback.notStored`, U23).
+- **`components/overlay/` — the website's first overlay primitive.** `useOverlay` owns the portal
+  target, the focus trap, Escape and the scroll lock; `OverlayDialog` is the U21c shell
+  (`grid-template-rows: auto minmax(0,1fr) auto` → sticky head + one scrolling body + sticky foot,
+  capped at `100dvh`). Three things about it are load-bearing:
+  - **It portals into `.sanad-web`, never `document.body`.** Every `--web-*` token is scoped to that
+    element (and the runtime branding vars are inlined on it), so a body portal renders unstyled.
+    Portaling at all is required because the landing trigger sits inside `.lp-finale`, which is
+    `isolation: isolate` with a per-frame `opacity` — a nested dialog would be both z-trapped and
+    faded.
+  - **The trap effect keys on `[open, portalTarget]`.** The target resolves in an effect, so an
+    overlay already open on its first render has no node yet when the effect runs; keyed on `open`
+    alone it bailed once and never re-ran — dialog visible, nothing focused, Escape dead.
+  - **Escape stops at the dialog node.** `UniverseNavigator`'s flight-skip and `MotionProvider`'s
+    scroll keys are both bubble listeners on `window`, so one `stopPropagation()` shields both.
+- **Scroll lock goes THROUGH the motion layer, not around it.** `MotionProvider` — not the browser —
+  owns desktop scrolling (a speed-capped scroller on the GSAP ticker that `preventDefault()`s wheel
+  and keys). `motion/scroll/scroll-lock/` is a reentrant singleton that marks `<html>`; the provider
+  returns **before** its `preventDefault()` while it is held, which hands the wheel back to the
+  browser so the dialog's own body scrolls natively, and resyncs its target on release.
+  `html { scrollbar-gutter: stable }` is what makes `overflow: hidden` shift nothing.
+- **A platform bug fixed on the way (`motion/scroll/should-drive-scroll/`).** `keyScrollDelta`
+  drives **Space**, and the provider exempted only `INPUT`/`TEXTAREA`/`contentEditable` — so Space
+  on any focused `<button>` paged the document instead of activating it, everywhere on the site.
+  The predicate now also spares activation keys on activatable elements and arrows inside composite
+  widgets (which protects the phone-field's roving country list too).
+- **The bar is non-blocking** (owner directive): nothing loads before consent, so a modal gate buys
+  no protection and costs the first impression. **Accept and reject are the same control with
+  different words** — same element, same class, same size; the spec asserts the class equality so a
+  restyle cannot reintroduce the usual dark pattern. Rendered only at `status === 'pending'`, with a
+  `html:not([data-consent='pending'])` CSS rule as a belt. It is suppressed during the landing's
+  ignition beat by `:has(.lp-ignition)` — necessary because `.lp-ignition`'s z-90 is local to
+  `.lp-content`'s z-10 context and does NOT actually paint above a layout-level bar.
+- **`necessary` is shown, on, and `aria-disabled` — never `disabled`.** Listing the category we are
+  not offering is the point, and `disabled` would drop it out of the tab order.
+- **The affordance is in BOTH footers.** `site-chrome.css` hides the chrome footer wherever
+  `.lp-finale` renders, so a `SiteFooter`-only link is unreachable on the landing. It **opens** the
+  dialog rather than withdrawing — withdrawing would reset someone to `pending` for wanting to
+  change one category. The two footers cross the tree through `consent-ui-store` (a module
+  singleton read via `useSyncExternalStore`, the module's own canon — the only React context high
+  enough to cover both footers also covers the R3F canvas).
+- **`--web-z-*` (`websiteZLayers` in `@sanad/config`, drift-guarded in `web-ui.tokens.spec`).** The
+  site-global stacking ladder, swept across all four stylesheets **value-preservingly** — zero
+  visual change, because the painted order is not what the numbers suggest and straightening it is
+  a separate, visible decision. Ordering inside one component's own stacking context stays a local
+  number.
+- **A designed focus ring, finally** (`--web-focus-ring`, applied to every interactive element in
+  `.sanad-web`): the site had none, and a hand-rolled focus trap makes that load-bearing.
 
 ## i18n (`src/i18n/`)
 

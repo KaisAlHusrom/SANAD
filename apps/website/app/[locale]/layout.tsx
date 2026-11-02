@@ -3,6 +3,8 @@ import '../../src/styles/site-chrome.css';
 import '../../src/styles/landing.css';
 import '../../src/styles/marketing.css';
 import '../../src/styles/universe.css';
+import '../../src/styles/overlay.css';
+import '../../src/styles/consent.css';
 import type { CSSProperties, ReactNode } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -16,6 +18,7 @@ import { getMenu } from '../../src/data/menus';
 import { getTrackingConfig } from '../../src/data/tracking';
 import { consentBootstrapScript } from '../../src/consent/consent-bootstrap';
 import { ConsentProvider } from '../../src/consent/consent-provider';
+import { ConsentLayer } from '../../src/consent/consent-layer';
 import { brandingToCssVars } from '../../src/branding/branding-to-css-vars';
 import {
   shareImageUrl,
@@ -147,7 +150,7 @@ export default async function LocaleLayout({
             __html: consentBootstrapScript(tracking.consent),
           }}
         />
-        <ConsentProvider policy={tracking.consent}>
+        <ConsentProvider config={tracking}>
           {/* P8.D one-universe: the accent is per-route — resolved by AccentStyle's
               :has([data-system]) rules off each page's SystemStage marker, so the shell
               must NOT inline an accent (inline would beat the route rules by cascade). */}
@@ -189,6 +192,10 @@ export default async function LocaleLayout({
                   branding={branding}
                   menu={footerMenu}
                 />
+                {/* Outside `.site-main`/`.page-stage` on purpose: in there the bar would go
+                    `visibility: hidden` during every comet flight, and inside `.lp-content` it
+                    would be trapped in that element's z-10 stacking context. */}
+                <ConsentLayer copy={dict.consent} locale={locale} />
               </UniverseProvider>
             </MotionProvider>
           </WebsiteShell>

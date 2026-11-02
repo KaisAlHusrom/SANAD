@@ -8,6 +8,8 @@ import {
   footItemReveal,
   footerReveal,
 } from '../../../motion/cosmos/math';
+import { ConsentPreferencesLink } from '../../../consent/consent-preferences-link';
+import type { ConsentPreferencesCopy } from '../../../consent/types';
 import { FINALE_COPY, finaleCopy } from './finale-copy';
 import { buildFinaleData, type FinaleData } from './finale-data';
 
@@ -34,10 +36,16 @@ const PRODUCT: ReadonlyArray<{ href: string; ar: string; en: string }> = [
 export function FooterFinale({
   locale,
   data,
+  consentCopy,
 }: {
   locale: Locale;
   /** Derived server-side from settings + the footer menu; omitted → coded defaults (F7). */
   data?: FinaleData;
+  /**
+   * The site dictionary's consent slice, resolved by the page. NOT added to `FINALE_COPY`: the
+   * chrome footer already carries this exact string, and a second catalog would drift (U3).
+   */
+  consentCopy?: ConsentPreferencesCopy;
 }) {
   const rootRef = useRef<HTMLElement>(null);
   const itemsRef = useRef<Array<HTMLElement | null>>([]);
@@ -232,6 +240,9 @@ export function FooterFinale({
             <a href={`/${locale}/terms`}>
               {finaleCopy(FINALE_COPY.terms, locale)}
             </a>
+            {/* The chrome footer is `display: none` wherever this finale renders, so without this
+                the landing page would be the one route with no way to revisit a decision. */}
+            {consentCopy ? <ConsentPreferencesLink copy={consentCopy} /> : null}
           </span>
         </div>
       </div>

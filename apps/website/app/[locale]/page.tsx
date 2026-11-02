@@ -58,6 +58,7 @@ import {
   FooterFinale,
   buildFinaleData,
 } from '../../src/components/landing/finale';
+import { getDictionary } from '../../src/i18n';
 import { getBranding } from '../../src/data/branding';
 import { getMenu } from '../../src/data/menus';
 
@@ -89,6 +90,9 @@ export default async function Home({
     getMenu('footer').catch(() => null),
   ]);
   const finaleData = buildFinaleData(branding, footerMenu, locale);
+  // Only the consent slice — the finale keeps its own cinematic copy, but this one string already
+  // lives in the site dictionary for the chrome footer and must not be duplicated (U3).
+  const dict = getDictionary(locale);
 
   // The collection-backed sections (work/testimonials/blog) hydrate from the page tree
   // (preview===live). Resolve their soft media ids → CDN urls up front so the shared cards render
@@ -252,7 +256,11 @@ export default async function Home({
           />
         </ChapterStage>
         <ImpactSection />
-        <FooterFinale locale={locale} data={finaleData} />
+        <FooterFinale
+          locale={locale}
+          data={finaleData}
+          consentCopy={dict.consent.preferences}
+        />
       </div>
     </SystemStage>
   );

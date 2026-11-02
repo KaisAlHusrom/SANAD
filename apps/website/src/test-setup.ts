@@ -50,3 +50,19 @@ if (typeof window.IntersectionObserver !== 'function') {
   window.IntersectionObserver =
     TestIntersectionObserver as unknown as typeof IntersectionObserver;
 }
+
+// jsdom has no layout, so there is no size to report; the consent bar only needs the constructor.
+if (typeof window.ResizeObserver !== 'function') {
+  class TestResizeObserver implements ResizeObserver {
+    observe(): void {
+      /* no-op */
+    }
+    unobserve(): void {
+      /* no-op */
+    }
+    disconnect(): void {
+      /* no-op */
+    }
+  }
+  window.ResizeObserver = TestResizeObserver;
+}

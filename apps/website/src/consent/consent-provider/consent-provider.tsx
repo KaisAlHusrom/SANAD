@@ -3,32 +3,36 @@
 import { createContext, type ReactNode } from 'react';
 import {
   DEFAULT_TRACKING_CONFIG,
-  type PublicConsentPolicy,
+  type PublicTrackingConfig,
 } from '@sanad/contracts';
 import { ConsentStatusMirror } from '../consent-status-mirror/consent-status-mirror';
 
 /**
- * The resolved policy travels by context, not by module singleton: a singleton is shared across
- * requests on the server, and the store deliberately holds only browser storage state.
+ * The resolved tracking config travels by context, not by module singleton: a singleton is shared
+ * across requests on the server, and the store deliberately holds only browser storage state.
  *
- * The default is the coded default (F7) — a consumer rendered outside a provider gets "ask, and
- * grant nothing", which is the safe answer rather than a crash.
+ * It carries the whole config rather than just the consent policy because the preferences dialog
+ * names the destinations a category would actually admit — a visitor is owed the list of third
+ * parties, not an abstraction — and A3's loaders read the same list.
+ *
+ * The default is the coded default (F7) — a consumer rendered outside a provider gets "ask, grant
+ * nothing, load nothing", which is the safe answer rather than a crash.
  */
-export const ConsentPolicyContext = createContext<PublicConsentPolicy>(
-  DEFAULT_TRACKING_CONFIG.consent,
+export const ConsentConfigContext = createContext<PublicTrackingConfig>(
+  DEFAULT_TRACKING_CONFIG,
 );
 
 export function ConsentProvider({
-  policy,
+  config,
   children,
 }: {
-  policy: PublicConsentPolicy;
+  config: PublicTrackingConfig;
   children: ReactNode;
 }) {
   return (
-    <ConsentPolicyContext.Provider value={policy}>
+    <ConsentConfigContext.Provider value={config}>
       <ConsentStatusMirror />
       {children}
-    </ConsentPolicyContext.Provider>
+    </ConsentConfigContext.Provider>
   );
 }

@@ -7,9 +7,12 @@ import {
   useRef,
   useSyncExternalStore,
 } from 'react';
-import type { PublicConsentPolicy } from '@sanad/contracts';
+import type {
+  PublicConsentPolicy,
+  PublicTrackingDestination,
+} from '@sanad/contracts';
 import { CONSENT_RECORD_VERSION } from '../constants/consent.constants';
-import { ConsentPolicyContext } from '../consent-provider/consent-provider';
+import { ConsentConfigContext } from '../consent-provider/consent-provider';
 import { consentStore } from '../consent-store/consent-store';
 import { evaluateConsent } from '../evaluate-consent/evaluate-consent';
 import type {
@@ -20,10 +23,17 @@ import type {
 
 export interface ConsentApi {
   policy: PublicConsentPolicy;
+  /** Only destinations that are both enabled and configured — what the dialog names to a visitor. */
+  destinations: readonly PublicTrackingDestination[];
   status: ConsentStatus;
   granted: ConsentGrants;
-  /** Record the visitor's answer. `necessary` is not passed — it was never theirs to refuse. */
-  decide: (decision: ConsentDecision) => void;
+  /**
+   * Record the visitor's answer. `necessary` is not passed — it was never theirs to refuse.
+   * Returns whether the answer was PERSISTED: it always applies to this page view, but a browser
+   * with storage blocked will forget it, and a visitor is owed that fact rather than a silent
+   * promise the next page break (U23).
+   */
+  decide: (decision: ConsentDecision) => boolean;
   /** Forget the answer entirely, so the visitor is asked again. */
   withdraw: () => void;
 }
@@ -35,7 +45,8 @@ export interface ConsentApi {
  * vanish, and React never warns about a mismatch.
  */
 export function useConsent(): ConsentApi {
-  const policy = useContext(ConsentPolicyContext);
+  const config = useContext(ConsentConfigContext);
+  const policy = config.consent;
   const record = useSyncExternalStore(
     consentStore.subscribe,
     consentStore.getSnapshot,
@@ -53,15 +64,14 @@ export function useConsent(): ConsentApi {
   );
 
   const decide = useCallback(
-    (decision: ConsentDecision) => {
+    (decision: ConsentDecision) =>
       consentStore.save({
         v: CONSENT_RECORD_VERSION,
         policyVersion: policy.policyVersion,
         decidedAt: Date.now(),
         analytics: decision.analytics,
         marketing: decision.marketing,
-      });
-    },
+      }),
     [policy.policyVersion],
   );
 
@@ -69,6 +79,7 @@ export function useConsent(): ConsentApi {
 
   return {
     policy,
+    destinations: config.destinations,
     status: state.status,
     granted: state.granted,
     decide,
